@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#2563eb">
+<title>SI-NILAI SD V8 FINAL — 2026/2027 • Perangkat Pembelajaran Lengkap</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:#f1f5f9;color:#172033}
+button,input,select,textarea{font:inherit}button{cursor:pointer}
+.login{min-height:100vh;display:grid;place-items:center;padding:22px;background:linear-gradient(135deg,#dbeafe,#eff6ff 45%,#e0e7ff)}
+.card{background:#fff;border:1px solid #dbe4f0;border-radius:22px;box-shadow:0 18px 50px #0f172a1a}
+.login-card{width:min(430px,100%);padding:28px}
+.logo{width:92px;height:92px;border-radius:20px;display:grid;place-items:center;background:#fff;border:1px solid #dbe4f0;overflow:hidden;margin:auto}
+.logo img{width:100%;height:100%;object-fit:contain}
+.brand-logo{width:36px;height:36px;border-radius:9px;object-fit:contain;background:#fff;border:1px solid #dbe4f0}
+h1,h2,h3{margin:0 0 8px}.muted{color:#64748b}.center{text-align:center}
+label{display:block;font-weight:700;font-size:14px;margin:15px 0 7px}
+input,select,textarea{width:100%;padding:12px 13px;border:1px solid #cbd5e1;border-radius:12px;outline:none;background:#fff}
+input:focus,select:focus,textarea:focus{border-color:#2563eb;box-shadow:0 0 0 3px #2563eb18}
+.btn{border:0;border-radius:12px;padding:11px 15px;font-weight:800}.primary{background:#2563eb;color:#fff}.secondary{background:#e2e8f0;color:#172033}.danger{background:#dc2626;color:#fff}.success{background:#16a34a;color:#fff}.wide{width:100%;margin-top:18px}
+.password{position:relative}.password input{padding-right:70px}.toggle{position:absolute;right:7px;top:6px;padding:7px 9px;border:0;background:transparent;color:#475569}
+.demo{margin-top:14px;padding:10px;border-radius:12px;background:#eff6ff;font-size:13px}
+.app{display:none;min-height:100vh}.top{height:64px;background:#fff;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;padding:0 16px;position:sticky;top:0;z-index:5}.brand{font-weight:900;color:#1d4ed8}.top-right{display:flex;gap:8px;align-items:center}
+.layout{display:flex;min-height:calc(100vh - 64px);position:relative}.side{width:250px;background:#0f172a;color:#fff;padding:14px;flex:none;overflow-y:auto;min-height:calc(100vh - 64px);z-index:20}.side-title{font-weight:900;padding:8px 12px 12px;color:#fff;display:block}.navbtn{display:block!important;width:100%;box-sizing:border-box;text-align:left;background:transparent!important;color:#cbd5e1!important;border:0;padding:11px 12px;border-radius:10px;margin:2px 0;font-weight:700;white-space:normal;line-height:1.25}.navbtn:hover,.navbtn.active{background:#1e3a8a!important;color:#fff!important}.main{padding:20px;flex:1;min-width:0}.page{display:none}.page.active{display:block}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.stat{padding:18px}.stat b{display:block;font-size:27px}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}.panel{padding:18px;margin-bottom:15px}.tablewrap{overflow:auto}.table{width:100%;border-collapse:collapse;min-width:700px}.table th,.table td{padding:10px;border-bottom:1px solid #e2e8f0;text-align:left;vertical-align:top}.table th{background:#f8fafc}.badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#dbeafe;color:#1d4ed8;font-size:12px;font-weight:800}
+.alert{padding:11px 13px;border-radius:12px;margin-top:10px;background:#fef2f2;color:#991b1b;display:none}.successbox{background:#f0fdf4;color:#166534}.menu-mobile{display:none}
+@media(max-width:850px){.side{display:none}.menu-mobile{display:inline-block}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.main{padding:13px}.top{height:60px}.side.open{display:block!important;position:fixed;z-index:100;top:60px;left:0;bottom:0;width:280px;max-width:88vw;min-height:calc(100vh - 60px);box-shadow:10px 0 30px #0005;overflow-y:auto}}
+@media(max-width:520px){.grid{grid-template-columns:1fr}.login-card{padding:22px}.top-right .user{display:none}}
+</style>
+</head>
+<body>
+<section id="loginScreen" class="login">
+  <div class="card login-card">
+    <div class="logo"><img src="logo-sekolah.png" alt="Logo sekolah"></div>
+    <div class="center" style="margin-top:16px">
+      <h1>SI-NILAI SD</h1><div class="muted">Sistem Penilaian Sekolah Dasar</div>
+      <div class="badge" style="margin-top:10px">TA 2026/2027 • V8 FINAL</div>
+    </div>
+    <form id="loginForm">
+      <label>Username</label><input id="loginUser" autocomplete="username" required placeholder="Masukkan username">
+      <label>Password</label>
+      <div class="password"><input id="loginPass" type="password" autocomplete="current-password" required placeholder="Masukkan password"><button class="toggle" type="button" id="showPass">Lihat</button></div>
+      <button class="btn primary wide" type="submit">MASUK KE SISTEM</button>
+      <div id="loginError" class="alert">Username atau password salah.</div>
+    </form>
+    <div class="demo"><b>Akun awal:</b> guru / 123456<br><span class="muted">Akun guru dapat dikelola dari menu Database Guru.</span></div>
+  </div>
+</section>
+
+<section id="app" class="app">
+<header class="top">
+  <div style="display:flex;gap:10px;align-items:center"><button id="menuBtn" class="btn secondary menu-mobile">☰</button><div class="brand" style="display:flex;align-items:center;gap:9px"><img class="brand-logo" src="logo-sekolah.png" alt="Logo sekolah"> SI-NILAI SD V8</div></div>
+  <div class="top-right"><span class="user" id="userLabel"></span><button id="logoutBtn" class="btn danger">Logout</button></div>
+</header>
+<div class="layout">
+<aside id="sidebar" class="side"></aside>
+<main class="main">
+  <section id="dashboard" class="page active">
+    <h2>Dashboard</h2><p class="muted">Selamat datang di SI-NILAI SD. Semua data tersimpan di browser perangkat ini.</p>
+    <div id="teacherClassBox" class="card panel" style="margin-top:12px;background:#eff6ff"><b id="teacherClassTitle">Kelas</b><div id="teacherClassInfo" class="muted" style="margin-top:4px"></div></div>
+    <div class="grid">
+      <div class="card stat"><span class="muted">Siswa</span><b id="statStudents">0</b></div>
+      <div class="card stat"><span class="muted">Nilai</span><b id="statScores">0</b></div>
+      <div class="card stat"><span class="muted">Guru</span><b id="statTeachers">1</b></div>
+      <div class="card stat"><span class="muted">Tahun</span><b>2026/27</b></div>
+    </div>
+    <div class="card panel" style="margin-top:15px"><h3>Alur kerja</h3><p>1. Isi/import siswa → 2. CP/TP/ATP sudah terisi per kelas → 3. Prota/Prosem/RPM sudah terisi per kelas → 4. Input penilaian per BAB → 5. Cetak/lihat rapor → 6. Backup data.</p></div>
+  </section>
+
+  <section id="students" class="page">
+    <h2>Data Siswa</h2><p class="muted">Data siswa ditampilkan sesuai kelas guru yang login. Admin dapat mengelola semua kelas.</p>
+    <div class="card panel">
+      <div class="grid" style="grid-template-columns:2fr 1fr 1fr 1fr"><input id="sName" placeholder="Nama siswa"><input id="sNis" placeholder="NIS"><select id="sClass"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select><input id="sAbsen" placeholder="No. absen"></div>
+      <button class="btn primary" style="margin-top:10px" id="addStudent">+ Tambah Siswa</button>
+    </div>
+    <div class="card panel tablewrap"><table class="table"><thead><tr><th>No</th><th>Nama</th><th>NIS</th><th>Kelas</th><th>Absen</th><th>Aksi</th></tr></thead><tbody id="studentTable"></tbody></table></div>
+  </section>
+
+  <section id="import" class="page">
+    <h2>Import Data Siswa</h2><p class="muted">Gunakan CSV sederhana: nama,nis,kelas,absen. Baris pertama boleh berupa judul kolom.</p>
+    <div class="card panel"><input type="file" id="csvFile" accept=".csv,text/csv"><button class="btn primary" id="importCsv" style="margin-top:10px">Import CSV</button><div id="importMsg" class="alert"></div></div>
+  </section>
+
+  <section id="cp" class="page"><h2>CP — Capaian Pembelajaran</h2><p class="muted">CP terisi otomatis per kelas dan mata pelajaran. Kelas I–II = Fase A, III–IV = Fase B, V–VI = Fase C.</p><div class="card panel"><div class="grid" style="grid-template-columns:1fr 2fr"><select id="cpKelas"></select><select id="cpMapel"></select></div><textarea id="cpText" rows="14" style="margin-top:10px" placeholder="CP..."></textarea><button class="btn primary" id="saveCp">Simpan CP</button></div></section>
+  <section id="tp" class="page"><h2>TP — Tujuan Pembelajaran</h2><p class="muted">TP disusun per kelas dan mata pelajaran sebagai turunan operasional dari CP.</p><div class="card panel"><div class="grid" style="grid-template-columns:1fr 2fr"><select id="tpKelas"></select><select id="tpMapel"></select></div><textarea id="tpText" rows="14" style="margin-top:10px" placeholder="TP..."></textarea><button class="btn primary" id="saveTp">Simpan TP</button></div></section>
+  <section id="atp" class="page"><h2>ATP — Alur Tujuan Pembelajaran</h2><p class="muted">ATP sudah disediakan per kelas dan mata pelajaran; dapat disesuaikan dengan konteks sekolah.</p><div class="card panel"><div class="grid" style="grid-template-columns:1fr 2fr"><select id="atpKelas"></select><select id="atpMapel"></select></div><textarea id="atpText" rows="16" style="margin-top:10px" placeholder="ATP..."></textarea><button class="btn primary" id="saveAtp">Simpan ATP</button></div></section>
+  <section id="prota" class="page"><h2>Prota — Program Tahunan</h2><p class="muted">Program tahunan terisi per kelas dan mata pelajaran. Alokasi waktu adalah rancangan awal dan perlu disesuaikan kalender pendidikan sekolah.</p><div class="card panel"><div class="grid" style="grid-template-columns:1fr 2fr"><select id="protaKelas"></select><select id="protaMapel"></select></div><textarea id="protaText" rows="18" style="margin-top:10px" placeholder="Prota..."></textarea><button class="btn primary" id="saveProta">Simpan Prota</button></div></section>
+  <section id="prosem" class="page"><h2>Prosem — Program Semester</h2><p class="muted">Program semester terisi per kelas dan mata pelajaran, dibagi Semester 1 dan 2.</p><div class="card panel"><div class="grid" style="grid-template-columns:1fr 2fr"><select id="prosemKelas"></select><select id="prosemMapel"></select></div><textarea id="prosemText" rows="20" style="margin-top:10px" placeholder="Prosem..."></textarea><button class="btn primary" id="saveProsem">Simpan Prosem</button></div></section>
+
+  <section id="rpm" class="page"><h2>RPM — Rencana Pembelajaran Mendalam</h2><p class="muted">Rencana Pembelajaran Mendalam (RPM) per kelas, mata pelajaran, dan BAB/Unit. Setiap RPM sudah memiliki identifikasi, dimensi profil lulusan, desain pembelajaran, pengalaman memahami–mengaplikasi–merefleksi, asesmen, diferensiasi, media, dan refleksi guru.</p><div class="card panel"><div class="grid" style="grid-template-columns:1fr 2fr"><select id="rpmKelas"></select><select id="rpmMapel"></select></div><select id="rpmBab" style="margin-top:10px"></select><textarea id="rpmText" rows="16" style="margin-top:10px" placeholder="Tujuan, kegiatan, asesmen, diferensiasi, refleksi..."></textarea><button class="btn primary" id="saveRpm">Simpan RPM</button></div></section>
+
+  <section id="scores" class="page">
+    <h2>Penilaian Per BAB</h2><p class="muted">Nilai dapat diinput per siswa dan per BAB/Unit. STS tidak digunakan.</p>
+    <div class="card panel">
+      <select id="scoreMapel"></select><select id="scoreKelas" style="margin-top:8px"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select><select id="scoreBab" style="margin-top:8px"></select>
+      <div class="tablewrap" style="margin-top:12px"><table class="table"><thead><tr><th>Nama</th><th>Nilai</th><th>Catatan</th></tr></thead><tbody id="scoreTable"></tbody></table></div>
+      <button class="btn success" id="saveScores">Simpan Nilai</button>
+    </div>
+  </section>
+
+  <section id="report" class="page"><h2>Rapor</h2><p class="muted">Rekap sederhana dari nilai yang tersimpan. Pilih siswa untuk melihat rata-rata.</p><div class="card panel"><select id="reportStudent"></select><div id="reportResult" style="margin-top:15px"></div></div></section>
+
+  <section id="teachers" class="page"><h2>Database Guru</h2><p class="muted">Setiap akun guru dapat diberi kelas. Saat guru kelas login, aplikasi otomatis mengunci ke kelas tersebut dan hanya menampilkan data siswa kelasnya. Untuk login multi-perangkat/terpusat diperlukan backend + PostgreSQL.</p><div class="card panel"><input id="tUser" placeholder="Username guru"><input id="tName" placeholder="Nama guru" style="margin-top:8px"><input id="tPass" placeholder="Password" style="margin-top:8px"><button class="btn primary" id="addTeacher" style="margin-top:10px">+ Tambah Guru</button></div><div class="card panel tablewrap"><table class="table"><thead><tr><th>Username</th><th>Nama</th><th>Peran</th><th>Kelas</th><th>Aksi</th></tr></thead><tbody id="teacherTable"></tbody></table></div></section>
+
+  <section id="reference" class="page"><h2>Referensi SIBI</h2><div class="card panel"><p>Perangkat di aplikasi dibuat sebagai rancangan kerja yang dapat diedit. Selaraskan CP dan materi dengan panduan mata pelajaran serta buku yang digunakan sekolah.</p><p><a href="https://buku.kemendikdasmen.go.id/katalog" target="_blank" rel="noopener">Buka Katalog Buku SIBI</a></p><p><a href="https://kurikulum.kemendikdasmen.go.id/panduan-mapel" target="_blank" rel="noopener">Panduan Mata Pelajaran</a></p><div id="babReference"></div></div></section>
+
+  <section id="backup" class="page"><h2>Backup / Restore</h2><div class="card panel"><p>Backup menyimpan data aplikasi lokal sebagai file JSON.</p><button class="btn primary" id="backupBtn">⬇ Backup JSON</button><label style="margin-top:18px">Restore JSON</label><input type="file" id="restoreFile" accept=".json"><button class="btn secondary" id="restoreBtn" style="margin-top:10px">Restore Data</button><div id="backupMsg" class="alert"></div></div></section>
+</main></div>
+</section>
+
+<script>
+(function(){
+'use strict';
+const KEY='si_nilai_sd_v8_2026_2027';
+const MAPEL=['Bahasa Indonesia','Pendidikan Pancasila','Matematika','IPAS','PJOK','Seni Rupa','Seni Musik','Seni Tari','Seni Teater','Bahasa Inggris','Pendidikan Agama dan Budi Pekerti'];
+const BAB={
+'Bahasa Indonesia':{
+1:['Bunyi Apa?','Ayo, Bermain!','Awas Kuman!','Aku Bisa!','Teman Baru','Berbeda Itu Tak Apa','Aku Ingin','Di Sekitar Rumah'],
+2:['Mengenal Perasaan','Menjaga Kesehatan','Berhati-hati di Mana Saja','Keluargaku Unik','Berteman dalam Keragaman','Bijak Memakai Uang','Sayang Lingkungan','Hobi yang Jadi Prestasi'],
+3:['Ayo, Main!','Kawan Seiring','Pengobar Semangat','Senyum di Sekitarku','Bola-Bola Cokelat','Tersesat','Aku dan si Merah'],
+4:['Sudah Besar','Di Bawah Atap','Lihat Sekitar','Meliuk dan Menerjang','Bertukar dan Membayar','Satu Titik','Asal-Usul','Sehatlah Ragaku'],
+5:['Aku yang Unik','Buku Jendela Dunia','Ekspresi Diri melalui Hobi','Belajar Berwirausaha','Menjadi Warga Dunia','Cinta Indonesia','Sayangi Bumi','Bergerak Bersama'],
+6:['Bangga Menjadi Anak Indonesia','Musisi Indonesia di Pentas Dunia','Taman Nasional dan Situs Warisan Dunia','Jeda untuk Iklim','Anak-Anak yang Mengubah Dunia','Liburan Perpisahan Kelas','Aku Bisa Berempati','Aman di Dunia Maya']},
+'IPAS':{4:['Tumbuhan, Sumber Kehidupan di Bumi','Wujud Zat dan Perubahannya','Gaya di Sekitar Kita','Mengubah Bentuk Energi','Cerita Tentang Daerahku','Indonesiaku Kaya Budaya','Bagaimana Mendapatkan Semua Kebutuhan Kita?','Membangun Masyarakat yang Beradab']},
+'Pendidikan Pancasila':{4:['Mengenal Lingkungan Sekitar','Aku Anak yang Disiplin','Kerja Sama di Lingkunganku','Pancasila dalam Diriku']},
+'Matematika':{4:['Bilangan Cacah sampai 10.000','Pecahan','Pola Gambar dan Pola Bilangan','Pengukuran Luas dan Volume','Bangun Datar','Piktogram dan Diagram Batang']}
+};
+const DOC_KELAS=[1,2,3,4,5,6];
+function fase(k){return k<=2?'A':k<=4?'B':'C'}
+function subjectFocus(m,k){
+const f=fase(k);
+const map={
+'Bahasa Indonesia':'menyimak, berbicara, membaca, memirsa, dan menulis melalui teks yang dekat dengan kehidupan murid',
+'Pendidikan Pancasila':'identitas diri, aturan, keberagaman, gotong royong, hak dan kewajiban, serta penerapan nilai Pancasila',
+'Matematika':'bilangan, operasi, aljabar/pola, pengukuran, geometri, data, dan pemecahan masalah sesuai tahap perkembangan',
+'IPAS':'pengamatan alam dan lingkungan, materi/energi, makhluk hidup, bumi, masyarakat, budaya, serta keterampilan inkuiri',
+'PJOK':'gerak dasar dan keterampilan olahraga, kebugaran, hidup sehat, keselamatan, serta sikap sportif',
+'Seni Rupa':'eksplorasi unsur rupa, alat dan bahan, proses berkarya, apresiasi, dan refleksi karya',
+'Seni Musik':'eksplorasi bunyi, ritme, melodi, ekspresi, praktik bermusik, apresiasi, dan refleksi',
+'Seni Tari':'eksplorasi gerak, ruang, waktu, tenaga, komposisi sederhana, pertunjukan, dan apresiasi',
+'Seni Teater':'olah tubuh/suara, ekspresi, tokoh, dialog, improvisasi, pementasan, dan refleksi',
+'Bahasa Inggris':'listening, speaking, reading/viewing, dan writing/presenting dengan ungkapan sederhana sesuai konteks',
+'Pendidikan Agama dan Budi Pekerti':'pemahaman ajaran agama, pembiasaan ibadah/akhlak, keteladanan, kepedulian, dan penerapannya dalam kehidupan'
+}; return map[m]+' pada Fase '+f+'.'
+}
+function unitTitles(m,k){
+const grade={1:'Kelas 1',2:'Kelas 2',3:'Kelas 3',4:'Kelas 4',5:'Kelas 5',6:'Kelas 6'}[k];
+const sets={
+'Bahasa Indonesia':BAB['Bahasa Indonesia'][k]||['Aku dan Lingkunganku','Cerita dan Pengalaman','Informasi di Sekitar Kita','Kegemaranku','Hidup Bersih dan Sehat','Bermain dan Bekerja Sama','Lingkungan dan Alam','Karya dan Ekspresi'],
+'Pendidikan Pancasila':['Aku dan Identitasku','Aturan dan Kesepakatan','Hak dan Kewajiban','Kebinekaan Indonesia','Gotong Royong','Pancasila dalam Kehidupan','Musyawarah dan Tanggung Jawab','Menjadi Warga Sekolah yang Baik'],
+'Matematika':['Bilangan dan Nilai Tempat','Penjumlahan dan Pengurangan','Perkalian dan Pembagian','Pecahan dan Desimal','Pengukuran','Bangun Datar dan Bangun Ruang','Pola dan Aljabar Awal','Data dan Pemecahan Masalah'],
+'IPAS':['Makhluk Hidup dan Lingkungannya','Benda dan Perubahannya','Gaya dan Gerak','Energi dalam Kehidupan','Bumi dan Cuaca','Lingkungan dan Sumber Daya','Masyarakat dan Budaya','Kegiatan Ekonomi di Sekitar Kita'],
+'PJOK':['Gerak Lokomotor dan Nonlokomotor','Manipulasi Gerak','Permainan dan Olahraga','Aktivitas Kebugaran','Senam dan Aktivitas Ritmik','Aktivitas Air dan Keselamatan','Hidup Sehat','Sportivitas dan Gaya Hidup Aktif'],
+'Seni Rupa':['Garis, Bentuk, dan Warna','Tekstur dan Pola','Menggambar dari Pengamatan','Kolase dan Karya Dua Dimensi','Karya Tiga Dimensi','Kriya dan Bahan Sekitar','Apresiasi Karya','Pameran dan Refleksi Karya'],
+'Seni Musik':['Bunyi dan Sumber Bunyi','Irama dan Ketukan','Melodi dan Lagu','Bernyanyi Bersama','Alat Musik Sederhana','Musik Tradisional','Ekspresi dan Pertunjukan','Apresiasi dan Refleksi Musik'],
+'Seni Tari':['Tubuh dan Gerak','Ruang dan Arah','Waktu dan Irama','Tenaga dan Ekspresi','Rangkaian Gerak','Tari Tradisi Daerah','Kreasi Tari Sederhana','Pementasan dan Apresiasi'],
+'Seni Teater':['Tubuh dan Ekspresi','Suara dan Artikulasi','Tokoh dan Karakter','Dialog dan Improvisasi','Cerita dan Adegan','Kerja Kelompok Pementasan','Pementasan Mini','Apresiasi dan Refleksi'],
+'Bahasa Inggris':['Greetings and Classroom Language','Myself and My Family','Numbers, Things, and Colors','Daily Activities','Food and Drinks','My Home and Neighborhood','Hobbies and Experiences','Simple Information and Presentation'],
+'Pendidikan Agama dan Budi Pekerti':['Aku Bersyukur','Aku Beribadah','Aku Berakhlak Baik','Aku Meneladani Tokoh','Aku Peduli Sesama','Aku Menjaga Lingkungan','Aku Bertanggung Jawab','Aku Merefleksikan Perbuatanku']
+};
+return sets[m]||['Unit 1 — '+grade,'Unit 2 — '+grade,'Unit 3 — '+grade,'Unit 4 — '+grade,'Unit 5 — '+grade,'Unit 6 — '+grade,'Unit 7 — '+grade,'Unit 8 — '+grade];
+}
+function babList(mapel,kelas){return unitTitles(mapel,+kelas)}
+function subjectElements(m){
+const e={
+'Bahasa Indonesia':'menyimak, membaca, memirsa, berbicara, dan menulis',
+'Pendidikan Pancasila':'Pancasila, Undang-Undang Dasar Negara Republik Indonesia Tahun 1945, Bhinneka Tunggal Ika, dan Negara Kesatuan Republik Indonesia',
+'Matematika':'bilangan, aljabar, pengukuran, geometri, data, dan peluang sesuai tahap perkembangan',
+'IPAS':'pemahaman sains dan sosial serta keterampilan proses melalui pengamatan, penyelidikan, dan komunikasi',
+'PJOK':'keterampilan gerak, pengetahuan gerak, kebugaran jasmani, kesehatan, keselamatan, dan karakter sportif',
+'Seni Rupa':'mengalami, menciptakan, merefleksikan, berpikir dan bekerja artistik, serta berdampak',
+'Seni Musik':'mengalami, menciptakan, merefleksikan, berpikir dan bekerja artistik, serta berdampak melalui musik',
+'Seni Tari':'mengalami, menciptakan, merefleksikan, berpikir dan bekerja artistik, serta berdampak melalui tari',
+'Seni Teater':'mengalami, menciptakan, merefleksikan, berpikir dan bekerja artistik, serta berdampak melalui teater',
+'Bahasa Inggris':'listening, speaking, reading/viewing, writing/presenting dalam konteks sederhana dan dekat dengan murid',
+'Pendidikan Agama dan Budi Pekerti':'pemahaman ajaran agama, praktik ibadah, akhlak, keteladanan, kepedulian, dan penerapan nilai dalam kehidupan'
+};return e[m]||m}
+function gradeProgression(k){return k<=2?'konkret, visual, bermain, pembiasaan, dan komunikasi sederhana':k<=4?'konkret menuju representasi, eksplorasi, kolaborasi, dan penerapan dalam konteks sekitar':'pemodelan, penalaran, analisis, pemecahan masalah, komunikasi, dan kemandirian'}
+function seedCP(m,k){
+const f=fase(k), e=subjectElements(m), g=gradeProgression(k);
+return `CAPAIAN PEMBELAJARAN (CP)\nKelas ${k} • Fase ${f}\nMata Pelajaran: ${m}\nTahun Pelajaran 2026/2027\n\nRUMUSAN CP KERJA\nPada akhir Fase ${f}, murid diharapkan mampu mengembangkan kompetensi ${e}. Pembelajaran diarahkan agar murid memahami konsep dan keterampilan inti, menggunakan pengetahuan dalam situasi nyata, mengomunikasikan gagasan, bekerja sama, serta merefleksikan proses dan hasil belajar.\n\nKONTEKS PERKEMBANGAN KELAS ${k}\nPendekatan pembelajaran menggunakan tahapan ${g}. Materi disajikan dari pengalaman yang dekat dengan kehidupan murid menuju konteks yang lebih luas, dengan dukungan visual, contoh konkret, praktik, diskusi, dan refleksi sesuai kebutuhan.\n\nELEMEN/CAKUPAN\n1. Pemahaman konsep atau pengetahuan inti ${m}.\n2. Keterampilan proses/praktik sesuai karakter mata pelajaran.\n3. Komunikasi dan kolaborasi dalam menyampaikan hasil belajar.\n4. Penerapan pengetahuan pada konteks kehidupan sehari-hari.\n5. Refleksi dan perbaikan berdasarkan umpan balik.\n\nINDIKATOR KETERLAKSANAAN\n• Murid memahami tujuan dan manfaat pembelajaran.\n• Murid menunjukkan bukti pemahaman melalui lisan, tulisan, karya, praktik, atau kinerja.\n• Murid mampu menghubungkan materi dengan pengalaman nyata.\n• Murid mampu bekerja secara mandiri maupun bersama teman.\n• Murid melakukan refleksi terhadap proses dan hasil.\n\nCatatan: rumusan ini adalah isi kerja aplikasi untuk kemudian diselaraskan dengan CP resmi dan keputusan kurikulum satuan pendidikan.`}
+function seedTP(m,k){
+const units=unitTitles(m,k), e=subjectElements(m), f=fase(k);
+const arr=units.map((u,i)=>`${i+1}. Setelah mempelajari ${u}, murid mampu menjelaskan konsep/keterampilan utama secara tepat melalui contoh yang dekat dengan kehidupan.`);
+return `TUJUAN PEMBELAJARAN (TP)\nKelas ${k} • Fase ${f}\nMata Pelajaran: ${m}\n\nTujuan umum: murid mengembangkan kemampuan ${e}, kemudian menerapkannya dalam konteks autentik dan melakukan refleksi.\n\nTUJUAN PER UNIT\n${arr.join('\n')}\n\nKOMPETENSI YANG DITARGETKAN\n• Memahami: mengidentifikasi, menjelaskan, membandingkan, mengelompokkan, dan menyimpulkan sesuai materi.\n• Mengaplikasi: mempraktikkan, menyelesaikan masalah, menghasilkan karya, melakukan penyelidikan, atau menunjukkan kinerja sesuai karakter mata pelajaran.\n• Merefleksi: mengomunikasikan hasil, menerima umpan balik, menilai proses, dan memperbaiki hasil.\n\nKRITERIA KETERCAPAIAN\n1. Ketepatan konsep/isi.\n2. Ketepatan prosedur atau teknik.\n3. Kemampuan menerapkan pada situasi baru.\n4. Kemampuan berkomunikasi dan berkolaborasi.\n5. Kemandirian dan tanggung jawab.\n6. Kemampuan melakukan refleksi.`}
+function seedATP(m,k){
+const units=unitTitles(m,k), f=fase(k);
+return `ALUR TUJUAN PEMBELAJARAN (ATP)\nKelas ${k} • Fase ${f}\nMata Pelajaran: ${m}\nTahun Pelajaran 2026/2027\n\nURUTAN PEMBELAJARAN\n${units.map((u,i)=>`${i+1}. ${u}\n   TP: Murid memahami konsep/keterampilan inti, mengeksplorasi contoh, melakukan latihan atau praktik, menerapkan pada tugas autentik, mengomunikasikan hasil, dan merefleksikan pembelajaran.\n   Aktivitas: apersepsi → eksplorasi → diskusi/praktik → penerapan → presentasi/unjuk kerja → refleksi.\n   Bukti asesmen: pertanyaan pemantik, lembar kerja, observasi, produk/kinerja, dan refleksi.`).join('\n\n')}\n\nPRINSIP ALUR\n• Dari konkret ke abstrak sesuai perkembangan kelas.\n• Dari pengalaman dekat menuju penerapan yang lebih luas.\n• Dari terbimbing menuju mandiri.\n• Mengintegrasikan literasi, numerasi, karakter, komunikasi, kolaborasi, dan pemanfaatan teknologi digital bila relevan.\n• Menyediakan ruang remedial, pengayaan, dan diferensiasi.`}
+function seedProta(m,k){
+const units=unitTitles(m,k), total=units.length*9;
+return `PROGRAM TAHUNAN (PROTA)\nKelas ${k} • Fase ${fase(k)} • ${m}\nTahun Pelajaran 2026/2027\n\nRencana alokasi: ${total} JP/tahun sebagai rancangan awal. Sesuaikan dengan struktur kurikulum, minggu efektif, kalender pendidikan, dan kondisi satuan pendidikan.\n\n${units.map((u,i)=>`No. ${i+1}\nUnit/Materi: ${u}\nTujuan ringkas: memahami → mengaplikasi → merefleksi\nAlokasi: 9 JP\nAsesmen: diagnostik awal, formatif selama proses, sumatif pada akhir unit`).join('\n\n')}\n\nREKAP\nSemester 1: ${Math.ceil(units.length/2)*9} JP\nSemester 2: ${Math.floor(units.length/2)*9} JP\nCadangan remedial/pengayaan dan kegiatan sekolah: disesuaikan kalender pendidikan.`}
+function seedProsem(m,k){
+const units=unitTitles(m,k), mid=Math.ceil(units.length/2);
+const make=(arr,offset)=>arr.map((u,i)=>`Minggu ${offset+i*2+1}–${offset+i*2+2} | ${u} | 9 JP | Memahami, mengaplikasi, asesmen formatif, refleksi`).join('\n');
+return `PROGRAM SEMESTER (PROSEM)\nKelas ${k} • Fase ${fase(k)} • ${m}\nTahun Pelajaran 2026/2027\n\nSEMESTER 1\n${make(units.slice(0,mid),0)}\n\nSEMESTER 2\n${make(units.slice(mid),mid*2)}\n\nKOMPONEN PENGUAT\n• Asesmen diagnostik pada awal lingkup/unit.\n• Asesmen formatif pada proses melalui observasi, tanya jawab, LKPD, latihan, dan unjuk kerja.\n• Asesmen sumatif pada akhir unit/semester sesuai tujuan.\n• Remedial dan pengayaan berdasarkan hasil asesmen.\n• Minggu efektif, libur, projek/kegiatan sekolah, dan penyesuaian alokasi mengikuti kalender pendidikan.`}
+function seedRPM(m,k,bab){
+const f=fase(k);
+return `RENCANA PEMBELAJARAN MENDALAM (RPM)\nKelas ${k} • Fase ${f} • ${m}\nUnit/BAB: ${bab}\nTahun Pelajaran 2026/2027\n\nA. IDENTIFIKASI\nKesiapan murid: cek pengetahuan awal, pengalaman, minat, kebutuhan dukungan, dan hambatan belajar melalui pertanyaan singkat/observasi.\nMateri: ${bab}.\nKarakteristik materi: dekat dengan konteks murid, dapat diamati/dipraktikkan, dan dikembangkan dari konkret menuju penerapan.\n\nB. DIMENSI PROFIL LULUSAN\nPenalaran kritis, kreativitas, kolaborasi, komunikasi, kemandirian, kesehatan, kewargaan, dan keimanan/ketakwaan kepada Tuhan Yang Maha Esa sesuai karakter materi.\n\nC. DESAIN PEMBELAJARAN\nTujuan pertemuan: murid mampu menjelaskan konsep inti ${bab}, mempraktikkan/menerapkannya dalam tugas autentik, mengomunikasikan hasil, dan melakukan refleksi.\nPraktik pedagogis: pembelajaran kontekstual, diskusi, demonstrasi, inkuiri/problem solving/projek sederhana sesuai karakter mapel.\nKemitraan: kerja individu, pasangan, kelompok kecil, guru sebagai fasilitator, serta pelibatan lingkungan/keluarga bila relevan.\nLingkungan: aman, inklusif, tertib, memberi ruang bertanya dan mencoba.\nDigital: video, gambar, presentasi, kuis, atau sumber digital digunakan bila tersedia dan relevan.\n\nD. PENGALAMAN BELAJAR MENDALAM\n1. MEMAHAMI\n• Salam, kesiapan, dan apersepsi.\n• Pertanyaan pemantik: “Apa yang sudah kamu ketahui tentang ${bab}?”\n• Murid mengamati/membaca/mendengar contoh.\n• Guru memfasilitasi penemuan konsep melalui pertanyaan bertahap.\n2. MENGAPLIKASI\n• Murid mengerjakan LKPD/tugas praktik secara individu atau kelompok.\n• Murid memecahkan masalah atau membuat produk/karya sesuai materi.\n• Guru memberi scaffolding dan umpan balik selama proses.\n3. MEREFLEKSI\n• Murid mempresentasikan/menunjukkan hasil.\n• Teman dan guru memberi umpan balik.\n• Murid mengisi refleksi: hal yang dipahami, kesulitan, strategi yang membantu, dan rencana perbaikan.\n\nE. ASESMEN\nAsesmen awal: 3–5 pertanyaan/aktivitas untuk memetakan kesiapan.\nAsesmen proses: observasi, pertanyaan lisan, LKPD, catatan anekdot, cek pemahaman, dan unjuk kerja.\nAsesmen akhir: tes/tugas produk/kinerja sesuai tujuan pembelajaran.\nKriteria: ketepatan konsep, proses/strategi, kualitas produk/kinerja, komunikasi, kolaborasi, dan refleksi.\n\nF. DIFERENSIASI\nKonten: gambar, benda konkret, teks bertingkat, atau contoh tambahan.\nProses: kelompok fleksibel, tutor sebaya, langkah bertahap, dan waktu tambahan bila diperlukan.\nProduk: pilihan jawaban tertulis, lisan, visual, praktik, atau karya sesuai tujuan.\nPengayaan: masalah/tugas yang lebih menantang dan penerapan pada situasi baru.\nRemedial: pembelajaran ulang pada konsep prasyarat, contoh konkret, latihan bertahap, dan asesmen ulang.\n\nG. MEDIA & SUMBER\nBuku teks, lingkungan sekitar, alat praktik sesuai materi, LKPD, papan tulis, dan sumber digital yang relevan.\n\nH. REFLEKSI GURU\nApakah tujuan tercapai? Siapa yang memerlukan dukungan? Aktivitas mana yang paling bermakna? Bukti asesmen apa yang menunjukkan perkembangan murid? Apa perbaikan untuk pertemuan berikutnya?\n\nPrinsip pembelajaran mendalam: BERKESADARAN, BERMAKNA, dan MENGGEMBIRAKAN.`}
+
+let db=load();
+db.teachers=db.teachers.map(t=>Object.assign({role:'admin',kelas:''},t));
+if(!db.teachers.some(t=>t.username==='guru'))db.teachers.unshift({username:'guru',name:'Administrator',password:'123456',role:'admin',kelas:''});
+function base(){return {students:[],scores:{},teachers:[{username:'guru',name:'Administrator',password:'123456',role:'admin',kelas:''}],texts:{},rpm:{}}}
+function load(){try{return Object.assign(base(),JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){return base()}}
+function save(){localStorage.setItem(KEY,JSON.stringify(db));renderStats()}
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function id(x){return document.getElementById(x)}
+const pages=[['dashboard','Dashboard'],['students','Data Siswa'],['import','Import Data Siswa'],['cp','CP'],['tp','TP'],['atp','ATP'],['prota','Prota'],['prosem','Prosem'],['rpm','RPM — Rencana Pembelajaran Mendalam'],['scores','Penilaian Per BAB'],['report','Rapor'],['teachers','Database Guru'],['reference','Referensi SIBI'],['backup','Backup / Restore']];
+let currentTeacher=null;
+function currentUser(){return sessionStorage.getItem('siLogin')||''}
+function isGuruKelas(){return !!currentTeacher && currentTeacher.role==='guru'}
+function allowedClass(){return isGuruKelas()?String(currentTeacher.kelas||''):''}
+function applyClassLock(){
+  const ids=['sClass','scoreKelas','rpmKelas','cpKelas','tpKelas','atpKelas','protaKelas','prosemKelas'];
+  ids.forEach(x=>{const el=id(x);if(!el)return;if(isGuruKelas()){el.value=allowedClass();el.disabled=true}else el.disabled=false});
+  const box=id('teacherClassBox'), title=id('teacherClassTitle'), info=id('teacherClassInfo');
+  if(box&&title&&info){
+    if(isGuruKelas()){box.style.display='block';title.textContent='Kelas Anda: Kelas '+allowedClass();info.textContent='Login sebagai '+currentTeacher.name+'. Data siswa, penilaian, CP/TP/ATP, Prota, Prosem, dan RPM diarahkan ke kelas ini.'}
+    else {box.style.display='block';title.textContent='Akses: Administrator';info.textContent='Administrator dapat mengelola seluruh kelas.'}
+  }
+}
+function setClassSelect(idName, value){
+  const el=id(idName); if(!el)return;
+  el.value=String(value);
+  el.disabled=isGuruKelas();
+}
+function buildNav(){const side=id('sidebar');side.innerHTML='<div class="side-title">MENU UTAMA</div>'+pages.map((p,i)=>'<button type="button" class="navbtn '+(i===0?'active':'')+'" data-page="'+p[0]+'">'+p[1]+'</button>').join('');side.querySelectorAll('.navbtn').forEach(b=>b.onclick=()=>showPage(b.dataset.page))}
+function showPage(p){
+  if(isGuruKelas()&&p==='teachers')p='dashboard';
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));id(p).classList.add('active');document.querySelectorAll('.navbtn').forEach(x=>x.classList.toggle('active',x.dataset.page===p));id('sidebar').classList.remove('open');if(p==='students')renderStudents();if(p==='teachers')renderTeachers();if(p==='scores')renderScores();if(p==='report')renderReport();if(p==='reference')renderReference()}
+function renderStats(){id('statStudents').textContent=db.students.length;id('statScores').textContent=Object.keys(db.scores).length;id('statTeachers').textContent=db.teachers.length}
+function fillMapels(){
+['rpmMapel','scoreMapel','cpMapel','tpMapel','atpMapel','protaMapel','prosemMapel'].forEach(k=>id(k).innerHTML=MAPEL.map(x=>'<option>'+esc(x)+'</option>').join(''));
+['rpmKelas','cpKelas','tpKelas','atpKelas','protaKelas','prosemKelas'].forEach(k=>id(k).innerHTML=DOC_KELAS.map(x=>'<option value="'+x+'">Kelas '+x+'</option>').join(''));
+updateBab(); loadDocFields();
+}
+function updateBab(){
+let k=id('scoreKelas').value,m=id('scoreMapel').value;
+id('scoreBab').innerHTML=babList(m,k).map((x,i)=>'<option value="'+i+'">'+esc('BAB '+(i+1)+' — '+x)+'</option>').join('');
+let rk=id('rpmKelas').value,rm=id('rpmMapel').value;
+id('rpmBab').innerHTML=babList(rm,rk).map((x,i)=>'<option value="'+i+'">'+esc('BAB '+(i+1)+' — '+x)+'</option>').join('');
+}
+function docKey(type,k,m){return type+'|'+k+'|'+m}
+function loadDocFields(){
+const pairs=[['cp','cpKelas','cpMapel','cpText'],['tp','tpKelas','tpMapel','tpText'],['atp','atpKelas','atpMapel','atpText'],['prota','protaKelas','protaMapel','protaText'],['prosem','prosemKelas','prosemMapel','prosemText']];
+pairs.forEach(([t,k,m,tx])=>{const key=docKey(t,id(k).value,id(m).value);if(!db.texts[key]) db.texts[key]=t==='cp'?seedCP(id(m).value,+id(k).value):t==='tp'?seedTP(id(m).value,+id(k).value):t==='atp'?seedATP(id(m).value,+id(k).value):t==='prota'?seedProta(id(m).value,+id(k).value):seedProsem(id(m).value,+id(k).value);id(tx).value=db.texts[key]});
+const rb=id('rpmKelas').value,rm=id('rpmMapel').value,ri=Number(id('rpmBab').value||0),rname=babList(rm,rb)[ri]||'Unit Pembelajaran 1';const rk=docKey('rpm',rb,rm)+'|'+ri;if(!db.rpm[rk]) db.rpm[rk]=seedRPM(rm,+rb,rname);id('rpmText').value=db.rpm[rk];
+save();
+}
+function renderStudents(){
+  const rows=db.students.map((s,i)=>({s,i})).filter(x=>!isGuruKelas()||String(x.s.kelas)===allowedClass());
+  id('studentTable').innerHTML=rows.map((x,n)=>{const s=x.s,i=x.i;return '<tr><td>'+(n+1)+'</td><td>'+esc(s.name)+'</td><td>'+esc(s.nis)+'</td><td>'+esc(s.kelas)+'</td><td>'+esc(s.absen)+'</td><td><button class="btn danger" data-del="'+i+'">Hapus</button></td></tr>'}).join('')||'<tr><td colspan="6" class="muted">Belum ada siswa untuk kelas ini.</td></tr>';
+  document.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{if(isGuruKelas()&&String(db.students[+b.dataset.del].kelas)!==allowedClass())return;db.students.splice(+b.dataset.del,1);save();renderStudents();renderReport();renderScores()})
+}
+function renderScores(){let k=isGuruKelas()?allowedClass():id('scoreKelas').value;id('scoreKelas').value=k;let ss=db.students.filter(s=>String(s.kelas)===String(k));id('scoreTable').innerHTML=ss.map(s=>{let key=s.nis+'|'+id('scoreMapel').value+'|'+k+'|'+id('scoreBab').value;let v=db.scores[key]||{};return '<tr><td>'+esc(s.name)+'</td><td><input class="scoreInput" data-key="'+esc(key)+'" type="number" min="0" max="100" value="'+esc(v.nilai||'')+'"></td><td><input class="noteInput" data-key="'+esc(key)+'" value="'+esc(v.catatan||'')+'" placeholder="Catatan"></td></tr>'}).join('')||'<tr><td colspan="3" class="muted">Belum ada siswa di kelas ini.</td></tr>'}
+function renderReport(){id('reportStudent').innerHTML='<option value="">Pilih siswa</option>'+db.students.filter(s=>!isGuruKelas()||String(s.kelas)===allowedClass()).map(s=>'<option value="'+esc(s.nis)+'">'+esc(s.name)+' — Kelas '+esc(s.kelas)+'</option>').join('')}
+function renderTeachers(){
+  id('teacherTable').innerHTML=db.teachers.map((t,i)=>'<tr><td>'+esc(t.username)+'</td><td>'+esc(t.name)+'</td><td><span class="badge">'+esc(t.role==='admin'?'Administrator':'Guru Kelas')+'</span></td><td>'+esc(t.kelas?('Kelas '+t.kelas):'Semua Kelas')+'</td><td>'+(i?'<button class="btn danger" data-tdel="'+i+'">Hapus</button>':'<span class="badge">Akun awal</span>')+'</td></tr>').join('');
+  document.querySelectorAll('[data-tdel]').forEach(b=>b.onclick=()=>{db.teachers.splice(+b.dataset.tdel,1);save();renderTeachers()})
+}
+function renderReference(){id('babReference').innerHTML='<h3 style="margin-top:20px">BAB yang tersedia di aplikasi</h3><p class="muted">Untuk kombinasi yang belum diverifikasi dari buku SIBI, aplikasi menggunakan label Unit Pembelajaran agar tidak mengarang judul BAB.</p>'+Object.entries(BAB).map(([m,ks])=>'<div style="margin:12px 0"><b>'+esc(m)+'</b>'+Object.entries(ks).map(([k,arr])=>'<div style="margin-top:5px">Kelas '+k+': '+arr.map((x,i)=>'<span class="badge" style="margin:2px">'+esc('BAB '+(i+1)+' — '+x)+'</span>').join('')+'</div>').join('')).join('')}
+id('loginForm').onsubmit=e=>{e.preventDefault();let u=id('loginUser').value.trim(),p=id('loginPass').value;let t=db.teachers.find(x=>x.username===u&&x.password===p);if(!t){id('loginError').style.display='block';return}currentTeacher=t;sessionStorage.setItem('siLogin',u);id('userLabel').textContent=t.name+' ('+t.username+')'+(t.role==='guru'?' • Kelas '+t.kelas:' • Admin');id('loginScreen').style.display='none';id('app').style.display='block';id('loginError').style.display='none';applyClassLock();renderStats();renderStudents();renderScores();renderReport();showPage(t.role==='guru'?'students':'dashboard')}
+id('showPass').onclick=()=>{id('loginPass').type=id('loginPass').type==='password'?'text':'password';id('showPass').textContent=id('loginPass').type==='password'?'Lihat':'Sembunyi'}
+id('logoutBtn').onclick=()=>{currentTeacher=null;sessionStorage.removeItem('siLogin');id('app').style.display='none';id('loginScreen').style.display='grid';id('loginPass').value=''}
+id('menuBtn').onclick=()=>id('sidebar').classList.toggle('open')
+id('addStudent').onclick=()=>{let name=id('sName').value.trim();if(!name)return alert('Nama siswa wajib diisi.');let kelas=isGuruKelas()?allowedClass():id('sClass').value;db.students.push({name,nis:id('sNis').value.trim()||('S'+Date.now()),kelas,absen:id('sAbsen').value.trim()});['sName','sNis','sAbsen'].forEach(x=>id(x).value='');save();renderStudents()}
+id('importCsv').onclick=()=>{let f=id('csvFile').files[0];if(!f)return alert('Pilih file CSV dulu.');let r=new FileReader();r.onload=()=>{let lines=r.result.split(/\r?\n/).filter(x=>x.trim());let count=0;lines.forEach((line,i)=>{let a=line.split(',').map(x=>x.trim().replace(/^"|"$/g,''));if(i===0&&/nama/i.test(a[0]))return;if(a[0]){db.students.push({name:a[0],nis:a[1]||('S'+Date.now()+count),kelas:isGuruKelas()?allowedClass():(a[2]||'1'),absen:a[3]||''});count++}});save();renderStudents();id('importMsg').textContent=count+' siswa berhasil diimport.';id('importMsg').className='alert successbox';id('importMsg').style.display='block'};r.readAsText(f)}
+;[['cp','cpText','cpKelas','cpMapel'],['tp','tpText','tpKelas','tpMapel'],['atp','atpText','atpKelas','atpMapel'],['prota','protaText','protaKelas','protaMapel'],['prosem','prosemText','prosemKelas','prosemMapel']].forEach(([k,el,ck,cm])=>id('save'+k[0].toUpperCase()+k.slice(1)).onclick=()=>{db.texts[docKey(k,id(ck).value,id(cm).value)]=id(el).value;save();alert(k.toUpperCase()+' tersimpan.')})
+id('saveRpm').onclick=()=>{let key=docKey('rpm',id('rpmKelas').value,id('rpmMapel').value)+'|'+id('rpmBab').value;db.rpm[key]=id('rpmText').value;save();alert('RPM tersimpan.')}
+;['scoreMapel','scoreKelas'].forEach(k=>id(k).onchange=()=>{updateBab();renderScores()});
+;['rpmMapel','rpmKelas','rpmBab'].forEach(k=>id(k).onchange=()=>{updateBab();loadDocFields()});
+;[['cpKelas','cpMapel'],['tpKelas','tpMapel'],['atpKelas','atpMapel'],['protaKelas','protaMapel'],['prosemKelas','prosemMapel']].forEach(([a,b])=>{id(a).onchange=loadDocFields;id(b).onchange=loadDocFields});
+id('saveScores').onclick=()=>{document.querySelectorAll('.scoreInput').forEach(inp=>{let n=document.querySelector('.noteInput[data-key="'+CSS.escape(inp.dataset.key)+'"]');db.scores[inp.dataset.key]={nilai:inp.value,catatan:n?n.value:''}});save();alert('Nilai berhasil disimpan.')}
+id('reportStudent').onchange=()=>{let nis=id('reportStudent').value;if(!nis){id('reportResult').innerHTML='';return}let rows=Object.entries(db.scores).filter(([k])=>k.startsWith(nis+'|'));let nums=rows.map(x=>Number(x[1].nilai)).filter(Number.isFinite);let avg=nums.length?Math.round(nums.reduce((a,b)=>a+b,0)/nums.length):0;id('reportResult').innerHTML='<div class="card panel"><b>Rata-rata nilai: '+avg+'</b><p class="muted">'+nums.length+' nilai tersimpan.</p></div>'}
+id('tRole').onchange=()=>id('tClass').disabled=id('tRole').value==='admin';id('addTeacher').onclick=()=>{let u=id('tUser').value.trim(),n=id('tName').value.trim(),p=id('tPass').value,role=id('tRole').value,kelas=role==='guru'?id('tClass').value:'';if(!u||!n||!p)return alert('Lengkapi username, nama, password.');if(role==='guru'&&!kelas)return alert('Pilih kelas guru.');if(db.teachers.some(t=>t.username===u))return alert('Username sudah ada.');db.teachers.push({username:u,name:n,password:p,role,kelas});save();['tUser','tName','tPass'].forEach(x=>id(x).value='');renderTeachers()}
+id('backupBtn').onclick=()=>{let blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='backup-si-nilai-sd-2026-2027.json';a.click();URL.revokeObjectURL(a.href)}
+id('restoreBtn').onclick=()=>{let f=id('restoreFile').files[0];if(!f)return alert('Pilih file JSON.');let r=new FileReader();r.onload=()=>{try{let x=JSON.parse(r.result);if(!x.students||!x.teachers)throw Error();db=x;save();renderStudents();renderTeachers();alert('Restore berhasil. Silakan login ulang jika diperlukan.')}catch(e){alert('File backup tidak valid.')}};r.readAsText(f)}
+buildNav();fillMapels();renderStats();renderStudents();renderTeachers();loadDocFields();applyClassLock();
+if(sessionStorage.getItem('siLogin')){let t=db.teachers.find(x=>x.username===sessionStorage.getItem('siLogin'));if(t){currentTeacher=t;id('loginScreen').style.display='none';id('app').style.display='block';id('userLabel').textContent=t.name+' ('+t.username+')'+(t.role==='guru'?' • Kelas '+t.kelas:' • Admin');applyClassLock();renderStats();renderStudents();renderScores();renderReport();showPage(t.role==='guru'?'students':'dashboard')}}
+})();
+</script>
+</body>
+</html>

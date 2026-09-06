@@ -1,0 +1,15 @@
+{
+  "name": "si-nilai-v8-backend",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "cors": "^2.8.5",
+    "better-sqlite3": "^12.2.0",
+    "jsonwebtoken": "^9.0.2",
+    "bcryptjs": "^3.0.2"
+  }
+}

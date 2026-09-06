@@ -54,7 +54,7 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb;box-shadow:0 0 0 3p
   <div class="top-right"><span class="user" id="userLabel"></span><button id="logoutBtn" class="btn danger">Logout</button></div>
 </header>
 <div class="layout">
-<aside id="sidebar" class="side"></aside>
+<aside id="sidebar" class="side"><div class="side-title">MENU UTAMA</div><button type="button" class="navbtn active" data-page="dashboard">Dashboard</button><button type="button" class="navbtn" data-page="students">Data Siswa</button><button type="button" class="navbtn" data-page="import">Import Data Siswa</button><button type="button" class="navbtn" data-page="cp">CP</button><button type="button" class="navbtn" data-page="tp">TP</button><button type="button" class="navbtn" data-page="atp">ATP</button><button type="button" class="navbtn" data-page="prota">Prota</button><button type="button" class="navbtn" data-page="prosem">Prosem</button><button type="button" class="navbtn" data-page="rpm">RPM — Rencana Pembelajaran Mendalam</button><button type="button" class="navbtn" data-page="scores">Penilaian Per BAB</button><button type="button" class="navbtn" data-page="report">Rapor</button><button type="button" class="navbtn admin-only" data-page="teachers">Database Guru</button><button type="button" class="navbtn" data-page="reference">Referensi SIBI</button><button type="button" class="navbtn" data-page="backup">Backup / Restore</button></aside>
 <main class="main">
   <section id="dashboard" class="page active">
     <h2>Dashboard</h2><p class="muted">Selamat datang di SI-NILAI SD. Semua data tersimpan di browser perangkat ini.</p>
@@ -225,7 +225,8 @@ function setClassSelect(idName, value){
   el.value=String(value);
   el.disabled=isGuruKelas();
 }
-function buildNav(){const side=id('sidebar');side.innerHTML='<div class="side-title">MENU UTAMA</div>'+pages.map((p,i)=>'<button type="button" class="navbtn '+(i===0?'active':'')+'" data-page="'+p[0]+'">'+p[1]+'</button>').join('');side.querySelectorAll('.navbtn').forEach(b=>b.onclick=()=>showPage(b.dataset.page))}
+function buildNav(){const side=id('sidebar');if(!side)return;side.querySelectorAll('.navbtn').forEach(b=>b.onclick=()=>showPage(b.dataset.page));syncRoleMenu()}
+function syncRoleMenu(){const admin=!isGuruKelas();document.querySelectorAll('.admin-only').forEach(b=>b.style.display=admin?'block':'none')}
 function showPage(p){
   if(isGuruKelas()&&p==='teachers')p='dashboard';
   document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));id(p).classList.add('active');document.querySelectorAll('.navbtn').forEach(x=>x.classList.toggle('active',x.dataset.page===p));id('sidebar').classList.remove('open');if(p==='students')renderStudents();if(p==='teachers')renderTeachers();if(p==='scores')renderScores();if(p==='report')renderReport();if(p==='reference')renderReference()}
@@ -260,7 +261,7 @@ function renderTeachers(){
   document.querySelectorAll('[data-tdel]').forEach(b=>b.onclick=()=>{db.teachers.splice(+b.dataset.tdel,1);save();renderTeachers()})
 }
 function renderReference(){id('babReference').innerHTML='<h3 style="margin-top:20px">BAB yang tersedia di aplikasi</h3><p class="muted">Untuk kombinasi yang belum diverifikasi dari buku SIBI, aplikasi menggunakan label Unit Pembelajaran agar tidak mengarang judul BAB.</p>'+Object.entries(BAB).map(([m,ks])=>'<div style="margin:12px 0"><b>'+esc(m)+'</b>'+Object.entries(ks).map(([k,arr])=>'<div style="margin-top:5px">Kelas '+k+': '+arr.map((x,i)=>'<span class="badge" style="margin:2px">'+esc('BAB '+(i+1)+' — '+x)+'</span>').join('')+'</div>').join('')).join('')}
-id('loginForm').onsubmit=e=>{e.preventDefault();let u=id('loginUser').value.trim(),p=id('loginPass').value;let t=db.teachers.find(x=>x.username===u&&x.password===p);if(!t){id('loginError').style.display='block';return}currentTeacher=t;sessionStorage.setItem('siLogin',u);id('userLabel').textContent=t.name+' ('+t.username+')'+(t.role==='guru'?' • Kelas '+t.kelas:' • Admin');id('loginScreen').style.display='none';id('app').style.display='block';id('loginError').style.display='none';applyClassLock();renderStats();renderStudents();renderScores();renderReport();showPage(t.role==='guru'?'students':'dashboard')}
+id('loginForm').onsubmit=e=>{e.preventDefault();let u=id('loginUser').value.trim(),p=id('loginPass').value;let t=db.teachers.find(x=>x.username===u&&x.password===p);if(!t){id('loginError').style.display='block';return}currentTeacher=t;sessionStorage.setItem('siLogin',u);id('userLabel').textContent=t.name+' ('+t.username+')'+(t.role==='guru'?' • Kelas '+t.kelas:' • Admin');id('loginScreen').style.display='none';id('app').style.display='block';id('loginError').style.display='none';applyClassLock();syncRoleMenu();renderStats();renderStudents();renderScores();renderReport();showPage(t.role==='guru'?'students':'dashboard')}
 id('showPass').onclick=()=>{id('loginPass').type=id('loginPass').type==='password'?'text':'password';id('showPass').textContent=id('loginPass').type==='password'?'Lihat':'Sembunyi'}
 id('logoutBtn').onclick=()=>{currentTeacher=null;sessionStorage.removeItem('siLogin');id('app').style.display='none';id('loginScreen').style.display='grid';id('loginPass').value=''}
 id('menuBtn').onclick=()=>id('sidebar').classList.toggle('open')
@@ -277,7 +278,7 @@ id('tRole').onchange=()=>id('tClass').disabled=id('tRole').value==='admin';id('a
 id('backupBtn').onclick=()=>{let blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='backup-si-nilai-sd-2026-2027.json';a.click();URL.revokeObjectURL(a.href)}
 id('restoreBtn').onclick=()=>{let f=id('restoreFile').files[0];if(!f)return alert('Pilih file JSON.');let r=new FileReader();r.onload=()=>{try{let x=JSON.parse(r.result);if(!x.students||!x.teachers)throw Error();db=x;save();renderStudents();renderTeachers();alert('Restore berhasil. Silakan login ulang jika diperlukan.')}catch(e){alert('File backup tidak valid.')}};r.readAsText(f)}
 buildNav();fillMapels();renderStats();renderStudents();renderTeachers();loadDocFields();applyClassLock();
-if(sessionStorage.getItem('siLogin')){let t=db.teachers.find(x=>x.username===sessionStorage.getItem('siLogin'));if(t){currentTeacher=t;id('loginScreen').style.display='none';id('app').style.display='block';id('userLabel').textContent=t.name+' ('+t.username+')'+(t.role==='guru'?' • Kelas '+t.kelas:' • Admin');applyClassLock();renderStats();renderStudents();renderScores();renderReport();showPage(t.role==='guru'?'students':'dashboard')}}
+if(sessionStorage.getItem('siLogin')){let t=db.teachers.find(x=>x.username===sessionStorage.getItem('siLogin'));if(t){currentTeacher=t;id('loginScreen').style.display='none';id('app').style.display='block';id('userLabel').textContent=t.name+' ('+t.username+')'+(t.role==='guru'?' • Kelas '+t.kelas:' • Admin');applyClassLock();syncRoleMenu();renderStats();renderStudents();renderScores();renderReport();showPage(t.role==='guru'?'students':'dashboard')}}
 })();
 </script>
 </body>

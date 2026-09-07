@@ -603,7 +603,7 @@ const rb=id('rpmKelas').value,rm=id('rpmMapel').value,ri=Number(id('rpmBab').val
 save();
 }
 function faseForClass(k){const n=gradeOf(k);return n<=2?'A':n<=4?'B':'C'}
-function docMeta(type){const map={cp:['CP','cpKelas','cpMapel','cpText','cpPreview','cpBadge','cpStatus'],tp:['TP','tpKelas','tpMapel','tpText','tpPreview','tpBadge','tpStatus'],atp:['ATP','atpKelas','atpMapel','atpText','atpPreview','atpBadge','atpStatus'],prota:['Prota','protaKelas','protaMapel','protaText','protaPreview','protaBadge','protaStatus'],prosem:['Prosem','prosemKelas','prosemMapel','prosemText','prosemPreview','prosemBadge','prosemStatus']};return map[type]}
+function docMeta(type){const map={cp:['CP','cpKelas','cpMapel','cpText','cpPreview','cpBadge','cpStatus'],tp:['TP','tpKelas','tpMapel','tpText','tpPreview','tpBadge','tpStatus'],atp:['ATP','atpKelas','atpMapel','atpText','atpPreview','atpBadge','atpStatus'],prota:['Prota','protaKelas','protaMapel','protaText','protaPreview','protaBadge','protaStatus'],prosem:['Prosem','prosemKelas','prosemMapel','prosemText','prosemPreview','prosemBadge','prosemStatus'],rpm:['RPM','rpmKelas','rpmMapel','rpmText','rpmPreview','rpmBadge','rpmStatus']};return map[type]}
 function escHtml(v){return esc(String(v??''))}
 function docHeader(type,k,m,bab){const fase=faseForClass(k);return '<div class="doc-grid"><div class="doc-box"><h4>📘 Dokumen</h4><p><b>'+escHtml(type.toUpperCase())+'</b><br>Rombel '+escHtml(k)+'</p></div><div class="doc-box"><h4>📚 Mata Pelajaran</h4><p>'+escHtml(m)+'</p></div><div class="doc-box"><h4>🏷️ Fase / Unit</h4><p>Fase '+fase+(bab?' • '+escHtml(bab):'')+'</p></div></div>'}
 function cleanAIMarkdown(text){
@@ -828,7 +828,7 @@ async function syncRemoteData(t){
 function renderBookBasisStatus(){
   const el=id('bookBasisStatus'); if(!el)return;
   const lines=[];
-  Object.keys(BOOK_CATALOG).forEach(m=>Object.keys(BOOK_CATALOG[m]).forEach(g=>{const b=BOOK_CATALOG[m][g];lines.push(`Kelas ${g} • ${m}: ${b.title} (${b.year}) • ${b.chapters.length} BAB`)}));
+  Object.keys(BOOK_CATALOG||{}).forEach(m=>Object.keys(BOOK_CATALOG[m]||{}).forEach(g=>{const b=BOOK_CATALOG[m][g]||{};const chapters=Array.isArray(b.chapters)?b.chapters:[];lines.push(`Kelas ${g} • ${m}: ${b.title||'Buku belum terverifikasi'} (${b.year||'-'}) • ${chapters.length} BAB`)}));
   el.innerHTML='<b>Master buku yang sudah tertanam:</b><br>'+lines.map(escHtml).join('<br>')+'<br><small>Mapel/kelas lain menggunakan referensi SIBI dan dapat diperbarui saat buku sekolah ditentukan.</small>';
 }
 async function remoteLogin(username,password){

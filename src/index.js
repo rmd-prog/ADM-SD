@@ -140,15 +140,27 @@ export default {
         }
 
         const c = await columns(env, "siswa");
-        const field = c.has("rombel") ? "COALESCE(NULLIF(TRIM(rombel), ''), TRIM(kelas))" : "TRIM(kelas)";
+        const classField = c.has("rombel") && c.has("kelas")
+          ? "COALESCE(NULLIF(TRIM(rombel), ''), TRIM(kelas))"
+          : c.has("rombel") ? "TRIM(rombel)"
+          : c.has("kelas") ? "TRIM(kelas)"
+          : "''";
+        const nameField = c.has("nama") ? "nama"
+          : c.has("name") ? "name"
+          : c.has("nama_siswa") ? "nama_siswa"
+          : c.has("nama_lengkap") ? "nama_lengkap"
+          : null;
+        const orderSql = nameField ? ` ORDER BY ${nameField}` : "";
 
         let result;
         if (requested) {
-          const rw = rombelWhere(field, requested); result = await env.DB.prepare(`SELECT * FROM siswa WHERE ${rw.sql} ORDER BY nama`).bind(...rw.binds).all();
+          const rw = rombelWhere(classField, requested);
+          result = await env.DB.prepare(`SELECT * FROM siswa WHERE ${rw.sql}${orderSql}`).bind(...rw.binds).all();
         } else if (user.role === "admin") {
-          result = await env.DB.prepare(`SELECT * FROM siswa ORDER BY nama`).all();
+          result = await env.DB.prepare(`SELECT * FROM siswa${orderSql}`).all();
         } else {
-          const rw = rombelWhere(field, own); result = await env.DB.prepare(`SELECT * FROM siswa WHERE ${rw.sql} ORDER BY nama`).bind(...rw.binds).all();
+          const rw = rombelWhere(classField, own);
+          result = await env.DB.prepare(`SELECT * FROM siswa WHERE ${rw.sql}${orderSql}`).bind(...rw.binds).all();
         }
 
         return json({ ok: true, rombel: requested || own, data: result.results });

@@ -268,6 +268,13 @@ export default {
         });
       }
 
+      // AI DIAGNOSTIC — tidak pernah mengembalikan isi secret
+      if (url.pathname === "/api/ai/status" && request.method === "GET") {
+        const hasKey = typeof env.OPENAI_API_KEY === "string" && env.OPENAI_API_KEY.trim().length > 0;
+        const model = String(env.OPENAI_MODEL || "gpt-5.6-luna");
+        return json({ ok:true, openaiKeyBound:hasKey, model });
+      }
+
       // AI GENERATOR PERANGKAT PEMBELAJARAN
       if (url.pathname === "/api/ai/generate" && request.method === "POST") {
         const user = getUser(request);
@@ -279,7 +286,14 @@ export default {
         const requested = cleanRombel(body.rombel || body.kelas || "");
         const own = cleanRombel(user.rombel || user.kelas || "");
         if (user.role !== "admin" && requested && requested !== own) return json({ ok:false, message:"Akses rombel ditolak." }, 403);
-        if (!env.OPENAI_API_KEY) return json({ ok:false, message:"OPENAI_API_KEY belum dipasang di Cloudflare Worker." }, 503);
+        const openaiKey = typeof env.OPENAI_API_KEY === "string" ? env.OPENAI_API_KEY.trim() : "";
+        if (!openaiKey) {
+          return json({
+            ok:false,
+            code:"OPENAI_KEY_NOT_BOUND",
+            message:"Worker aktif tidak menerima secret OPENAI_API_KEY. Pastikan secret dipasang pada Worker/environment yang sedang dideploy, lalu Deploy ulang Worker."
+          }, 503);
+        }
 
         const mapel = String(body.mapel || "").trim();
         const context = String(body.context || "").trim();
@@ -308,7 +322,7 @@ RANCANGAN SEBELUMNYA (boleh diperbaiki):\n${existing || "belum ada"}`;
 
         const apiRes = await fetch("https://api.openai.com/v1/responses", {
           method:"POST",
-          headers:{"Content-Type":"application/json","Authorization":`Bearer ${env.OPENAI_API_KEY}`},
+          headers:{"Content-Type":"application/json","Authorization":`Bearer ${openaiKey}`},
           body:JSON.stringify({
             model,
             store:false,

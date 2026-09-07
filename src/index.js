@@ -299,6 +299,14 @@ export default {
         const tahun = String(body.tahun || "2026/2027").trim();
         const fase = String(body.fase || "").trim();
         const bab = String(body.bab || "").trim();
+        const bookReference = body.bookReference && typeof body.bookReference === "object" ? body.bookReference : null;
+        const bookLock = body.bookLock === true;
+        const bookTitle = String(bookReference?.title || "").trim();
+        const bookSource = String(bookReference?.source || "").trim();
+        const bookYear = String(bookReference?.year || "").trim();
+        const bookBab = String(bookReference?.bab || "").trim();
+        const bookChapters = Array.isArray(bookReference?.chapters) ? bookReference.chapters.map(x => String(x).trim()).filter(Boolean).slice(0,50) : [];
+        const bookContext = bookLock && bookTitle ? `\n\nSUMBER BUKU TERKUNCI:\n- Judul buku: ${bookTitle}\n- Sumber: ${bookSource || "SIBI"}\n- Tahun/Edisi: ${bookYear || "sesuai metadata"}\n${bookBab ? `- BAB/UNIT TERPILIH: ${bookBab}\n` : ""}${bookChapters.length ? `- DAFTAR BAB/UNIT YANG TERVERIFIKASI: ${bookChapters.join(" | ")}\n` : ""}ATURAN WAJIB SUMBER BUKU:\n1. Jangan mengganti, menerjemahkan, memendekkan, atau mengarang judul buku.\n2. Jika BAB/UNIT terpilih diberikan, gunakan tepat BAB/UNIT tersebut.\n3. Jika daftar BAB diberikan, jangan membuat BAB di luar daftar.\n4. Jangan mengklaim isi BAB yang belum terverifikasi.\n5. Jika informasi buku tidak cukup, tulis “struktur buku belum terverifikasi” daripada mengarang.` : "";
         const jumlahSoal = Math.min(100, Math.max(1, Number(body.jumlahSoal || 10)));
         const bentukSoal = String(body.bentukSoal || "campuran");
         const tingkatKesulitan = String(body.tingkatKesulitan || "sedang");
@@ -313,7 +321,7 @@ export default {
           soal_sumatif:"Soal Sumatif",soal_formatif:"Soal Formatif",kisi_kisi:"Kisi-kisi Soal",rubrik:"Rubrik Penilaian",kunci_jawaban:"Kunci Jawaban",pedoman_skor:"Pedoman Penskoran",
           jurnal:"Jurnal Pembelajaran",refleksi:"Refleksi Pembelajaran",remedial:"Program Remedial",pengayaan:"Program Pengayaan",deskripsi_hasil:"Deskripsi Hasil Belajar"
         };
-        const common = `KELAS/ROMBEL: ${requested || own || "SD"}\nFASE: ${fase || "sesuai kelas"}\nMAPEL: ${mapel || "sesuai konteks"}\nTAHUN PELAJARAN: ${tahun}\nTOPIK/KONTEKS: ${context || "gunakan konteks dekat dengan kehidupan murid"}${bab ? `\nBAB/UNIT: ${bab}` : ""}`;
+        const common = `KELAS/ROMBEL: ${requested || own || "SD"}\nFASE: ${fase || "sesuai kelas"}\nMAPEL: ${mapel || "sesuai konteks"}\nTAHUN PELAJARAN: ${tahun}\nTOPIK/KONTEKS: ${context || "gunakan konteks dekat dengan kehidupan murid"}${bab ? `\nBAB/UNIT: ${bab}` : ""}${bookContext}`;
         let specific = "";
         if (jenis === "lkpd") specific = `\nTUJUAN LKPD: ${tujuan || "rumuskan tujuan yang terukur"}\nDURASI: ${durasi || "sesuaikan kebutuhan"}\nAKTIVITAS KHUSUS: ${aktivitas || "pilih aktivitas kontekstual yang aktif dan bermakna"}`;
         if (jenis === "soal_sumatif" || jenis === "soal_formatif") specific = `\nJUMLAH SOAL: ${jumlahSoal}\nBENTUK SOAL: ${bentukSoal}\nTINGKAT KESULITAN: ${tingkatKesulitan}\nSERTAKAN KUNCI DAN KISI-KISI: ${sertakanKunci ? "YA" : "TIDAK"}`;
@@ -343,13 +351,13 @@ export default {
           deskripsi_hasil:"Buat beberapa contoh deskripsi hasil belajar yang positif, spesifik, berbasis kompetensi, dan menyertakan saran pengembangan tanpa memberi label negatif."
         };
         const instructions = `Anda adalah AI Guru SD Indonesia yang membantu guru membuat perangkat dan administrasi pembelajaran yang siap diedit dan digunakan. Gunakan Bahasa Indonesia formal tetapi natural. Selaraskan dengan Kurikulum Merdeka dan Pembelajaran Mendalam: berkesadaran (mindful), bermakna (meaningful), menggembirakan (joyful), serta pengalaman memahami, mengaplikasi, dan merefleksi. Sesuaikan bahasa dan beban tugas dengan usia murid. Jangan membuat klaim bahwa rancangan Anda adalah dokumen resmi pemerintah. Jangan mengarang data sekolah, nama murid, kebijakan, atau angka yang tidak diberikan. Jika informasi kurang, buat asumsi wajar dan tandai bagian yang dapat disesuaikan.\n\nJENIS: ${names[jenis]}\n${common}${specific}\n\nTUGAS KHUSUS: ${rules[jenis] || "Buat hasil yang lengkap, sistematis, dan siap dipakai guru."}\n\nKeluaran harus rapi dengan judul, subjudul, tabel bila bermanfaat, dan isi yang substansial. Untuk soal, pastikan jumlah soal tepat ${jumlahSoal} bila jenisnya soal. Untuk pilihan ganda, gunakan opsi A-D dan hanya satu jawaban paling tepat. ${sertakanKunci ? "Sertakan kunci/kisi-kisi sesuai permintaan." : "Jangan sertakan kunci jawaban kecuali diminta."}`;
-        const userPrompt = `Buat ${names[jenis]} untuk ${requested || own || "kelas SD"}, mapel ${mapel || "sesuai konteks"}. ${context ? "Gunakan topik/konteks: "+context : "Gunakan topik yang paling relevan dengan kebutuhan ini."}${bab ? " Unit/BAB: "+bab+"." : ""}`;
+        const userPrompt = `Buat ${names[jenis]} untuk ${requested || own || "kelas SD"}, mapel ${mapel || "sesuai konteks"}. ${context ? "Gunakan topik/konteks: "+context : "Gunakan topik yang paling relevan dengan kebutuhan ini."}${bab ? " Unit/BAB: "+bab+"." : ""}${bookContext ? "\n\nWAJIB: patuhi sumber buku terkunci di atas dan jangan mengganti judul/BAB." : ""}`;
         const apiRes = await fetch("https://api.openai.com/v1/responses",{method:"POST",headers:{"Content-Type":"application/json","Authorization":`Bearer ${openaiKey}`},body:JSON.stringify({model,store:false,input:[{role:"developer",content:instructions},{role:"user",content:userPrompt}],text:{verbosity:"high"}})});
         const raw=await apiRes.text();let data={};try{data=JSON.parse(raw)}catch{}
         if(!apiRes.ok)return json({ok:false,message:data?.error?.message||"AI gagal memproses permintaan.",status:apiRes.status},502);
         const text=String(data.output_text||(data.output||[]).flatMap(x=>x.content||[]).find(x=>x.type==='output_text')?.text||"").trim();
         if(!text)return json({ok:false,message:"AI tidak mengembalikan isi dokumen."},502);
-        return json({ok:true,jenis,text,model});
+        return json({ok:true,jenis,text,model,bookReference: bookReference || null,bookLock});
       }
 
       // DATA GURU / USERS

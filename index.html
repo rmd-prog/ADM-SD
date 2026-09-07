@@ -43,6 +43,7 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb;box-shadow:0 0 0 3p
 .smartbar{display:flex;gap:8px;align-items:center;margin-top:10px;padding:10px;border:1px solid #dbeafe;background:#f8fbff;border-radius:14px}.smartbar>span{font-size:20px}.smartbar input{flex:1}.export-note{font-size:12px;color:#64748b;margin-top:7px}@media(max-width:650px){.smartbar{align-items:stretch;flex-wrap:wrap}.smartbar input{min-width:100%}}</style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<meta name="app-version" content="V8-BAB-FIX-2026-09-08">
 </head>
 <body>
 <section id="loginScreen" class="login">
@@ -413,12 +414,15 @@ function fillMapels(){
 updateBab(); loadDocFields();
 }
 function updateBab(){
-let k=normalizeRombel(id('scoreKelas').value),m=id('scoreMapel').value;
-const scoreUnits=babList(m,k);
-id('scoreBab').innerHTML=scoreUnits.length?scoreUnits.map((x,i)=>'<option value="'+i+'">'+esc('BAB '+(i+1)+' — '+x)+'</option>').join(''):'<option value="">Struktur BAB/Unit belum terverifikasi</option>';
-let rk=normalizeRombel(id('rpmKelas').value),rm=id('rpmMapel').value;
-const rpmUnits=babList(rm,rk);
-id('rpmBab').innerHTML=rpmUnits.length?rpmUnits.map((x,i)=>'<option value="'+i+'">'+esc('BAB '+(i+1)+' — '+x)+'</option>').join(''):'<option value="">Struktur BAB/Unit belum terverifikasi</option>';
+  const getUnits=(m,k)=>{const g=gradeOf(k);const b=BOOK_CATALOG[m]?.[g];if(b&&Array.isArray(b.chapters)&&b.chapters.length)return b.chapters.slice();return Array.isArray(BAB[m]?.[g])?BAB[m][g].slice():[]};
+  const k=normalizeRombel(id('scoreKelas').value),m=id('scoreMapel').value;
+  const scoreUnits=getUnits(m,k);
+  id('scoreBab').innerHTML=scoreUnits.length?scoreUnits.map((x,i)=>'<option value="'+i+'">'+esc('BAB '+(i+1)+' — '+x)+'</option>').join(''):'<option value="">Struktur BAB/Unit belum terverifikasi</option>';
+  const rk=normalizeRombel(id('rpmKelas').value),rm=id('rpmMapel').value;
+  const rpmUnits=getUnits(rm,rk);
+  const prev=Number(id('rpmBab').value||0);
+  id('rpmBab').innerHTML=rpmUnits.length?rpmUnits.map((x,i)=>'<option value="'+i+'">'+esc('BAB '+(i+1)+' — '+x)+'</option>').join(''):'<option value="">Struktur BAB/Unit belum terverifikasi</option>';
+  if(rpmUnits.length)id('rpmBab').value=String(Math.min(prev,rpmUnits.length-1));
 }
 function docKey(type,k,m){return type+'|'+k+'|'+m}
 function loadDocFields(){
@@ -454,7 +458,22 @@ function linesToBlocks(text){return '<div class="doc-section">'+cleanAIMarkdown(
 function renderStructured(type,text,k,m,bab){const units=unitTitles(m,k);let h=docHeader(type,k,m,bab);if(type==='prota'){h+='<div class="doc-section"><h4>📅 Tabel Program Tahunan</h4><div class="tablewrap"><table class="doc-table"><thead><tr><th>No</th><th>Unit / Materi</th><th>Alokasi</th><th>Asesmen</th></tr></thead><tbody>'+units.map((u,i)=>'<tr><td>'+(i+1)+'</td><td><b>'+escHtml(u)+'</b></td><td>9 JP</td><td>Diagnostik • Formatif • Sumatif</td></tr>').join('')+'</tbody></table></div></div>';h+='<div class="doc-note">💡 Alokasi waktu adalah rancangan awal. Sesuaikan dengan kalender pendidikan dan struktur kurikulum sekolah.</div>'}else if(type==='prosem'){const mid=Math.ceil(units.length/2);const rows=(arr,offset)=>arr.map((u,i)=>'<tr><td>'+(''+(offset+i+1))+'</td><td>Minggu '+(offset+i*2+1)+'–'+(offset+i*2+2)+'</td><td>'+escHtml(u)+'</td><td>9 JP</td><td>Formatif • Refleksi</td></tr>').join('');h+='<div class="doc-section"><h4>1️⃣ Semester 1</h4><div class="tablewrap"><table class="doc-table"><thead><tr><th>No</th><th>Minggu</th><th>Unit / Materi</th><th>JP</th><th>Asesmen</th></tr></thead><tbody>'+rows(units.slice(0,mid),0)+'</tbody></table></div></div><div class="doc-section"><h4>2️⃣ Semester 2</h4><div class="tablewrap"><table class="doc-table"><thead><tr><th>No</th><th>Minggu</th><th>Unit / Materi</th><th>JP</th><th>Asesmen</th></tr></thead><tbody>'+rows(units.slice(mid),mid)+'</tbody></table></div></div>'}else{h+=linesToBlocks(text)}return h}
 function setDocPreview(type,notice){const meta=docMeta(type),k=normalizeRombel(id(meta[1]).value),m=id(meta[2]).value,text=id(meta[3]).value,bab=type==='rpm'?babList(m,k)[Number(id('rpmBab').value||0)]||'Unit Pembelajaran 1':'';id(meta[4]).innerHTML=renderStructured(meta[0],text,k,m,bab);id(meta[5]).textContent='Generated • '+k;id(meta[6]).textContent=notice||('Dokumen '+meta[0]+' berhasil digenerate.');id(meta[6]).style.display='block';setTimeout(()=>id(meta[6]).style.display='none',2800)}
 function docPayload(type){const meta=docMeta(type),k=normalizeRombel(id(meta[1]).value),m=id(meta[2]).value,text=id(meta[3]).value,bab=type==='rpm'?babList(m,k)[Number(id('rpmBab').value||0)]||'Unit Pembelajaran 1':'';return {meta,k,m,text,bab,title:meta[0]+' — '+m+' — Rombel '+k,body:renderStructured(meta[0],text,k,m,bab)}}
-function exportHtml(type){const d=docPayload(type);return '<!doctype html><html lang="id"><head><meta charset="utf-8"><title>'+escHtml(d.title)+'</title><style>body{font-family:Arial,sans-serif;margin:35px;color:#172033}h1{font-size:24px;margin-bottom:4px}h4{margin:18px 0 8px;border-bottom:2px solid #ddd;padding-bottom:6px}.doc-grid{display:flex;gap:10px}.doc-box{border:1px solid #ddd;border-radius:10px;padding:12px;flex:1;margin-bottom:12px}.doc-line{border:1px solid #e2e8f0;border-radius:7px;padding:8px;margin:5px 0;line-height:1.5}.doc-table{width:100%;border-collapse:collapse}.doc-table th,.doc-table td{border:1px solid #ccc;padding:8px;text-align:left;vertical-align:top}.doc-table th{background:#f3f4f6}.doc-note{margin-top:12px;padding:10px;background:#fff7ed}</style></head><body><h1>'+escHtml(d.title)+'</h1><p>Tahun Pelajaran 2026/2027</p>'+d.body+'</body></html>'}
+function exportHtml(type){const d=docPayload(type);return '<!doctype html><html lang="id"><head><meta charset="utf-8"><title>'+escHtml(d.title)+'</title><style>body{font-family:Arial,sans-serif;margin:35px;color:#172033}h1{font-size:24px;margin-bottom:4px}h4{margin:18px 0 8px;border-bottom:2px solid #ddd;padding-bottom:6px}.doc-grid{display:flex;gap:10px}.doc-box{border:1px solid #ddd;border-radius:10px;padding:12px;flex:1;margin-bottom:12px}.doc-line{border:1px solid #e2e8f0;border-radius:7px;padding:8px;margin:5px 0;line-height:1.5}.doc-table{width:100%;border-collapse:collapse}.doc-table th,.doc-table td{border:1px solid #ccc;padding:8px;text-align:left;vertical-align:top}.doc-table th{background:#f3f4f6}.doc-note{margin-top:12px;padding:10px;background:#fff7ed}</style></head><body><h1>'+escHtml(d.title)+'</h1><p>Tahun Pelajaran 2026/2027</p>'+d.body+'<script>
+/* V8 BAB DROPDOWN HOTFIX: selalu ambil BAB dari BOOK_CATALOG/BAB sesuai kelas+mapel. */
+(function(){
+  const original=window.updateBab;
+  window.__babDropdownFixVersion='2026-09-08';
+  window.updateBab=function(){
+    const getUnits=(m,k)=>{const g=gradeOf(k);const b=BOOK_CATALOG[m]?.[g];if(b&&Array.isArray(b.chapters)&&b.chapters.length)return b.chapters.slice();return Array.isArray(BAB[m]?.[g])?BAB[m][g].slice():[]};
+    const render=(el,units,keep)=>{if(!el)return;const old=Number(el.value||0);el.innerHTML=units.length?units.map((x,i)=>'<option value=\"'+i+'\">'+esc('BAB '+(i+1)+' — '+x)+'</option>').join(''):'<option value=\"\">Struktur BAB/Unit belum terverifikasi</option>';if(units.length)el.value=String(Math.min(Number.isFinite(keep)?keep:old,units.length-1));};
+    const sk=normalizeRombel(id('scoreKelas').value),sm=id('scoreMapel').value;
+    render(id('scoreBab'),getUnits(sm,sk),Number(id('scoreBab').value||0));
+    const rk=normalizeRombel(id('rpmKelas').value),rm=id('rpmMapel').value;
+    render(id('rpmBab'),getUnits(rm,rk),Number(id('rpmBab').value||0));
+  };
+})();
+</script>
+</body></html>'}
 function ensureDoc(type){const meta=docMeta(type);if(!id(meta[3]).value.trim())generateDoc(type);return docPayload(type)}
 function exportPDF(type){const d=ensureDoc(type);if(typeof html2pdf==='undefined'){alert('Modul PDF belum termuat. Pastikan internet aktif lalu coba lagi.');return}const el=document.createElement('div');el.innerHTML='<h1>'+escHtml(d.title)+'</h1><p>Tahun Pelajaran 2026/2027</p>'+d.body;el.style.cssText='font-family:Arial,sans-serif;color:#172033;padding:20px;background:white;width:100%;';document.body.appendChild(el);html2pdf().set({margin:10,filename:d.title.replace(/[^a-z0-9]+/gi,'-').toLowerCase()+'.pdf',image:{type:'jpeg',quality:.98},html2canvas:{scale:1.7,useCORS:true},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}}).from(el).save().then(()=>el.remove()).catch(()=>el.remove())}
 function exportWord(type){const d=ensureDoc(type),html=exportHtml(type).replace('</head>','<style>@page{size:A4;margin:18mm}</style></head>'),blob=new Blob(['\ufeff',html],{type:'application/msword'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=d.title.replace(/[^a-z0-9]+/gi,'-').toLowerCase()+'.doc';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}

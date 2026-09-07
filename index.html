@@ -192,10 +192,92 @@ h1,h2,h3{letter-spacing:-.25px}
 .login-location{position:absolute;left:22px;top:22px;z-index:2;color:#fff;font-weight:900;font-size:12px;letter-spacing:1px;text-shadow:0 2px 8px rgba(0,0,0,.45)}
 @media(max-width:700px){.login:before{background-position:center,left bottom,right bottom,center;background-size:cover,45% auto,38% auto,42% auto}.bogor-corner{top:12px;right:12px;padding:5px 7px}.bogor-corner img{width:31px;height:39px}.bogor-corner span{font-size:9px}.login-location{left:12px;top:15px;font-size:10px}.login-card{width:min(340px,calc(100vw - 24px));padding:20px 18px 18px}.login .logo{width:64px;height:64px}}
 @media(max-width:430px){.login:before{background-size:cover,48% auto,42% auto,48% auto}.login-card{padding:18px 16px}.login-card h1{font-size:21px!important}.login-location{display:none}.bogor-corner span{display:none}}
+/* ===== GURU+ SD V9 • AUTO ORIENTATION ===== */
+body{--ui-scale:1}
+.top,.side,.main{transition:all .25s ease}
+.top .brand{font-size:clamp(13px,1.2vw,16px)}
+.main{font-size:calc(14px * var(--ui-scale))}
+@media (min-width:761px){
+body{--ui-scale:1}
+.top{height:68px}
+.side{width:250px}
+.main{padding:22px!important}
+.page h2{font-size:24px!important}
+.panel{border-radius:18px}
+}
+@media (max-width:760px) and (orientation:portrait){
+body{--ui-scale:.92}
+.top{height:58px;padding:0 9px}
+.brand{font-size:13px!important}
+.brand-logo{width:32px;height:32px}
+.main{padding:11px!important}
+.page h2{font-size:20px!important;margin-bottom:8px!important}
+.panel{border-radius:15px;padding:14px!important}
+.stat b{font-size:21px}
+.navbtn,.navgroup{font-size:12px}
+input,select,textarea{min-height:40px;font-size:13px}
+.btn{min-height:40px;font-size:12px}
+.tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+}
+@media (max-width:760px) and (orientation:landscape){
+body{--ui-scale:.88}
+.top{height:52px;padding:0 10px}
+.brand{font-size:12px!important}
+.brand-logo{width:30px;height:30px}
+.main{padding:9px 13px!important}
+.page h2{font-size:18px!important;margin-bottom:6px!important}
+.panel{border-radius:13px;padding:11px!important}
+.stat b{font-size:19px}
+.navbtn,.navgroup{font-size:11px}
+input,select,textarea{min-height:36px;font-size:12px}
+.btn{min-height:36px;font-size:11px}
+.teacher-avatar{width:34px;height:34px}
+.top-right .danger{padding:7px 9px;font-size:11px}
+.tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+}
+@media (min-width:1200px){
+.main{padding:24px 28px!important}
+.page h2{font-size:26px!important}
+}
+/* Login also adapts to portrait/landscape */
+@media (max-width:760px) and (orientation:portrait){
+.login-card{width:min(340px,calc(100vw - 24px));padding:18px 16px!important}
+.login .logo{width:62px;height:62px}
+.login-card h1{font-size:21px!important}
+}
+@media (max-width:760px) and (orientation:landscape){
+.login{padding:10px!important}
+.login-card{width:min(370px,78vw);padding:12px 18px!important}
+.login .logo{width:48px;height:48px}
+.login-card h1{font-size:18px!important}
+.login-card label{margin:7px 0 3px}
+.login-card input{height:34px}
+.login-card .wide{height:36px;margin-top:10px}
+.bogor-corner{top:8px;right:10px}
+}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <meta name="app-version" content="V9-BAB-FIX-2026-09-08">
+
+<!-- GURU+ SD V9 • AUTO ORIENTATION -->
+<script>
+(function(){
+  function setOrientation(){
+    var w=window.innerWidth||document.documentElement.clientWidth;
+    var h=window.innerHeight||document.documentElement.clientHeight;
+    var root=document.documentElement;
+    root.dataset.device=w<=760?'hp':'pc';
+    root.dataset.orientation=w>=h?'landscape':'portrait';
+    root.style.setProperty('--screen-width',w+'px');
+    root.style.setProperty('--screen-height',h+'px');
+  }
+  setOrientation();
+  window.addEventListener('resize',setOrientation,{passive:true});
+  window.addEventListener('orientationchange',function(){setTimeout(setOrientation,80)},{passive:true});
+})();
+</script>
+
 </head>
 <body>
 <section id="loginScreen" class="login"><div class="bogor-corner"><img src="https://disdukcapil.jabarprov.go.id/files/image/portal/kabkota/3271.png" alt="Lambang Kota Bogor"><span>KOTA BOGOR</span></div><div class="login-location">BOGOR • JAWA BARAT</div>

@@ -1,0 +1,42 @@
+name: V10 Login No Scroll
+
+on:
+  push:
+    paths:
+      - 'index.html'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch login viewport
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          old = ".login{min-height:100vh;display:grid;place-items:center;padding:22px;background:linear-gradient(135deg,#dbeafe,#eff6ff 45%,#e0e7ff)}"
+          new = ".login{height:100svh;min-height:100svh;display:grid;place-items:center;padding:12px;overflow:hidden;background:linear-gradient(135deg,#dbeafe,#eff6ff 45%,#e0e7ff)}"
+          if old not in s:
+              raise SystemExit('login CSS anchor not found')
+          s = s.replace(old, new, 1)
+          old2 = ".login-card{width:min(430px,100%);padding:28px}"
+          new2 = ".login-card{width:min(430px,100%);padding:20px;max-height:calc(100svh - 24px);overflow:hidden}"
+          if old2 not in s:
+              raise SystemExit('login-card CSS anchor not found')
+          s = s.replace(old2, new2, 1)
+          s += "\n<style id=\"v10-login-viewport-fix\">\nhtml,body{height:100%;margin:0}\nbody.v10-login{height:100svh!important;min-height:100svh!important;overflow:hidden!important}\nbody.v10-login .login{height:100svh!important;min-height:100svh!important;overflow:hidden!important}\n@media(max-width:520px){body.v10-login .login{padding:8px!important}body.v10-login .login-card{padding:16px!important;max-height:calc(100svh - 16px)!important}.logo{width:76px!important;height:76px!important}body.v10-login label{margin:10px 0 5px!important}body.v10-login input{padding:10px 11px!important}.wide{margin-top:12px!important}}\n</style>\n"
+          p.write_text(s, encoding='utf-8')
+          PY
+      - name: Commit patch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m 'fix: keep V10 login fixed to viewport'
+          git push

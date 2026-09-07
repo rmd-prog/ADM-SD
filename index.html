@@ -323,51 +323,7 @@ function linesToBlocks(text){const lines=String(text||'').split(/\r?\n/).map(x=>
 function renderStructured(type,text,k,m,bab){const units=unitTitles(m,k);let h=docHeader(type,k,m,bab);if(type==='prota'){h+='<div class="doc-section"><h4>📅 Tabel Program Tahunan</h4><div class="tablewrap"><table class="doc-table"><thead><tr><th>No</th><th>Unit / Materi</th><th>Alokasi</th><th>Asesmen</th></tr></thead><tbody>'+units.map((u,i)=>'<tr><td>'+(i+1)+'</td><td><b>'+escHtml(u)+'</b></td><td>9 JP</td><td>Diagnostik • Formatif • Sumatif</td></tr>').join('')+'</tbody></table></div></div>';h+='<div class="doc-note">💡 Alokasi waktu adalah rancangan awal. Sesuaikan dengan kalender pendidikan dan struktur kurikulum sekolah.</div>'}else if(type==='prosem'){const mid=Math.ceil(units.length/2);const rows=(arr,offset)=>arr.map((u,i)=>'<tr><td>'+(''+(offset+i+1))+'</td><td>Minggu '+(offset+i*2+1)+'–'+(offset+i*2+2)+'</td><td>'+escHtml(u)+'</td><td>9 JP</td><td>Formatif • Refleksi</td></tr>').join('');h+='<div class="doc-section"><h4>1️⃣ Semester 1</h4><div class="tablewrap"><table class="doc-table"><thead><tr><th>No</th><th>Minggu</th><th>Unit / Materi</th><th>JP</th><th>Asesmen</th></tr></thead><tbody>'+rows(units.slice(0,mid),0)+'</tbody></table></div></div><div class="doc-section"><h4>2️⃣ Semester 2</h4><div class="tablewrap"><table class="doc-table"><thead><tr><th>No</th><th>Minggu</th><th>Unit / Materi</th><th>JP</th><th>Asesmen</th></tr></thead><tbody>'+rows(units.slice(mid),mid)+'</tbody></table></div></div>'}else{h+=linesToBlocks(text)}return h}
 function setDocPreview(type,notice){const meta=docMeta(type),k=normalizeRombel(id(meta[1]).value),m=id(meta[2]).value,text=id(meta[3]).value,bab=type==='rpm'?babList(m,k)[Number(id('rpmBab').value||0)]||'Unit Pembelajaran 1':'';id(meta[4]).innerHTML=renderStructured(meta[0],text,k,m,bab);id(meta[5]).textContent='Generated • '+k;id(meta[6]).textContent=notice||('Dokumen '+meta[0]+' berhasil digenerate.');id(meta[6]).style.display='block';setTimeout(()=>id(meta[6]).style.display='none',2800)}
 function docPayload(type){const meta=docMeta(type),k=normalizeRombel(id(meta[1]).value),m=id(meta[2]).value,text=id(meta[3]).value,bab=type==='rpm'?babList(m,k)[Number(id('rpmBab').value||0)]||'Unit Pembelajaran 1':'';return {meta,k,m,text,bab,title:meta[0]+' — '+m+' — Rombel '+k,body:renderStructured(meta[0],text,k,m,bab)}}
-function exportHtml(type){const d=docPayload(type);return '<!doctype html><html lang="id"><head><meta charset="utf-8"><title>'+escHtml(d.title)+'</title><style>body{font-family:Arial,sans-serif;margin:35px;color:#172033}h1{font-size:24px;margin-bottom:4px}h4{margin:18px 0 8px;border-bottom:2px solid #ddd;padding-bottom:6px}.doc-grid{display:flex;gap:10px}.doc-box{border:1px solid #ddd;border-radius:10px;padding:12px;flex:1;margin-bottom:12px}.doc-line{border:1px solid #e2e8f0;border-radius:7px;padding:8px;margin:5px 0;line-height:1.5}.doc-table{width:100%;border-collapse:collapse}.doc-table th,.doc-table td{border:1px solid #ccc;padding:8px;text-align:left;vertical-align:top}.doc-table th{background:#f3f4f6}.doc-note{margin-top:12px;padding:10px;background:#fff7ed}</style></head><body><h1>'+escHtml(d.title)+'</h1><p>Tahun Pelajaran 2026/2027</p>'+d.body+'<script>
-/* SI-NILAI SD V8 — AI click safety fallback */
-(function(){
-  const API='https://adm-sd.adm-sd.workers.dev/api';
-  const cfg={
-    generateCp:['cp','cpKelas','cpMapel','cpText','cpStatus'],
-    generateTp:['tp','tpKelas','tpMapel','tpText','tpStatus'],
-    generateAtp:['atp','atpKelas','atpMapel','atpText','atpStatus'],
-    generateProta:['prota','protaKelas','protaMapel','protaText','protaStatus'],
-    generateProsem:['prosem','prosemKelas','prosemMapel','prosemText','prosemStatus'],
-    generateRpm:['rpm','rpmKelas','rpmMapel','rpmText','rpmStatus']
-  };
-  const $=id=>document.getElementById(id);
-  const grade=v=>({IA:1,IB:1,IIA:2,IIB:2,IIIA:3,IIIB:3,IVA:4,IVB:4,V:5,VI:6}[String(v||'').toUpperCase().replace(/\s/g,'')]||4);
-  const phase=v=>{let g=grade(v);return g<=2?'A':g<=4?'B':'C'};
-  async function go(buttonId){
-    const [type,kid,mid,tid,sid]=cfg[buttonId], k=$(kid)?.value||'', m=$(mid)?.value||'', tx=$(tid), st=$(sid), token=sessionStorage.getItem('siAuthToken')||'';
-    if(!tx)return;
-    if(!token){alert('Sesi login tidak ditemukan. Silakan login ulang.');return}
-    if(tx.value.trim()&&!confirm('Generate AI akan mengganti isi editor dengan rancangan baru. Lanjutkan?'))return;
-    st.textContent='🤖 AI sedang menyusun perangkat pembelajaran...';st.className='gen-status show';
-    const b=$(buttonId); if(b){b.disabled=true;b.dataset.aiBusy='1';b._old=b.innerHTML;b.innerHTML='⏳ Menyusun...';}
-    try{
-      const body={jenis:type,rombel:k,mapel:m,fase:phase(k),tahun:'2026/2027',context:$(type+'Context')?.value||'',existing:tx.value};
-      if(type==='rpm')body.bab=$('rpmBab')?.value||'';
-      const r=await fetch(API+'/ai/generate',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify(body)});
-      const raw=await r.text(); let d={}; try{d=JSON.parse(raw)}catch(e){}
-      if(!r.ok||!d.ok)throw new Error(d.message||('AI gagal memproses permintaan ('+r.status+').'));
-      tx.value=d.text||''; st.textContent='✅ Selesai • '+(d.model||'AI');st.className='gen-status show';
-      const badge=$(type+'Badge');if(badge)badge.textContent='Sudah digenerate AI';
-      const preview=$(type+'Preview');if(preview)preview.innerHTML='<div class="alert successbox">✨ '+type.toUpperCase()+' berhasil dibuat oleh AI untuk Rombel '+k+'.</div>';
-      tx.dispatchEvent(new Event('input',{bubbles:true}));
-    }catch(e){console.error(e);st.textContent='❌ '+e.message;st.className='gen-status show';alert(e.message)}
-    finally{if(b){b.disabled=false;b.dataset.aiBusy='';b.innerHTML=b._old||'🤖 Generate dengan AI'}}
-  }
-  document.addEventListener('click',function(e){
-    const b=e.target.closest&&e.target.closest('button[id]'); if(!b||!cfg[b.id])return;
-    e.preventDefault(); e.stopImmediatePropagation();
-    if(b.dataset.aiBusy==='1')return;
-    go(b.id);
-  },true);
-})();
-</script>
-
-</body></html>'}
+function exportHtml(type){const d=docPayload(type);return '<!doctype html><html lang="id"><head><meta charset="utf-8"><title>'+escHtml(d.title)+'</title><style>body{font-family:Arial,sans-serif;margin:35px;color:#172033}h1{font-size:24px;margin-bottom:4px}h4{margin:18px 0 8px;border-bottom:2px solid #ddd;padding-bottom:6px}.doc-grid{display:flex;gap:10px}.doc-box{border:1px solid #ddd;border-radius:10px;padding:12px;flex:1;margin-bottom:12px}.doc-line{border:1px solid #e2e8f0;border-radius:7px;padding:8px;margin:5px 0;line-height:1.5}.doc-table{width:100%;border-collapse:collapse}.doc-table th,.doc-table td{border:1px solid #ccc;padding:8px;text-align:left;vertical-align:top}.doc-table th{background:#f3f4f6}.doc-note{margin-top:12px;padding:10px;background:#fff7ed}</style></head><body><h1>'+escHtml(d.title)+'</h1><p>Tahun Pelajaran 2026/2027</p>'+d.body+'</body></html>'}
 function ensureDoc(type){const meta=docMeta(type);if(!id(meta[3]).value.trim())generateDoc(type);return docPayload(type)}
 function exportPDF(type){const d=ensureDoc(type);if(typeof html2pdf==='undefined'){alert('Modul PDF belum termuat. Pastikan internet aktif lalu coba lagi.');return}const el=document.createElement('div');el.innerHTML='<h1>'+escHtml(d.title)+'</h1><p>Tahun Pelajaran 2026/2027</p>'+d.body;el.style.cssText='font-family:Arial,sans-serif;color:#172033;padding:20px;background:white;width:100%;';document.body.appendChild(el);html2pdf().set({margin:10,filename:d.title.replace(/[^a-z0-9]+/gi,'-').toLowerCase()+'.pdf',image:{type:'jpeg',quality:.98},html2canvas:{scale:1.7,useCORS:true},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}}).from(el).save().then(()=>el.remove()).catch(()=>el.remove())}
 function exportWord(type){const d=ensureDoc(type),html=exportHtml(type).replace('</head>','<style>@page{size:A4;margin:18mm}</style></head>'),blob=new Blob(['\ufeff',html],{type:'application/msword'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=d.title.replace(/[^a-z0-9]+/gi,'-').toLowerCase()+'.doc';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
@@ -535,7 +491,6 @@ try{const saved=JSON.parse(sessionStorage.getItem('siLogin')||'null');const toke
 })();
 </script>
 <script>
-/* SI-NILAI SD V8 — AI click safety fallback */
 (function(){
   const API='https://adm-sd.adm-sd.workers.dev/api';
   const cfg={
@@ -546,37 +501,35 @@ try{const saved=JSON.parse(sessionStorage.getItem('siLogin')||'null');const toke
     generateProsem:['prosem','prosemKelas','prosemMapel','prosemText','prosemStatus'],
     generateRpm:['rpm','rpmKelas','rpmMapel','rpmText','rpmStatus']
   };
-  const $=id=>document.getElementById(id);
-  const grade=v=>({IA:1,IB:1,IIA:2,IIB:2,IIIA:3,IIIB:3,IVA:4,IVB:4,V:5,VI:6}[String(v||'').toUpperCase().replace(/\s/g,'')]||4);
-  const phase=v=>{let g=grade(v);return g<=2?'A':g<=4?'B':'C'};
-  async function go(buttonId){
-    const [type,kid,mid,tid,sid]=cfg[buttonId], k=$(kid)?.value||'', m=$(mid)?.value||'', tx=$(tid), st=$(sid), token=sessionStorage.getItem('siAuthToken')||'';
-    if(!tx)return;
-    if(!token){alert('Sesi login tidak ditemukan. Silakan login ulang.');return}
+  const $=x=>document.getElementById(x);
+  const phase=v=>{const s=String(v||'').toUpperCase().replace(/\s/g,'');const g={IA:1,IB:1,IIA:2,IIB:2,IIIA:3,IIIB:3,IVA:4,IVB:4,V:5,VI:6}[s]||4;return g<=2?'A':g<=4?'B':'C'};
+  async function runAI(buttonId){
+    const c=cfg[buttonId]; if(!c)return;
+    const [type,kid,mid,tid,sid]=c, k=$(kid)?.value||'', m=$(mid)?.value||'', tx=$(tid), st=$(sid), b=$(buttonId);
+    const token=sessionStorage.getItem('siAuthToken')||'';
+    if(!token){alert('Sesi login tidak ditemukan. Silakan login ulang.');return;}
+    if(!tx||!st)return;
     if(tx.value.trim()&&!confirm('Generate AI akan mengganti isi editor dengan rancangan baru. Lanjutkan?'))return;
+    if(b){b.disabled=true;b.dataset.aiBusy='1';b._oldAI=b.innerHTML;b.innerHTML='⏳ Menyusun...';}
     st.textContent='🤖 AI sedang menyusun perangkat pembelajaran...';st.className='gen-status show';
-    const b=$(buttonId); if(b){b.disabled=true;b.dataset.aiBusy='1';b._old=b.innerHTML;b.innerHTML='⏳ Menyusun...';}
     try{
-      const body={jenis:type,rombel:k,mapel:m,fase:phase(k),tahun:'2026/2027',context:$(type+'Context')?.value||'',existing:tx.value};
-      if(type==='rpm')body.bab=$('rpmBab')?.value||'';
-      const r=await fetch(API+'/ai/generate',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify(body)});
+      const r=await fetch(API+'/ai/generate',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({jenis:type,rombel:k,mapel:m,fase:phase(k),tahun:'2026/2027',context:$(type+'Context')?.value||'',existing:tx.value})});
       const raw=await r.text(); let d={}; try{d=JSON.parse(raw)}catch(e){}
       if(!r.ok||!d.ok)throw new Error(d.message||('AI gagal memproses permintaan ('+r.status+').'));
-      tx.value=d.text||''; st.textContent='✅ Selesai • '+(d.model||'AI');st.className='gen-status show';
-      const badge=$(type+'Badge');if(badge)badge.textContent='Sudah digenerate AI';
-      const preview=$(type+'Preview');if(preview)preview.innerHTML='<div class="alert successbox">✨ '+type.toUpperCase()+' berhasil dibuat oleh AI untuk Rombel '+k+'.</div>';
-      tx.dispatchEvent(new Event('input',{bubbles:true}));
-    }catch(e){console.error(e);st.textContent='❌ '+e.message;st.className='gen-status show';alert(e.message)}
-    finally{if(b){b.disabled=false;b.dataset.aiBusy='';b.innerHTML=b._old||'🤖 Generate dengan AI'}}
+      tx.value=String(d.text||'');
+      if(typeof window.save==='function')window.save();
+      if(typeof window.setDocPreview==='function')window.setDocPreview(type,'✨ '+type.toUpperCase()+' berhasil dibuat oleh AI untuk Rombel '+k+'.');
+      st.textContent='✅ Selesai • '+(d.model||'AI');st.className='gen-status show';
+    }catch(e){console.error(e);st.textContent='❌ '+(e.message||'AI gagal');st.className='gen-status show';alert(e.message||'AI gagal membuat dokumen.');}
+    finally{if(b){b.disabled=false;b.dataset.aiBusy='';b.innerHTML=b._oldAI||'🤖 Generate dengan AI';}}
   }
   document.addEventListener('click',function(e){
-    const b=e.target.closest&&e.target.closest('button[id]'); if(!b||!cfg[b.id])return;
+    const b=e.target.closest&&e.target.closest('button[id]');
+    if(!b||!cfg[b.id]||b.dataset.aiBusy==='1')return;
     e.preventDefault(); e.stopImmediatePropagation();
-    if(b.dataset.aiBusy==='1')return;
-    go(b.id);
+    runAI(b.id);
   },true);
 })();
 </script>
-
 </body>
 </html>

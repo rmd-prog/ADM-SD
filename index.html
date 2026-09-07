@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#2563eb">
-<title>🚀 GURU+ SD V9 — 2026/2027 • Administrasi & Pembelajaran Guru</title>
+<title>🏛️ GURU+ SD V10 — 2026/2027 • Portal Administrasi Guru</title>
 <style>
 *{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:#f1f5f9;color:#172033}
 button,input,select,textarea{font:inherit}button{cursor:pointer}#aiGenerate select,#aiGenerate input,#aiGenerate button{position:relative;z-index:2;pointer-events:auto;touch-action:manipulation}#aiGenerate .panel,#aiGenerate .doc-hero{position:relative;z-index:1}
@@ -184,10 +184,51 @@ h1,h2,h3{letter-spacing:-.25px}
 .login-card .password input{padding-right:60px!important}.login-card .toggle{top:4px!important;right:5px!important;font-size:11px!important;color:#6366f1!important;font-weight:800!important}
 .login-card .wide{height:43px!important;margin-top:15px!important;border-radius:12px!important;font-size:12px!important;letter-spacing:.2px!important;background:linear-gradient(135deg,#2563eb,#6366f1 55%,#7c3aed)!important;box-shadow:0 10px 22px rgba(79,70,229,.24)!important}
 @media(max-width:600px){.login{padding:14px!important}.login-card{width:min(348px,calc(100vw - 24px))!important;padding:20px 18px 18px!important}.login .logo{width:64px!important;height:64px!important}.login-card h1{font-size:22px!important}.school-name{font-size:12px;padding:6px 14px}}
+/* ===== GURU+ SD V10 • BOGOR PORTAL UI ===== */
+:root{--v10-blue:#1d4ed8;--v10-indigo:#4338ca;--v10-cyan:#0891b2;--v10-ink:#172033;--v10-muted:#64748b;--v10-line:#e2e8f0}
+html{scroll-behavior:auto!important;scroll-padding-top:0!important}
+body{overflow-x:hidden}
+#app{min-height:100svh}
+.top{height:72px!important;padding:0 18px!important;background:rgba(255,255,255,.90)!important}
+.brand{font-size:16px!important;font-weight:950!important;color:#1e3a8a!important}
+.brand:after{content:'• PORTAL ADMINISTRASI GURU';display:block;font-size:9px;color:#64748b;letter-spacing:1px;font-weight:800;margin-left:49px;margin-top:-2px}
+.side{width:270px!important;background:linear-gradient(180deg,#0f172a 0%,#172554 52%,#1e1b4b 100%)!important;padding:16px 12px!important}
+.side-title{padding:10px 12px 14px!important;font-size:10px!important;letter-spacing:1.7px!important;color:#93c5fd!important}
+.navbtn,.navgroup{min-height:42px!important;border-radius:12px!important}
+.navbtn.active{background:linear-gradient(135deg,#2563eb,#4f46e5)!important;box-shadow:0 8px 22px rgba(37,99,235,.25)!important}
+.main{padding:22px!important;background:transparent}
+#dashboard{max-width:1400px;margin:0 auto}
+#dashboard .v10-hero{position:relative;overflow:hidden;padding:24px!important;border-radius:24px!important;background:linear-gradient(135deg,#172554 0%,#1d4ed8 54%,#0891b2 100%)!important;color:#fff!important;box-shadow:0 22px 55px rgba(30,64,175,.22)!important;margin-bottom:16px}
+#dashboard .v10-hero:after{content:'';position:absolute;width:240px;height:240px;border-radius:50%;right:-70px;top:-90px;background:rgba(255,255,255,.10);box-shadow:-90px 150px 0 20px rgba(255,255,255,.045)}
+.v10-kicker{font-size:10px;font-weight:900;letter-spacing:1.8px;opacity:.82;text-transform:uppercase}
+.v10-hero h2{font-size:28px!important;margin:4px 0 6px!important;letter-spacing:-.8px!important;position:relative;z-index:1}
+.v10-hero p{max-width:720px;margin:0!important;color:rgba(255,255,255,.82)!important;line-height:1.55;position:relative;z-index:1}
+.v10-pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:15px;position:relative;z-index:1}
+.v10-pill{display:inline-flex;align-items:center;gap:6px;padding:7px 11px;border-radius:999px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.16);font-size:11px;font-weight:800}
+.v10-services{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;margin:16px 0}
+.v10-service{border:1px solid #e2e8f0!important;border-radius:18px!important;padding:15px!important;background:rgba(255,255,255,.86)!important;box-shadow:0 10px 28px rgba(15,23,42,.055)!important;cursor:pointer;transition:.2s;min-height:112px}
+.v10-service:hover{transform:translateY(-3px);box-shadow:0 18px 35px rgba(15,23,42,.10)!important;border-color:#bfdbfe!important}
+.v10-service-icon{width:40px;height:40px;border-radius:13px;display:grid;place-items:center;background:#eff6ff;font-size:21px;margin-bottom:9px}
+.v10-service b{display:block;font-size:13px}.v10-service span{display:block;color:#64748b;font-size:11px;margin-top:3px;line-height:1.35}
+.v10-section-title{display:flex;align-items:end;justify-content:space-between;gap:10px;margin:20px 0 10px}.v10-section-title h3{margin:0;font-size:17px}.v10-section-title span{font-size:11px;color:#64748b}
+.v10-stat-grid{margin-top:0!important}
+.v10-stat-grid .stat{border-radius:18px!important;padding:17px!important;background:rgba(255,255,255,.88)!important;border:1px solid #e2e8f0;box-shadow:0 10px 28px rgba(15,23,42,.045)}
+.v10-stat-grid .stat span{font-size:11px}.v10-stat-grid .stat b{font-size:26px!important;margin-top:4px}
+.v10-workflow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.v10-step{padding:15px;border:1px solid #e2e8f0;border-radius:17px;background:#fff;position:relative}.v10-step-num{font-size:10px;font-weight:900;color:#2563eb}.v10-step b{display:block;margin:4px 0;font-size:13px}.v10-step span{font-size:11px;color:#64748b;line-height:1.4}
+.v10-quick{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.v10-quick .btn{border-radius:11px!important}
+.v10-admin-card{margin-top:16px!important;border-radius:18px!important;background:rgba(255,255,255,.76)!important}
+@media(max-width:1050px){.v10-services{grid-template-columns:repeat(3,minmax(0,1fr))}.v10-workflow{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){.top{height:64px!important;padding:0 10px!important}.brand{font-size:13px!important}.brand:after{display:none}.main{padding:12px!important}.v10-services{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.v10-service{min-height:102px;padding:12px!important}.v10-hero{padding:20px!important}.v10-hero h2{font-size:23px!important}.v10-workflow{grid-template-columns:1fr}.v10-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media(max-width:420px){.v10-services{grid-template-columns:1fr 1fr}.v10-service-icon{width:36px;height:36px}.v10-service b{font-size:12px}.v10-service span{font-size:10px}}
+/* Fix the post-login jump permanently. */
+body.v10-logged-in{overflow-x:hidden!important;overflow-y:auto!important}
+body.v10-login{overflow:hidden!important}
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<meta name="app-version" content="V9-BAB-FIX-2026-09-08">
+<meta name="app-version" content="V10-BOGOR-PORTAL-2026-09-08">
 
 <!-- GURU+ SD V9 • AUTO ORIENTATION -->
 <script>
@@ -208,13 +249,13 @@ h1,h2,h3{letter-spacing:-.25px}
 </script>
 
 </head>
-<body><!-- GURU+ SD V9 • FINAL LOGIN DESIGN -->
+<body class="v10-login"><!-- GURU+ SD V10 • FINAL LOGIN DESIGN -->
 
 <section id="loginScreen" class="login">
   <div class="card login-card">
     <div class="logo"><img src="logo-sekolah.png" alt="Logo sekolah"></div>
     <div class="center" style="margin-top:16px">
-      <h1>🚀 GURU+ SD</h1><div class="school-name">SDN Muarasari 1</div><div class="school-city">KOTA BOGOR</div><div class="badge" style="margin-top:10px">TA 2026/2027 • V9 FINAL</div>
+      <h1>🚀 GURU+ SD</h1><div class="school-name">SDN Muarasari 1</div><div class="school-city">KOTA BOGOR</div><div class="badge" style="margin-top:10px">TA 2026/2027 • V10 FINAL</div>
     </div>
     <form id="loginForm">
       <label>Username</label><input id="loginUser" autocomplete="username" required placeholder="Masukkan username">
@@ -237,7 +278,7 @@ h1,h2,h3{letter-spacing:-.25px}
 
 <section id="app" class="app">
 <header class="top">
-  <div style="display:flex;gap:10px;align-items:center"><button id="menuBtn" class="btn secondary menu-mobile">☰</button><div class="brand" style="display:flex;align-items:center;gap:9px"><img class="brand-logo" src="logo-sekolah.png" alt="Logo sekolah"> 🚀 GURU+ SD V9</div></div>
+  <div style="display:flex;gap:10px;align-items:center"><button id="menuBtn" class="btn secondary menu-mobile">☰</button><div class="brand" style="display:flex;align-items:center;gap:9px"><img class="brand-logo" src="logo-sekolah.png" alt="Logo sekolah"> 🚀 GURU+ SD V10</div></div>
   <div class="top-right"><div class="teacher-profile"><div class="teacher-avatar" id="teacherAvatar">👨‍🏫</div><div class="teacher-info"><div class="teacher-name" id="userLabel">Guru</div><div class="teacher-role" id="userRoleLabel">Guru Kelas</div></div></div><button id="logoutBtn" class="btn danger">Logout</button></div>
 </header>
 <div class="layout">
@@ -258,15 +299,37 @@ h1,h2,h3{letter-spacing:-.25px}
 </aside>
 <main class="main">
   <section id="dashboard" class="page active">
-    <h2>Dashboard</h2><p class="muted">Selamat datang di 🚀 GURU+ SD. Data akun dan data yang tersedia di D1 dibaca melalui Cloudflare Worker. Fitur lokal tetap dipertahankan untuk data kerja yang belum memiliki endpoint simpan di Worker.</p>
-    <div id="teacherClassBox" class="card panel" style="margin-top:12px;background:#eff6ff"><b id="teacherClassTitle">Kelas</b><div id="teacherClassInfo" class="muted" style="margin-top:4px"></div></div>
-    <div class="grid">
+    <div class="v10-hero">
+      <div class="v10-kicker">Portal Administrasi Guru • Kota Bogor</div>
+      <h2>Selamat datang di GURU+ SD V10 👋</h2>
+      <p>Satu portal untuk data siswa, penilaian, perangkat pembelajaran, AI Generate, LKPD, dan laporan guru. Dirancang dengan pola layanan terintegrasi seperti portal publik modern.</p>
+      <div class="v10-pills"><span class="v10-pill">🏫 SDN Muarasari 1</span><span class="v10-pill">📍 Kota Bogor</span><span class="v10-pill">📅 2026/2027</span><span class="v10-pill">⚡ Cloudflare + D1</span></div>
+    </div>
+    <div id="teacherClassBox" class="card panel v10-admin-card" style="background:#eff6ff"><b id="teacherClassTitle">Kelas</b><div id="teacherClassInfo" class="muted" style="margin-top:4px"></div></div>
+    <div class="v10-section-title"><h3>🚀 Akses layanan utama</h3><span>Pilih layanan untuk mulai bekerja</span></div>
+    <div class="v10-services">
+      <div class="v10-service" data-v10-page="students"><div class="v10-service-icon">👥</div><b>Data Siswa</b><span>Kelola data siswa & rombel</span></div>
+      <div class="v10-service" data-v10-page="scores"><div class="v10-service-icon">📝</div><b>Penilaian</b><span>Input nilai per BAB</span></div>
+      <div class="v10-service" data-v10-page="aiGenerate"><div class="v10-service-icon">🤖</div><b>AI Generate</b><span>Dokumen pembelajaran otomatis</span></div>
+      <div class="v10-service" data-v10-page="cp"><div class="v10-service-icon">📚</div><b>Perangkat</b><span>CP, TP, ATP, Prota, Prosem & RPM</span></div>
+      <div class="v10-service" data-v10-page="report"><div class="v10-service-icon">📊</div><b>Rapor</b><span>Rekap dan hasil belajar</span></div>
+      <div class="v10-service" data-v10-page="reference"><div class="v10-service-icon">📖</div><b>Referensi SIBI</b><span>Basis buku dan materi</span></div>
+    </div>
+    <div class="v10-section-title"><h3>📊 Ringkasan sistem</h3><span>Data akun aktif</span></div>
+    <div class="grid v10-stat-grid">
       <div class="card stat"><span class="muted">Siswa</span><b id="statStudents">0</b></div>
       <div class="card stat"><span class="muted">Nilai</span><b id="statScores">0</b></div>
       <div class="card stat"><span class="muted">Guru</span><b id="statTeachers">1</b></div>
       <div class="card stat"><span class="muted">Tahun</span><b>2026/27</b></div>
     </div>
-    <div class="card panel" style="margin-top:15px"><h3>Alur kerja</h3><p>1. Isi/import siswa → 2. CP/TP/ATP sudah terisi per kelas → 3. Prota/Prosem/RPM sudah terisi per kelas → 4. Input penilaian per BAB → 5. Cetak/lihat rapor → 6. Backup data.</p></div>
+    <div class="v10-section-title"><h3>🧭 Alur kerja</h3><span>Langkah kerja guru</span></div>
+    <div class="v10-workflow">
+      <div class="v10-step"><span class="v10-step-num">01</span><b>Data Master</b><span>Isi atau import siswa dan rombel.</span></div>
+      <div class="v10-step"><span class="v10-step-num">02</span><b>Perangkat</b><span>Siapkan CP, TP, ATP, Prota, Prosem dan RPM.</span></div>
+      <div class="v10-step"><span class="v10-step-num">03</span><b>Penilaian</b><span>Input nilai per BAB dan pantau perkembangan.</span></div>
+      <div class="v10-step"><span class="v10-step-num">04</span><b>Laporan</b><span>Cek rapor, cetak dokumen, dan backup data.</span></div>
+    </div>
+    <div class="v10-quick"><button class="btn primary" data-v10-page="aiGenerate">🤖 Mulai AI Generate</button><button class="btn secondary" data-v10-page="students">👥 Kelola Siswa</button><button class="btn secondary" data-v10-page="scores">📝 Input Nilai</button></div>
   </section>
 
   <section id="students" class="page">
@@ -365,7 +428,7 @@ h1,h2,h3{letter-spacing:-.25px}
 
   <section id="teachers" class="page"><h2>Database Guru</h2><p class="muted">Data guru dipetakan ke rombel IA, IB, IIA, IIB, IIIA, IIIB, IVA, IVB, V, VI. Login guru tetap diverifikasi oleh Cloudflare Worker + D1.</p><div class="card panel"><input id="tUser" placeholder="Username / NIP guru"><input id="tName" placeholder="Nama guru" style="margin-top:8px"><input id="tPass" type="password" placeholder="Password lokal (opsional)" style="margin-top:8px"><select id="tRole" style="margin-top:8px"><option value="guru">Guru Kelas</option><option value="admin">Administrator</option></select><select id="tClass" style="margin-top:8px"></select><button class="btn primary" id="addTeacher" style="margin-top:10px">+ Tambah Guru</button></div><div class="card panel"><b>Import Data Guru</b><p class="muted">CSV: username/nip,nama,rombel,role,password. Rom-bel seperti 1 A otomatis menjadi IA. Password boleh dikosongkan; akun login server tetap mengikuti D1.</p><input type="file" id="teacherCsvFile" accept=".csv,text/csv"><button class="btn secondary" id="importTeacherCsv" style="margin-top:10px">Import CSV Guru</button><div id="teacherImportMsg" class="alert"></div></div><div class="card panel tablewrap"><table class="table"><thead><tr><th>Username/NIP</th><th>Nama</th><th>Peran</th><th>Rombel</th><th>Aksi</th></tr></thead><tbody id="teacherTable"></tbody></table></div></section>
 
-  <section id="reference" class="page"><h2>Referensi SIBI & Basis V9 FINAL</h2><div class="card panel"><p><b>Basis CP:</b> Keputusan Kepala BSKAP Nomor 046/H/KR/2025. <b>Basis buku:</b> struktur BAB/Unit mengikuti buku yang dipilih sekolah; untuk contoh Kelas V, aplikasi sudah memuat struktur dari buku yang diunggah.</p><p>Untuk tahun pelajaran 2026/2027, V9 tetap menggunakan baseline regulasi 2025 sesuai konfigurasi aplikasi. Teks CP resmi tetap menjadi rujukan utama dan tidak digantikan oleh hasil AI.</p><div id="bookBasisStatus" class="alert successbox" style="display:block"></div><p><a href="https://buku.kemendikdasmen.go.id/katalog" target="_blank" rel="noopener">Buka Katalog Buku SIBI</a></p><p><a href="https://kurikulum.kemendikdasmen.go.id/panduan-mapel" target="_blank" rel="noopener">Panduan Mata Pelajaran</a></p><div id="babReference"></div></div></section>
+  <section id="reference" class="page"><h2>Referensi SIBI & Basis V10</h2><div class="card panel"><p><b>Basis CP:</b> Keputusan Kepala BSKAP Nomor 046/H/KR/2025. <b>Basis buku:</b> struktur BAB/Unit mengikuti buku yang dipilih sekolah; untuk contoh Kelas V, aplikasi sudah memuat struktur dari buku yang diunggah.</p><p>Untuk tahun pelajaran 2026/2027, V9 tetap menggunakan baseline regulasi 2025 sesuai konfigurasi aplikasi. Teks CP resmi tetap menjadi rujukan utama dan tidak digantikan oleh hasil AI.</p><div id="bookBasisStatus" class="alert successbox" style="display:block"></div><p><a href="https://buku.kemendikdasmen.go.id/katalog" target="_blank" rel="noopener">Buka Katalog Buku SIBI</a></p><p><a href="https://kurikulum.kemendikdasmen.go.id/panduan-mapel" target="_blank" rel="noopener">Panduan Mata Pelajaran</a></p><div id="babReference"></div></div></section>
 
   <section id="backup" class="page"><h2>Backup / Restore</h2><div class="card panel"><p>Backup menyimpan data aplikasi lokal sebagai file JSON.</p><button class="btn primary" id="backupBtn">⬇ Backup JSON</button><label style="margin-top:18px">Restore JSON</label><input type="file" id="restoreFile" accept=".json"><button class="btn secondary" id="restoreBtn" style="margin-top:10px">Restore Data</button><div id="backupMsg" class="alert"></div></div></section>
 </main></div>
@@ -374,8 +437,8 @@ h1,h2,h3{letter-spacing:-.25px}
 <script>
 (function(){
 'use strict';
-const KEY='guru_plus_sd_v9_2026_2027';
-const APP_VERSION='V9 FINAL • AI Terkunci Referensi Buku • Basis BSKAP 2025 + SIBI';
+const KEY='guru_plus_sd_v10_2026_2027';
+const APP_VERSION='V10 FINAL • Portal Administrasi Guru • AI Terkunci Referensi Buku';
 const API_BASE='https://adm-sd.adm-sd.workers.dev/api';
 const LOGIN_API=API_BASE+'/login';
 const MAPEL=['Bahasa Indonesia','Pendidikan Pancasila','Matematika','IPAS','PJOK','Seni Rupa','Seni Musik','Seni Tari','Seni Teater','Bahasa Inggris','Pendidikan Agama dan Budi Pekerti'];
@@ -575,6 +638,7 @@ function setClassSelect(idName, value){
 }
 function buildNav(){const side=id('sidebar');if(!side)return;side.querySelectorAll('.navbtn').forEach(b=>b.onclick=()=>showPage(b.dataset.page));side.querySelectorAll('.navgroup').forEach(b=>b.onclick=()=>b.parentElement.classList.toggle('open'));syncRoleMenu()}
 function syncRoleMenu(){const admin=!isGuruKelas();document.querySelectorAll('.admin-only').forEach(b=>b.style.display=admin?'':'none');document.querySelectorAll('.menu-group.admin-only').forEach(b=>b.style.display=admin?'block':'none')}
+document.addEventListener('click',function(e){const el=e.target.closest('[data-v10-page]');if(el&&typeof showPage==='function'){showPage(el.getAttribute('data-v10-page'));window.scrollTo({top:0,left:0,behavior:'auto'});}});
 function showPage(p){
   if(isGuruKelas()&&['teachers','importScores','backup'].includes(p))p='dashboard';
   document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));id(p).classList.add('active');document.querySelectorAll('.navbtn').forEach(x=>x.classList.toggle('active',x.dataset.page===p));id('sidebar').classList.remove('open');if(p==='students')renderStudents();if(p==='teachers')renderTeachers();if(p==='scores')renderScores();if(p==='report')renderReport();if(p==='reference')renderReference()}
@@ -864,10 +928,13 @@ async function remoteLogin(username,password){
 }
 async function finishLogin(t){
   currentTeacher=t;
+  document.body.classList.remove('v10-login');
+  document.body.classList.add('v10-logged-in');
+  window.scrollTo(0,0);document.documentElement.scrollTop=0;document.body.scrollTop=0;
   localStorage.setItem('siLogin',JSON.stringify(t));
   if(t.token) localStorage.setItem('siAuthToken',t.token); else localStorage.removeItem('siAuthToken');
   updateTeacherProfile(t);
-  id('loginScreen').style.display='none';id('app').style.display='block';id('loginError').style.display='none';
+  id('loginScreen').style.display='none';id('app').style.display='block';window.scrollTo({top:0,left:0,behavior:'auto'});document.documentElement.scrollTop=0;document.body.scrollTop=0;id('loginError').style.display='none';
   applyClassLock();syncRoleMenu();initAIGenerator();renderBookBasisStatus();renderStats();renderStudents();renderScores();renderReport();showPage(t.role==='guru'?'students':'dashboard');
   // Sinkronisasi D1 berjalan di belakang layar agar login tidak tertahan.
   syncRemoteData(t).catch(err=>console.warn('Sinkronisasi D1 gagal:',err));
@@ -903,7 +970,7 @@ id('loginForm').onsubmit=async e=>{
   try{const t=await remoteLogin(u,p);await finishLogin(t)}catch(err){id('loginError').textContent=err.message||'Login gagal. Pastikan Worker dapat diakses.';id('loginError').style.display='block'}finally{btn.disabled=false;btn.textContent='MASUK KE SISTEM'}
 };
 id('showPass').onclick=()=>{id('loginPass').type=id('loginPass').type==='password'?'text':'password';id('showPass').textContent=id('loginPass').type==='password'?'Lihat':'Sembunyi'}
-id('logoutBtn').onclick=()=>{currentTeacher=null;localStorage.removeItem('siLogin');localStorage.removeItem('siAuthToken');id('app').style.display='none';id('loginScreen').style.display='grid';id('loginPass').value=''}
+id('logoutBtn').onclick=()=>{currentTeacher=null;localStorage.removeItem('siLogin');localStorage.removeItem('siAuthToken');document.body.classList.remove('v10-logged-in');document.body.classList.add('v10-login');id('app').style.display='none';id('loginScreen').style.display='grid';id('loginPass').value='';window.scrollTo(0,0);document.documentElement.scrollTop=0;document.body.scrollTop=0}
 id('menuBtn').onclick=()=>id('sidebar').classList.toggle('open')
 const photoPicker=document.createElement('input');photoPicker.type='file';photoPicker.accept='image/*';photoPicker.style.display='none';document.body.appendChild(photoPicker);
 id('teacherAvatar')?.addEventListener('click',()=>photoPicker.click());id('teacherAvatar')?.setAttribute('title','Klik untuk mengganti foto profil');

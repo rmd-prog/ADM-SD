@@ -166,6 +166,45 @@ export default {
         return json({ ok: true, rombel: requested || own, data: result.results });
       }
 
+      // IMPORT DATA SISWA — khusus administrator, dari CSV ke D1
+      if (url.pathname === "/api/siswa/import" && request.method === "POST") {
+        if (user.role !== "admin") return json({ ok: false, message: "Khusus administrator." }, 403);
+        const body = await request.json();
+        const items = Array.isArray(body.items) ? body.items : [];
+        if (!items.length) return json({ ok: false, message: "Tidak ada data siswa untuk diimport." }, 400);
+
+        const c = await columns(env, "siswa");
+        const nameCol = c.has("nama") ? "nama" : c.has("name") ? "name" : c.has("nama_siswa") ? "nama_siswa" : c.has("nama_lengkap") ? "nama_lengkap" : null;
+        const nisCol = c.has("nis") ? "nis" : c.has("nisn") ? "nisn" : null;
+        const classCol = c.has("rombel") ? "rombel" : c.has("kelas") ? "kelas" : null;
+        const absenCol = c.has("absen") ? "absen" : c.has("no_absen") ? "no_absen" : c.has("nomor_absen") ? "nomor_absen" : null;
+        if (!nameCol || !classCol) return json({ ok: false, message: "Kolom tabel siswa tidak cocok. Minimal harus ada kolom nama dan kelas/rombel." }, 500);
+
+        const cols = [nameCol];
+        if (nisCol) cols.push(nisCol);
+        if (classCol !== nameCol && !cols.includes(classCol)) cols.push(classCol);
+        if (absenCol && !cols.includes(absenCol)) cols.push(absenCol);
+
+        const replace = body.replace === true;
+        if (replace) await env.DB.prepare("DELETE FROM siswa").run();
+
+        const statements = [];
+        for (const item of items) {
+          const nama = String(item.nama ?? item.name ?? "").trim();
+          if (!nama) continue;
+          const vals = [nama];
+          if (nisCol) vals.push(String(item.nis ?? item.nisn ?? "").trim());
+          if (classCol) vals.push(cleanRombel(item.rombel ?? item.kelas ?? ""));
+          if (absenCol) vals.push(String(item.absen ?? item.no_absen ?? item.nomor_absen ?? "").trim());
+          const placeholders = cols.map(() => "?").join(",");
+          statements.push(env.DB.prepare(`INSERT INTO siswa (${cols.join(",")}) VALUES (${placeholders})`).bind(...vals));
+        }
+        for (let i = 0; i < statements.length; i += 50) {
+          await env.DB.batch(statements.slice(i, i + 50));
+        }
+        return json({ ok: true, imported: statements.length, replaced: replace, message: `${statements.length} siswa berhasil disimpan ke D1.` });
+      }
+
       // DATA GURU / USERS
       if (url.pathname === "/api/guru" && request.method === "GET") {
         if (user.role !== "admin") return json({ ok: false, message: "Khusus administrator." }, 403);

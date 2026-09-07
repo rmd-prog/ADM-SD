@@ -89,7 +89,7 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb;box-shadow:0 0 0 3p
   </section>
 
   <section id="import" class="page">
-    <h2>Import Data Siswa</h2><p class="muted">Gunakan CSV sederhana: nama,nis,rombel,absen. Baris pertama boleh berupa judul kolom.</p>
+    <h2>Import Data Siswa</h2><p class="muted">Gunakan CSV sederhana: nama,nis,kelas,absen. Import administrator akan menyimpan data langsung ke Cloudflare D1. Data lama akan diganti agar jumlah siswa sesuai CSV.</p>
     <div class="card panel"><input type="file" id="csvFile" accept=".csv,text/csv"><button class="btn primary" id="importCsv" style="margin-top:10px">Import CSV</button><div id="importMsg" class="alert"></div></div>
   </section>
 
@@ -434,8 +434,29 @@ id('selectAllStudents').onclick=()=>{if(isGuruKelas())return;document.querySelec
 id('clearSelectedStudents').onclick=()=>{document.querySelectorAll('.studentCheck').forEach(c=>c.checked=false);if(id('selectAllStudentCheck'))id('selectAllStudentCheck').checked=false}
 id('moveStudentsBtn').onclick=async()=>{if(isGuruKelas())return alert('Fitur ini khusus administrator.');const target=normalizeRombel(id('moveRombel').value);const selected=[...document.querySelectorAll('.studentCheck:checked')].map(c=>db.students[+c.dataset.index]).filter(Boolean);if(!ROMBELS.includes(target))return alert('Pilih rombel tujuan.');if(!selected.length)return alert('Pilih siswa yang akan dipindahkan.');if(selected.some(s=>!s.id))return alert('Sebagian siswa tidak memiliki ID D1. Sinkronkan data terlebih dahulu.');if(!confirm('Pindahkan '+selected.length+' siswa ke rombel '+target+'?'))return;const token=sessionStorage.getItem('siAuthToken')||'';const res=await fetch(API_BASE+'/siswa/atur-rombel',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:JSON.stringify({rombel:target,items:selected.map(s=>({id:String(s.id)}))})});let payload={};try{payload=await res.json()}catch(e){}if(!res.ok||payload.ok===false)return alert(payload.message||'Gagal mengatur rombel.');selected.forEach(s=>{s.kelas=target;s.rombel=target});save();id('moveRombel').value='';renderStudents();id('rombelMoveMsg').textContent=payload.updated+' siswa berhasil dipindahkan ke rombel '+target+'.';id('rombelMoveMsg').className='alert successbox';id('rombelMoveMsg').style.display='block'}
 id('addStudent').onclick=()=>{let name=id('sName').value.trim();if(!name)return alert('Nama siswa wajib diisi.');let kelas=isGuruKelas()?allowedClass():normalizeRombel(id('sClass').value);db.students.push({name,nis:id('sNis').value.trim()||('S'+Date.now()),kelas,rombel:kelas,absen:id('sAbsen').value.trim()});['sName','sNis','sAbsen'].forEach(x=>id(x).value='');save();renderStudents()}
-id('importCsv').onclick=()=>{let f=id('csvFile').files[0];if(!f)return alert('Pilih file CSV dulu.');let r=new FileReader();r.onload=()=>{let lines=r.result.split(/\r?\n/).filter(x=>x.trim());let count=0;lines.forEach((line,i)=>{let a=line.split(',').map(x=>x.trim().replace(/^"|"$/g,''));if(i===0&&/nama/i.test(a[0]))return;if(a[0]){const rk=isGuruKelas()?allowedClass():normalizeRombel(a[2]||'IA');db.students.push({name:a[0],nis:a[1]||('S'+Date.now()+count),kelas:rk,rombel:rk,absen:a[3]||''});count++}});save();renderStudents();id('importMsg').textContent=count+' siswa berhasil diimport.';id('importMsg').className='alert successbox';id('importMsg').style.display='block'};r.readAsText(f)}
-;[['cp','cpText','cpKelas','cpMapel'],['tp','tpText','tpKelas','tpMapel'],['atp','atpText','atpKelas','atpMapel'],['prota','protaText','protaKelas','protaMapel'],['prosem','prosemText','prosemKelas','prosemMapel']].forEach(([k,el,ck,cm])=>id('save'+k[0].toUpperCase()+k.slice(1)).onclick=()=>{let kelas=normalizeRombel(id(ck).value);if(isGuruKelas()&&kelas!==allowedClass())return alert('Akses ditolak: kelas akun guru tidak sesuai.');db.texts[docKey(k,kelas,id(cm).value)]=id(el).value;save();alert(k.toUpperCase()+' tersimpan.')})
+id('importCsv').onclick=async()=>{
+  const f=id('csvFile').files[0]; if(!f)return alert('Pilih file CSV dulu.');
+  if(isGuruKelas()) return alert('Import data siswa hanya dapat dilakukan administrator.');
+  const text=await f.text();
+  const lines=text.split(/\r?\n/).filter(x=>x.trim());
+  const items=[];
+  const parseCsvLine=(line)=>{const out=[];let cur='',q=false;for(let i=0;i<line.length;i++){const ch=line[i];if(ch==='"'){if(q&&line[i+1]==='"'){cur+='"';i++;}else q=!q;}else if(ch===','&&!q){out.push(cur.trim());cur='';}else cur+=ch;}out.push(cur.trim());return out;};
+  lines.forEach((line,i)=>{const a=parseCsvLine(line).map(x=>x.replace(/^"|"$/g,''));if(i===0&&/nama/i.test(a[0]||''))return;if(a[0])items.push({nama:a[0],nis:a[1]||'',kelas:a[2]||'',absen:a[3]||''});});
+  if(!items.length)return alert('Tidak ada data siswa yang terbaca.');
+  if(!confirm('Simpan '+items.length+' siswa ke D1 dan ganti data siswa lama?'))return;
+  const token=sessionStorage.getItem('siAuthToken')||'';
+  const btn=id('importCsv');btn.disabled=true;btn.textContent='MENYIMPAN KE D1...';
+  try{
+    const res=await fetch(API_BASE+'/siswa/import',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:JSON.stringify({items,replace:true})});
+    let payload={};try{payload=await res.json()}catch(e){}
+    if(!res.ok||payload.ok===false)throw new Error(payload.message||'Import ke D1 gagal.');
+    db.students=items.map((x,i)=>{const r=normalizeRombel(x.kelas);return {id:'local-'+(i+1),name:x.nama,nis:x.nis,kelas:r,rombel:r,absen:x.absen}});
+    save();renderStats();renderStudents();renderScores();renderReport();
+    id('importMsg').textContent=payload.message||(''+items.length+' siswa berhasil disimpan ke D1.');id('importMsg').className='alert successbox';id('importMsg').style.display='block';
+    await syncRemoteData(currentTeacher);
+  }catch(e){id('importMsg').textContent='Gagal: '+(e.message||'periksa Worker/D1.');id('importMsg').className='alert';id('importMsg').style.display='block';}
+  finally{btn.disabled=false;btn.textContent='Import CSV';}
+}
 id('saveRpm').onclick=()=>{if(isGuruKelas()&&normalizeRombel(id('rpmKelas').value)!==allowedClass())return alert('Akses ditolak: kelas akun guru tidak sesuai.');let key=docKey('rpm',id('rpmKelas').value,id('rpmMapel').value)+'|'+id('rpmBab').value;db.rpm[key]=id('rpmText').value;save();alert('RPM tersimpan.')}
 ;['scoreMapel','scoreKelas'].forEach(k=>id(k).onchange=()=>{updateBab();renderScores()});
 ;['rpmMapel','rpmKelas','rpmBab'].forEach(k=>id(k).onchange=()=>{updateBab();loadDocFields()});

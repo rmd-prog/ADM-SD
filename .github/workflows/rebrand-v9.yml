@@ -1,0 +1,37 @@
+name: Apply GURU+ SD V9 branding
+
+on:
+  push:
+    paths:
+      - '.github/workflows/rebrand-v9.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  rebrand:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update branding
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          s = s.replace('SI-NILAI SD', '🚀 GURU+ SD')
+          s = s.replace('SI-NILAI', 'GURU+')
+          s = s.replace('V8', 'V9')
+          s = s.replace('v8', 'v9')
+          s = s.replace('si_nilai_sd_v9_2026_2027', 'guru_plus_sd_v9_2026_2027')
+          s = s.replace('backup-si-nilai-sd-2026-2027.json', 'backup-guru-plus-sd-2026-2027.json')
+          p.write_text(s, encoding='utf-8')
+          PY
+      - name: Commit branding update
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m 'feat: rebrand app to GURU+ SD V9 🚀'
+          git push

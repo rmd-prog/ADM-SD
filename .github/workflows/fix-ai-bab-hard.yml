@@ -1,0 +1,81 @@
+name: Fix AI BAB Hard Lock
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: github.event.head_commit.message != 'fix: hard lock AI BAB dropdown to book catalog'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch index.html
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          marker='<!-- V8 HARD BAB LOCK 2026-09-08 -->'
+          if marker not in s:
+              patch=r'''<!-- V8 HARD BAB LOCK 2026-09-08 -->
+<script>
+(function(){
+  const FIX='V8-HARD-BAB-LOCK-2026-09-08';
+  window.__AI_BAB_FIX=FIX;
+  function apply(){
+    try{
+      if(typeof BOOK_CATALOG==='undefined'||typeof gradeOf!=='function'||typeof normalizeRombel!=='function') return;
+      const getUnits=(mapel,kelas)=>{
+        const g=gradeOf(kelas);
+        const b=BOOK_CATALOG?.[mapel]?.[g];
+        return (b&&Array.isArray(b.chapters)&&b.chapters.length)?b.chapters.slice():[];
+      };
+      const put=(sel,mapel,kelas)=>{
+        if(!sel) return;
+        const units=getUnits(mapel,kelas);
+        if(!units.length) return;
+        const old=Number(sel.value||0);
+        sel.innerHTML=units.map((x,i)=>'<option value="'+i+'">BAB '+(i+1)+' — '+esc(String(x))+'</option>').join('');
+        sel.value=String(Math.min(Number.isFinite(old)?old:0,units.length-1));
+      };
+      const k=normalizeRombel(document.getElementById('rpmKelas')?.value||'');
+      const m=document.getElementById('rpmMapel')?.value||'';
+      const rpm=document.getElementById('rpmBab');
+      put(rpm,m,k);
+      const ak=document.getElementById('aiKelas');
+      const am=document.getElementById('aiMapel');
+      const ab=document.getElementById('aiBab');
+      if(ab&&ak&&am){
+        const units=getUnits(am.value,normalizeRombel(ak.value));
+        if(units.length){
+          ab.innerHTML=units.map((x,i)=>'<option value="'+i+'">BAB '+(i+1)+' — '+esc(String(x))+'</option>').join('');
+          if(rpm) ab.value=rpm.value;
+        }
+      }
+    }catch(e){console.warn('BAB hard lock:',e)}
+  }
+  function run(){ apply(); setTimeout(apply,50); setTimeout(apply,300); setTimeout(apply,1000); }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',run); else run();
+  ['rpmKelas','rpmMapel','aiKelas','aiMapel'].forEach(id=>document.getElementById(id)?.addEventListener('change',()=>setTimeout(apply,0)));
+})();
+</script>
+'''
+              s=s.replace('</body>',patch+'</body>')
+              p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet || git commit -m "fix: hard lock AI BAB dropdown to book catalog"
+          git push
+      - name: Remove one-time workflow
+        if: success()
+        run: |
+          git rm .github/workflows/fix-ai-bab-hard.yml || true
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: remove one-time BAB hard lock workflow" || true
+          git push || true

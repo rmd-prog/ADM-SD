@@ -1,4 +1,4 @@
-name: Apply GURU+ SD V9 branding
+name: Fix V10 login viewport
 
 on:
   push:
@@ -9,29 +9,40 @@ permissions:
   contents: write
 
 jobs:
-  rebrand:
+  fix-login:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Update branding
+      - name: Patch login viewport safely
         run: |
           python - <<'PY'
           from pathlib import Path
           p = Path('index.html')
           s = p.read_text(encoding='utf-8')
-          s = s.replace('SI-NILAI SD', '🚀 GURU+ SD')
-          s = s.replace('SI-NILAI', 'GURU+')
-          s = s.replace('V8', 'V9')
-          s = s.replace('v8', 'v9')
-          s = s.replace('si_nilai_sd_v9_2026_2027', 'guru_plus_sd_v9_2026_2027')
-          s = s.replace('backup-si-nilai-sd-2026-2027.json', 'backup-guru-plus-sd-2026-2027.json')
-          p.write_text(s, encoding='utf-8')
+          css = '''
+          /* V10 LOGIN: single-screen, no page scroll */
+          html,body{width:100%;min-height:100%;overflow-x:hidden}
+          body.v10-login-lock{height:100svh!important;min-height:100svh!important;overflow:hidden!important;overscroll-behavior:none!important}
+          body.v10-login-lock .login{position:fixed!important;inset:0!important;width:100%!important;height:100svh!important;min-height:100svh!important;overflow:hidden!important;display:grid!important;place-items:center!important;padding:clamp(10px,2.5vh,22px)!important}
+          body.v10-login-lock .login-card{max-height:calc(100svh - 20px)!important;overflow:hidden!important}
+          @media(max-height:700px){body.v10-login-lock .login-card{padding:18px!important}.login-card .logo{width:72px;height:72px}.login-card label{margin:9px 0 5px}.login-card .wide{margin-top:12px}.login-card .demo{margin-top:9px}}
+          @media(max-height:560px){body.v10-login-lock .login-card{padding:13px!important}.login-card .logo{width:58px;height:58px}.login-card h1{font-size:20px}.login-card label{margin:6px 0 4px}.login-card input{padding:9px 11px}.login-card .wide{margin-top:8px}.login-card .demo{padding:7px;margin-top:6px;font-size:11px}}
+          '''
+          marker='</style>'
+          if '/* V10 LOGIN: single-screen, no page scroll */' not in s:
+              if marker not in s:
+                  raise SystemExit('style marker not found')
+              s=s.replace(marker,css+'\n'+marker,1)
+          script='''\n<script>\n(function(){\n  function sync(){\n    var app=document.querySelector('.app');\n    var login=document.querySelector('.login');\n    var logged=app && getComputedStyle(app).display !== 'none';\n    document.body.classList.toggle('v10-login-lock',!!login && !logged);\n  }\n  sync();\n  new MutationObserver(sync).observe(document.documentElement,{subtree:true,attributes:true,attributeFilter:['style','class']});\n  window.addEventListener('resize',sync,{passive:true});\n})();\n</script>\n'''
+          if 'v10-login-lock' not in s[s.find('</style>'):]:
+              s=s.replace('</body>',script+'</body>',1)
+          p.write_text(s,encoding='utf-8')
           PY
-      - name: Commit branding update
+      - name: Commit patch and remove temporary workflow
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
-          git diff --cached --quiet && exit 0
-          git commit -m 'feat: rebrand app to GURU+ SD V9 🚀'
+          git rm .github/workflows/rebrand-v9.yml
+          git commit -m 'fix: V10 login stays fixed to viewport without scroll'
           git push

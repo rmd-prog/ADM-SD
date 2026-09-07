@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#2563eb">
-<title>SI-NILAI SD V8 FINAL FINAL — 2026/2027 • Perangkat Pembelajaran Lengkap</title>
+<title>🚀 GURU+ SD V9 FINAL FINAL — 2026/2027 • Perangkat Pembelajaran Lengkap</title>
 <style>
 *{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:#f1f5f9;color:#172033}
 button,input,select,textarea{font:inherit}button{cursor:pointer}#aiGenerate select,#aiGenerate input,#aiGenerate button{position:relative;z-index:2;pointer-events:auto;touch-action:manipulation}#aiGenerate .panel,#aiGenerate .doc-hero{position:relative;z-index:1}
@@ -169,14 +169,14 @@ input:focus,select:focus,textarea:focus{border-color:#8b5cf6;box-shadow:0 0 0 4p
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<meta name="app-version" content="V8-BAB-FIX-2026-09-08">
+<meta name="app-version" content="V9-BAB-FIX-2026-09-08">
 </head>
 <body>
 <section id="loginScreen" class="login">
   <div class="card login-card">
     <div class="logo"><img src="logo-sekolah.png" alt="Logo sekolah"></div>
     <div class="center" style="margin-top:16px">
-      <h1>SI-NILAI SD</h1><div class="badge" style="margin-top:10px">TA 2026/2027 • V8 FINAL</div>
+      <h1>🚀 GURU+ SD</h1><div class="badge" style="margin-top:10px">TA 2026/2027 • V9 FINAL</div>
     </div>
     <form id="loginForm">
       <label>Username</label><input id="loginUser" autocomplete="username" required placeholder="Masukkan username">
@@ -199,7 +199,7 @@ input:focus,select:focus,textarea:focus{border-color:#8b5cf6;box-shadow:0 0 0 4p
 
 <section id="app" class="app">
 <header class="top">
-  <div style="display:flex;gap:10px;align-items:center"><button id="menuBtn" class="btn secondary menu-mobile">☰</button><div class="brand" style="display:flex;align-items:center;gap:9px"><img class="brand-logo" src="logo-sekolah.png" alt="Logo sekolah"> SI-NILAI SD V8</div></div>
+  <div style="display:flex;gap:10px;align-items:center"><button id="menuBtn" class="btn secondary menu-mobile">☰</button><div class="brand" style="display:flex;align-items:center;gap:9px"><img class="brand-logo" src="logo-sekolah.png" alt="Logo sekolah"> 🚀 GURU+ SD V9</div></div>
   <div class="top-right"><div class="teacher-profile"><div class="teacher-avatar" id="teacherAvatar">👨‍🏫</div><div class="teacher-info"><div class="teacher-name" id="userLabel">Guru</div><div class="teacher-role" id="userRoleLabel">Guru Kelas</div></div></div><button id="logoutBtn" class="btn danger">Logout</button></div>
 </header>
 <div class="layout">
@@ -220,7 +220,7 @@ input:focus,select:focus,textarea:focus{border-color:#8b5cf6;box-shadow:0 0 0 4p
 </aside>
 <main class="main">
   <section id="dashboard" class="page active">
-    <h2>Dashboard</h2><p class="muted">Selamat datang di SI-NILAI SD. Data akun dan data yang tersedia di D1 dibaca melalui Cloudflare Worker. Fitur lokal tetap dipertahankan untuk data kerja yang belum memiliki endpoint simpan di Worker.</p>
+    <h2>Dashboard</h2><p class="muted">Selamat datang di 🚀 GURU+ SD. Data akun dan data yang tersedia di D1 dibaca melalui Cloudflare Worker. Fitur lokal tetap dipertahankan untuk data kerja yang belum memiliki endpoint simpan di Worker.</p>
     <div id="teacherClassBox" class="card panel" style="margin-top:12px;background:#eff6ff"><b id="teacherClassTitle">Kelas</b><div id="teacherClassInfo" class="muted" style="margin-top:4px"></div></div>
     <div class="grid">
       <div class="card stat"><span class="muted">Siswa</span><b id="statStudents">0</b></div>
@@ -327,7 +327,7 @@ input:focus,select:focus,textarea:focus{border-color:#8b5cf6;box-shadow:0 0 0 4p
 
   <section id="teachers" class="page"><h2>Database Guru</h2><p class="muted">Data guru dipetakan ke rombel IA, IB, IIA, IIB, IIIA, IIIB, IVA, IVB, V, VI. Login guru tetap diverifikasi oleh Cloudflare Worker + D1.</p><div class="card panel"><input id="tUser" placeholder="Username / NIP guru"><input id="tName" placeholder="Nama guru" style="margin-top:8px"><input id="tPass" type="password" placeholder="Password lokal (opsional)" style="margin-top:8px"><select id="tRole" style="margin-top:8px"><option value="guru">Guru Kelas</option><option value="admin">Administrator</option></select><select id="tClass" style="margin-top:8px"></select><button class="btn primary" id="addTeacher" style="margin-top:10px">+ Tambah Guru</button></div><div class="card panel"><b>Import Data Guru</b><p class="muted">CSV: username/nip,nama,rombel,role,password. Rom-bel seperti 1 A otomatis menjadi IA. Password boleh dikosongkan; akun login server tetap mengikuti D1.</p><input type="file" id="teacherCsvFile" accept=".csv,text/csv"><button class="btn secondary" id="importTeacherCsv" style="margin-top:10px">Import CSV Guru</button><div id="teacherImportMsg" class="alert"></div></div><div class="card panel tablewrap"><table class="table"><thead><tr><th>Username/NIP</th><th>Nama</th><th>Peran</th><th>Rombel</th><th>Aksi</th></tr></thead><tbody id="teacherTable"></tbody></table></div></section>
 
-  <section id="reference" class="page"><h2>Referensi SIBI & Basis V8 FINAL</h2><div class="card panel"><p><b>Basis CP:</b> Keputusan Kepala BSKAP Nomor 046/H/KR/2025. <b>Basis buku:</b> struktur BAB/Unit mengikuti buku yang dipilih sekolah; untuk contoh Kelas V, aplikasi sudah memuat struktur dari buku yang diunggah.</p><p>Untuk tahun pelajaran 2026/2027, V8 tetap menggunakan baseline regulasi 2025 sesuai konfigurasi aplikasi. Teks CP resmi tetap menjadi rujukan utama dan tidak digantikan oleh hasil AI.</p><div id="bookBasisStatus" class="alert successbox" style="display:block"></div><p><a href="https://buku.kemendikdasmen.go.id/katalog" target="_blank" rel="noopener">Buka Katalog Buku SIBI</a></p><p><a href="https://kurikulum.kemendikdasmen.go.id/panduan-mapel" target="_blank" rel="noopener">Panduan Mata Pelajaran</a></p><div id="babReference"></div></div></section>
+  <section id="reference" class="page"><h2>Referensi SIBI & Basis V9 FINAL</h2><div class="card panel"><p><b>Basis CP:</b> Keputusan Kepala BSKAP Nomor 046/H/KR/2025. <b>Basis buku:</b> struktur BAB/Unit mengikuti buku yang dipilih sekolah; untuk contoh Kelas V, aplikasi sudah memuat struktur dari buku yang diunggah.</p><p>Untuk tahun pelajaran 2026/2027, V9 tetap menggunakan baseline regulasi 2025 sesuai konfigurasi aplikasi. Teks CP resmi tetap menjadi rujukan utama dan tidak digantikan oleh hasil AI.</p><div id="bookBasisStatus" class="alert successbox" style="display:block"></div><p><a href="https://buku.kemendikdasmen.go.id/katalog" target="_blank" rel="noopener">Buka Katalog Buku SIBI</a></p><p><a href="https://kurikulum.kemendikdasmen.go.id/panduan-mapel" target="_blank" rel="noopener">Panduan Mata Pelajaran</a></p><div id="babReference"></div></div></section>
 
   <section id="backup" class="page"><h2>Backup / Restore</h2><div class="card panel"><p>Backup menyimpan data aplikasi lokal sebagai file JSON.</p><button class="btn primary" id="backupBtn">⬇ Backup JSON</button><label style="margin-top:18px">Restore JSON</label><input type="file" id="restoreFile" accept=".json"><button class="btn secondary" id="restoreBtn" style="margin-top:10px">Restore Data</button><div id="backupMsg" class="alert"></div></div></section>
 </main></div>
@@ -336,8 +336,8 @@ input:focus,select:focus,textarea:focus{border-color:#8b5cf6;box-shadow:0 0 0 4p
 <script>
 (function(){
 'use strict';
-const KEY='si_nilai_sd_v8_2026_2027';
-const APP_VERSION='V8 FINAL • AI Terkunci Referensi Buku • Basis BSKAP 2025 + SIBI';
+const KEY='guru_plus_sd_v9_2026_2027';
+const APP_VERSION='V9 FINAL • AI Terkunci Referensi Buku • Basis BSKAP 2025 + SIBI';
 const API_BASE='https://adm-sd.adm-sd.workers.dev/api';
 const LOGIN_API=API_BASE+'/login';
 const MAPEL=['Bahasa Indonesia','Pendidikan Pancasila','Matematika','IPAS','PJOK','Seni Rupa','Seni Musik','Seni Tari','Seni Teater','Bahasa Inggris','Pendidikan Agama dan Budi Pekerti'];
@@ -353,7 +353,7 @@ const BAB={
 'Pendidikan Pancasila':{4:['Mengenal Lingkungan Sekitar','Aku Anak yang Disiplin','Kerja Sama di Lingkunganku','Pancasila dalam Diriku']},
 'Matematika':{4:['Bilangan Cacah sampai 10.000','Pecahan','Pola Gambar dan Pola Bilangan','Pengukuran Luas dan Volume','Bangun Datar','Piktogram dan Diagram Batang']}
 };
-// V8 FINAL — Basis buku contoh yang diunggah pengguna + rujukan resmi SIBI/BSKAP 2025.
+// V9 FINAL — Basis buku contoh yang diunggah pengguna + rujukan resmi SIBI/BSKAP 2025.
 const BOOK_CATALOG={
   // Kelas V: dikunci ke PDF referensi yang diunggah pengguna.
   'Bahasa Indonesia':{
@@ -636,7 +636,7 @@ function renderAIPaper(type,title,text,k,m,bab,size='A4',orientation='portrait',
       +'<div style="flex:1;min-width:0">'
         +'<div class="ai-theme-badge">'+theme.emoji+' Tema: '+escHtml(theme.label)+'</div>'
         +'<h1 class="ai-paper-title">'+escHtml(title)+'</h1>'
-        +'<div class="ai-paper-meta">SI-NILAI SD • '+escHtml(k)+' • Fase '+escHtml(faseForClass(k))+' • '+escHtml(m)+' • Tahun Pelajaran 2026/2027</div>'
+        +'<div class="ai-paper-meta">🚀 GURU+ SD • '+escHtml(k)+' • Fase '+escHtml(faseForClass(k))+' • '+escHtml(m)+' • Tahun Pelajaran 2026/2027</div>'
       +'</div>'
     +'</div>'
     +'<div class="ai-identity-grid">'
@@ -889,7 +889,7 @@ id('reportStudent').onchange=()=>{let nis=id('reportStudent').value;if(!nis){id(
 id('tRole').onchange=()=>id('tClass').disabled=id('tRole').value==='admin';id('addTeacher').onclick=()=>{let u=id('tUser').value.trim(),n=id('tName').value.trim(),p=id('tPass').value,role=id('tRole').value,kelas=role==='guru'?normalizeRombel(id('tClass').value):'';if(!u||!n||!p)return alert('Lengkapi username, nama, password.');if(role==='guru'&&!kelas)return alert('Pilih rombel guru.');if(db.teachers.some(t=>t.username===u))return alert('Username sudah ada.');db.teachers.push({username:u,name:n,password:p,role,kelas,rombel:kelas});save();['tUser','tName','tPass'].forEach(x=>id(x).value='');renderTeachers()}
 id('importTeacherCsv').onclick=()=>{const f=id('teacherCsvFile').files[0];if(!f)return alert('Pilih CSV guru terlebih dahulu.');const r=new FileReader();r.onload=()=>{let lines=r.result.split(/\r?\n/).filter(x=>x.trim()),count=0;lines.forEach((line,i)=>{const a=line.split(',').map(x=>x.trim().replace(/^"|"$/g,''));if(i===0&&/(username|nip|nama)/i.test(a.join(' ')))return;const u=String(a[0]||'').trim(),n=String(a[1]||'').trim(),rk=normalizeRombel(a[2]||''),role=String(a[3]||'guru').toLowerCase().includes('admin')?'admin':'guru',pw=String(a[4]||'');if(!u||!n)return;const idx=db.teachers.findIndex(t=>t.username===u&&role==='guru');const obj={username:u,name:n,password:pw,role,kelas:role==='guru'?rk:'',rombel:role==='guru'?rk:''};if(idx>=0)db.teachers[idx]=Object.assign({},db.teachers[idx],obj);else db.teachers.push(obj);count++});save();renderTeachers();id('teacherImportMsg').textContent=count+' data guru berhasil diimport ke data lokal.';id('teacherImportMsg').className='alert successbox';id('teacherImportMsg').style.display='block'};r.readAsText(f)}
 id('importScoreCsv')&&(id('importScoreCsv').onclick=()=>{const f=id('scoreCsvFile').files[0];if(!f)return alert('Pilih CSV nilai terlebih dahulu.');const r=new FileReader();r.onload=()=>{let lines=r.result.split(/\r?\n/).filter(x=>x.trim()),count=0;lines.forEach((line,i)=>{const a=line.split(',').map(x=>x.trim().replace(/^"|"$/g,''));if(i===0&&/(nis|nilai|mapel|bab)/i.test(a.join(' ')))return;const nis=String(a[0]||'').trim(),mapel=String(a[2]||'').trim(),bab=String(a[3]||'').trim(),nilai=Number(a[4]);if(!nis||!mapel||!bab||!Number.isFinite(nilai))return;db.scores[nis+'|'+mapel+'|'+bab]={nilai};count++});save();renderScores();id('scoreImportMsg').textContent=count+' nilai berhasil diimport ke data lokal.';id('scoreImportMsg').className='alert successbox';id('scoreImportMsg').style.display='block'};r.readAsText(f)});
-id('backupBtn').onclick=()=>{let blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='backup-si-nilai-sd-2026-2027.json';a.click();URL.revokeObjectURL(a.href)}
+id('backupBtn').onclick=()=>{let blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='backup-guru-plus-sd-2026-2027.json';a.click();URL.revokeObjectURL(a.href)}
 id('restoreBtn').onclick=()=>{let f=id('restoreFile').files[0];if(!f)return alert('Pilih file JSON.');let r=new FileReader();r.onload=()=>{try{let x=JSON.parse(r.result);if(!x.students||!x.teachers)throw Error();db=x;save();renderStudents();renderTeachers();alert('Restore berhasil. Silakan login ulang jika diperlukan.')}catch(e){alert('File backup tidak valid.')}};r.readAsText(f)}
 // Inisialisasi dibuat tahan error agar satu fitur yang gagal tidak mematikan semua tombol.
 for(const [nama,fn] of [['menu',buildNav],['mapel',fillMapels],['dokumen',bindDocumentTools],['ai',initAIGenerator],['statistik',renderStats],['siswa',renderStudents],['guru',renderTeachers],['dokumen-data',loadDocFields],['kunci-kelas',applyClassLock]]){

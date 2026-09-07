@@ -324,7 +324,7 @@ async function apiGet(path,params={}){
   if(!res.ok||payload.ok===false) throw new Error(payload.message||'Gagal mengambil data dari server.');
   return payload;
 }
-function normalizeStudentRow(x){return {id:x.id!=null?String(x.id):'',name:String(x.name??x.nama??''),nis:String(x.nis??x.nisn??''),kelas:normalizeRombel(x.rombel??x.kelas??x.class??''),rombel:normalizeRombel(x.rombel??x.kelas??x.class??''),absen:String(x.absen??x.no_absen??x.nomor_absen??'')}}
+function normalizeStudentRow(x){const rawClass=x.rombel??x.kelas??x.class??x.class_id??x.kelas_id??''; return {id:x.id!=null?String(x.id):(x.siswa_id!=null?String(x.siswa_id):''),name:String(x.name??x.nama??x.nama_siswa??x.nama_lengkap??x.student_name??x.studentName??''),nis:String(x.nis??x.nisn??''),kelas:normalizeRombel(rawClass),rombel:normalizeRombel(rawClass),absen:String(x.absen??x.no_absen??x.nomor_absen??x.nomor??'')}}
 function normalizeScoreRow(x,students,kelas,mapel,bab,semester){
   const sid=String(x.siswa_id??x.student_id??x.nis??x.nisn??'');
   const st=students.find(s=>String(s.nis)===sid||String(s.id)===sid);
@@ -337,7 +337,12 @@ async function syncRemoteData(t){
   try{
     const rombel=t.role==='guru'?normalizeRombel(t.rombel||t.kelas):'';
     const sp=await apiGet('/siswa',rombel?{rombel}:{});
-    if(Array.isArray(sp.data)) db.students=sp.data.map(normalizeStudentRow).filter(s=>s.name);
+    if(Array.isArray(sp.data)) {
+      const remoteStudents=sp.data.map(normalizeStudentRow).filter(s=>s.name);
+      if(remoteStudents.length || !db.students.length) db.students=remoteStudents;
+      const syncInfo=document.getElementById('studentSyncInfo');
+      if(syncInfo) syncInfo.textContent=remoteStudents.length ? ('Data siswa tersinkron: '+remoteStudents.length+' siswa.') : 'Data siswa dari server kosong.';
+    }
     const classes=t.role==='admin'?ROMBELS:[rombel];
     db.remoteLoaded=true;
     for(const k of classes){
@@ -367,7 +372,11 @@ async function syncRemoteData(t){
       }catch(e){console.warn('Sinkron RPM kelas '+k,e)}
     }
     save(); renderStats(); renderStudents(); renderScores(); renderReport(); loadDocFields();
-  }catch(err){console.warn('Sinkronisasi D1 gagal:',err);}
+  }catch(err){
+    console.warn('Sinkronisasi D1 gagal:',err);
+    const syncInfo=document.getElementById('studentSyncInfo');
+    if(syncInfo) syncInfo.textContent='Sinkronisasi siswa gagal: '+(err.message||'periksa koneksi/API Worker.');
+  }
 }
 async function remoteLogin(username,password){
   let res;

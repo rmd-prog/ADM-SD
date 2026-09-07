@@ -79,6 +79,18 @@ async function queryByRombel(env, table, rombel, extraSql = "", binds = []) {
   return env.DB.prepare(sql).bind(...rw.binds, ...binds).all();
 }
 
+// Mengubah nilai kelas/rombel CSV menjadi format D1 yang benar.
+// Contoh: "1 A" -> kelas 1, rombel IA; "2 B" -> kelas 2, rombel IIB; "5" -> kelas 5, rombel V.
+function normalizeClass(value) {
+  const raw = String(value ?? "").trim().toUpperCase();
+  const compact = raw.replace(/\s+/g, "");
+  const m = compact.match(/^([1-6])([AB])?$/);
+  if (!m) return null;
+  const kelas = Number(m[1]);
+  const rombel = m[2] ? `${m[1]}${m[2]}` : m[1];
+  return { kelas, rombel: cleanRombel(rombel) };
+}
+
 export default {
   async fetch(request, env) {
     if (request.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -91,134 +103,145 @@ export default {
           ok: true,
           aplikasi: "SI-NILAI SD V8",
           backend: "Cloudflare Worker + D1",
-          rombel: {
-            users: uc.has("rombel"),
-            siswa: sc.has("rombel")
-          },
+          rombel: { users: uc.has("rombel"), siswa: sc.has("rombel") },
           catatan: "Worker membaca kolom rombel jika tersedia; jika belum ada, memakai nilai kolom kelas tanpa mengubah data D1."
         });
       }
 
-      // LOGIN: membaca rombel jika kolom rombel tersedia, tanpa mengubah data lama.
       if (url.pathname === "/api/login" && request.method === "POST") {
         const body = await request.json();
         const username = String(body.username || "").trim();
         const password = String(body.password || "");
-
         const c = await columns(env, "users");
         const rombelExpr = c.has("rombel")
           ? "COALESCE(NULLIF(TRIM(rombel), ''), TRIM(kelas)) AS rombel"
           : "TRIM(kelas) AS rombel";
-
         const user = await env.DB.prepare(
           `SELECT id, username, password, nama, role, kelas, ${rombelExpr}
            FROM users WHERE username = ?`
         ).bind(username).first();
-
         if (!user || user.password !== password) {
           return json({ ok: false, message: "Username atau password salah." }, 401);
         }
-
         const safeUser = {
           id: user.id, username: user.username, nama: user.nama,
           role: user.role, kelas: cleanRombel(user.rombel || user.kelas),
           rombel: cleanRombel(user.rombel || user.kelas)
         };
-
         return json({ ok: true, token: createToken(safeUser), user: safeUser });
       }
 
       const user = getUser(request);
       if (!user) return json({ ok: false, message: "Belum login." }, 401);
 
-      // DATA SISWA
+      // DATA SISWA - GET
       if (url.pathname === "/api/siswa" && request.method === "GET") {
         const { requested, own } = classFilter(url.searchParams.get("rombel") || url.searchParams.get("kelas"), user);
-
         if (user.role !== "admin" && requested && requested !== own) {
           return json({ ok: false, message: "Akses rombel ditolak." }, 403);
         }
-
         const c = await columns(env, "siswa");
-        const classField = c.has("rombel") && c.has("kelas")
-          ? "COALESCE(NULLIF(TRIM(rombel), ''), TRIM(kelas))"
-          : c.has("rombel") ? "TRIM(rombel)"
-          : c.has("kelas") ? "TRIM(kelas)"
-          : "''";
-        const nameField = c.has("nama") ? "nama"
-          : c.has("name") ? "name"
-          : c.has("nama_siswa") ? "nama_siswa"
-          : c.has("nama_lengkap") ? "nama_lengkap"
-          : null;
-        const orderSql = nameField ? ` ORDER BY ${nameField}` : "";
-
+        const field = c.has("rombel") ? "COALESCE(NULLIF(TRIM(rombel), ''), TRIM(kelas))" : "TRIM(kelas)";
         let result;
         if (requested) {
-          const rw = rombelWhere(classField, requested);
-          result = await env.DB.prepare(`SELECT * FROM siswa WHERE ${rw.sql}${orderSql}`).bind(...rw.binds).all();
+          const rw = rombelWhere(field, requested);
+          result = await env.DB.prepare(`SELECT * FROM siswa WHERE ${rw.sql} ORDER BY nama`).bind(...rw.binds).all();
         } else if (user.role === "admin") {
-          result = await env.DB.prepare(`SELECT * FROM siswa${orderSql}`).all();
+          result = await env.DB.prepare(`SELECT * FROM siswa ORDER BY nama`).all();
         } else {
-          const rw = rombelWhere(classField, own);
-          result = await env.DB.prepare(`SELECT * FROM siswa WHERE ${rw.sql}${orderSql}`).bind(...rw.binds).all();
+          const rw = rombelWhere(field, own);
+          result = await env.DB.prepare(`SELECT * FROM siswa WHERE ${rw.sql} ORDER BY nama`).bind(...rw.binds).all();
         }
-
         return json({ ok: true, rombel: requested || own, data: result.results });
       }
 
-      // IMPORT DATA SISWA — khusus administrator, dari CSV ke D1
+      // IMPORT SISWA - POST
+      // Endpoint ini dipanggil langsung oleh index.html: POST /api/siswa/import
       if (url.pathname === "/api/siswa/import" && request.method === "POST") {
-        if (user.role !== "admin") return json({ ok: false, message: "Khusus administrator." }, 403);
+        if (user.role !== "admin") {
+          return json({ ok: false, message: "Import data siswa hanya dapat dilakukan administrator." }, 403);
+        }
+
         const body = await request.json();
         const items = Array.isArray(body.items) ? body.items : [];
-        if (!items.length) return json({ ok: false, message: "Tidak ada data siswa untuk diimport." }, 400);
+        const replace = body.replace !== false;
+
+        if (!items.length) {
+          return json({ ok: false, message: "Data siswa kosong." }, 400);
+        }
 
         const c = await columns(env, "siswa");
-        const nameCol = c.has("nama") ? "nama" : c.has("name") ? "name" : c.has("nama_siswa") ? "nama_siswa" : c.has("nama_lengkap") ? "nama_lengkap" : null;
-        const nisCol = c.has("nis") ? "nis" : c.has("nisn") ? "nisn" : null;
-        const classCol = c.has("rombel") ? "rombel" : c.has("kelas") ? "kelas" : null;
-        const absenCol = c.has("absen") ? "absen" : c.has("no_absen") ? "no_absen" : c.has("nomor_absen") ? "nomor_absen" : null;
-        if (!nameCol || !classCol) return json({ ok: false, message: "Kolom tabel siswa tidak cocok. Minimal harus ada kolom nama dan kelas/rombel." }, 500);
+        const has = name => c.has(name);
+        if (!has("nama") || !has("kelas")) {
+          return json({ ok: false, message: "Struktur tabel siswa tidak memiliki kolom nama/kelas." }, 500);
+        }
 
-        const cols = [nameCol];
-        if (nisCol) cols.push(nisCol);
-        if (classCol !== nameCol && !cols.includes(classCol)) cols.push(classCol);
-        if (absenCol && !cols.includes(absenCol)) cols.push(absenCol);
+        const rows = [];
+        const errors = [];
+        for (let i = 0; i < items.length; i++) {
+          const x = items[i] || {};
+          const nama = String(x.nama ?? x.name ?? "").trim();
+          const nis = String(x.nis ?? "").trim();
+          const nisn = String(x.nisn ?? "").trim();
+          const classInfo = normalizeClass(x.rombel ?? x.kelas ?? "");
 
-        const replace = body.replace === true;
+          if (!nama) {
+            errors.push(`Baris ${i + 1}: nama kosong`);
+            continue;
+          }
+          if (!classInfo) {
+            errors.push(`Baris ${i + 1} (${nama}): kelas tidak valid "${String(x.rombel ?? x.kelas ?? "")}"`);
+            continue;
+          }
+
+          const row = { nama, nis, nisn, kelas: classInfo.kelas, rombel: classInfo.rombel };
+          rows.push(row);
+        }
+
+        if (!rows.length) {
+          return json({ ok: false, message: "Tidak ada baris yang valid.", errors }, 400);
+        }
+
+        // Ganti seluruh data lama hanya jika replace=true.
         if (replace) await env.DB.prepare("DELETE FROM siswa").run();
 
-        const statements = [];
-        for (const item of items) {
-          const nama = String(item.nama ?? item.name ?? "").trim();
-          if (!nama) continue;
-          const vals = [nama];
-          if (nisCol) vals.push(String(item.nis ?? item.nisn ?? "").trim());
-          if (classCol) vals.push(cleanRombel(item.rombel ?? item.kelas ?? ""));
-          if (absenCol) vals.push(String(item.absen ?? item.no_absen ?? item.nomor_absen ?? "").trim());
-          const placeholders = cols.map(() => "?").join(",");
-          statements.push(env.DB.prepare(`INSERT INTO siswa (${cols.join(",")}) VALUES (${placeholders})`).bind(...vals));
-        }
+        // Hanya memakai kolom yang benar-benar ada di tabel D1.
+        const cols = ["nama", "nis", "kelas"];
+        if (has("nisn")) cols.splice(2, 0, "nisn");
+        if (has("rombel")) cols.push("rombel");
+        const placeholders = cols.map(() => "?").join(",");
+        const sql = `INSERT INTO siswa (${cols.join(",")}) VALUES (${placeholders})`;
+
+        const statements = rows.map(r => {
+          const vals = cols.map(col => r[col] ?? "");
+          return env.DB.prepare(sql).bind(...vals);
+        });
+
+        // D1 batch aman untuk ratusan baris; pecah per 50 agar payload tidak terlalu besar.
         for (let i = 0; i < statements.length; i += 50) {
           await env.DB.batch(statements.slice(i, i + 50));
         }
-        return json({ ok: true, imported: statements.length, replaced: replace, message: `${statements.length} siswa berhasil disimpan ke D1.` });
+
+        return json({
+          ok: true,
+          message: `Import berhasil: ${rows.length} siswa tersimpan di D1.`,
+          inserted: rows.length,
+          skipped: errors.length,
+          errors: errors.slice(0, 20)
+        });
       }
 
       // DATA GURU / USERS
       if (url.pathname === "/api/guru" && request.method === "GET") {
         if (user.role !== "admin") return json({ ok: false, message: "Khusus administrator." }, 403);
-
         const c = await columns(env, "users");
         const rombelExpr = c.has("rombel")
           ? "COALESCE(NULLIF(TRIM(rombel), ''), TRIM(kelas)) AS rombel"
           : "TRIM(kelas) AS rombel";
-
         const result = await env.DB.prepare(
           `SELECT id, username, nama, role, kelas, ${rombelExpr}
            FROM users ORDER BY role, rombel, nama`
         ).all();
-
         return json({ ok: true, data: result.results });
       }
 
@@ -227,18 +250,16 @@ export default {
         const { requested, own } = classFilter(url.searchParams.get("rombel") || url.searchParams.get("kelas"), user);
         const mapel = url.searchParams.get("mapel") || "";
         const semester = Number(url.searchParams.get("semester") || 1);
-
         if (user.role !== "admin" && requested && requested !== own) {
           return json({ ok: false, message: "Akses rombel ditolak." }, 403);
         }
-
         const c = await columns(env, "nilai");
         const field = c.has("rombel") ? "COALESCE(NULLIF(TRIM(rombel), ''), TRIM(kelas))" : "TRIM(kelas)";
-        const rw = rombelWhere(field, requested || own); let sql = `SELECT * FROM nilai WHERE ${rw.sql} AND semester = ?`;
+        const rw = rombelWhere(field, requested || own);
+        let sql = `SELECT * FROM nilai WHERE ${rw.sql} AND semester = ?`;
         const binds = [...rw.binds, semester];
         if (mapel) { sql += ` AND mapel = ?`; binds.push(mapel); }
         sql += ` ORDER BY siswa_id`;
-
         let result;
         if (user.role === "admin" && !requested) {
           let q = `SELECT * FROM nilai WHERE semester = ?`;
@@ -249,7 +270,6 @@ export default {
         } else {
           result = await env.DB.prepare(sql).bind(...binds).all();
         }
-
         return json({ ok: true, data: result.results });
       }
 
@@ -258,14 +278,11 @@ export default {
         const { requested, own } = classFilter(url.searchParams.get("rombel") || url.searchParams.get("kelas"), user);
         const jenis = url.searchParams.get("jenis") || "";
         const mapel = url.searchParams.get("mapel") || "";
-
         if (user.role !== "admin" && requested && requested !== own) {
           return json({ ok: false, message: "Akses rombel ditolak." }, 403);
         }
-
         const c = await columns(env, "perangkat");
         const field = c.has("rombel") ? "COALESCE(NULLIF(TRIM(rombel), ''), TRIM(kelas))" : "TRIM(kelas)";
-
         if (user.role === "admin" && !requested) {
           let sql = "SELECT * FROM perangkat";
           const binds = [];
@@ -277,13 +294,12 @@ export default {
           const result = await env.DB.prepare(sql).bind(...binds).all();
           return json({ ok: true, data: result.results });
         }
-
-        const rw = rombelWhere(field, requested || own); let sql = `SELECT * FROM perangkat WHERE ${rw.sql}`;
+        const rw = rombelWhere(field, requested || own);
+        let sql = `SELECT * FROM perangkat WHERE ${rw.sql}`;
         const binds = [...rw.binds];
         if (jenis) { sql += " AND jenis = ?"; binds.push(jenis); }
         if (mapel) { sql += " AND mapel = ?"; binds.push(mapel); }
         sql += " ORDER BY jenis, mapel, id";
-
         const result = await env.DB.prepare(sql).bind(...binds).all();
         return json({ ok: true, data: result.results });
       }
@@ -292,14 +308,11 @@ export default {
       if (url.pathname === "/api/rpm" && request.method === "GET") {
         const { requested, own } = classFilter(url.searchParams.get("rombel") || url.searchParams.get("kelas"), user);
         const mapel = url.searchParams.get("mapel") || "";
-
         if (user.role !== "admin" && requested && requested !== own) {
           return json({ ok: false, message: "Akses rombel ditolak." }, 403);
         }
-
         const c = await columns(env, "rpm");
         const field = c.has("rombel") ? "COALESCE(NULLIF(TRIM(rombel), ''), TRIM(kelas))" : "TRIM(kelas)";
-
         if (user.role === "admin" && !requested) {
           let sql = "SELECT * FROM rpm";
           const binds = [];
@@ -308,19 +321,18 @@ export default {
           const result = await env.DB.prepare(sql).bind(...binds).all();
           return json({ ok: true, data: result.results });
         }
-
-        const rw = rombelWhere(field, requested || own); let sql = `SELECT * FROM rpm WHERE ${rw.sql}`;
+        const rw = rombelWhere(field, requested || own);
+        let sql = `SELECT * FROM rpm WHERE ${rw.sql}`;
         const binds = [...rw.binds];
         if (mapel) { sql += " AND mapel = ?"; binds.push(mapel); }
         sql += " ORDER BY mapel, id";
         const result = await env.DB.prepare(sql).bind(...binds).all();
-
         return json({ ok: true, data: result.results });
       }
 
       return json({ ok: false, message: "Endpoint tidak ditemukan." }, 404);
     } catch (error) {
-      return json({ ok: false, message: error.message }, 500);
+      return json({ ok: false, message: error?.message || String(error) }, 500);
     }
   }
 };

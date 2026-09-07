@@ -1,0 +1,35 @@
+name: login-fix
+on:
+  push:
+    paths:
+      - '.github/login-fix-trigger.txt'
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch login safely
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          # Remove only the V10 scroll/login body locks that can block interaction.
+          s=s.replace('body.v10-login{overflow:hidden!important}','body.v10-login{overflow-x:hidden!important}')
+          s=s.replace("document.body.classList.remove('v10-login');document.body.classList.add('v10-logged-in');window.scrollTo(0,0);document.documentElement.scrollTop=0;document.body.scrollTop=0;", "document.body.classList.remove('v10-login');document.body.classList.add('v10-logged-in');")
+          s=s.replace("window.scrollTo({top:0,left:0,behavior:'auto'});document.documentElement.scrollTop=0;document.body.scrollTop=0;", "window.scrollTo(0,0);")
+          p.write_text(s,encoding='utf-8')
+          PY
+          rm -f .github/login-fix-trigger.txt
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html .github/login-fix-trigger.txt
+          git diff --cached --quiet || git commit -m 'fix: restore login interaction'
+          git push
+      - name: Remove patch workflow
+        run: |
+          git rm .github/workflows/login-fix.yml || true
+          git commit -m 'chore: remove temporary login fix workflow' || true
+          git push || true

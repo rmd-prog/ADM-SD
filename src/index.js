@@ -268,6 +268,65 @@ export default {
         });
       }
 
+      // AI GENERATOR PERANGKAT PEMBELAJARAN
+      if (url.pathname === "/api/ai/generate" && request.method === "POST") {
+        const user = getUser(request);
+        if (!user) return json({ ok:false, message:"Sesi login tidak valid." }, 401);
+        const body = await request.json();
+        const jenis = String(body.jenis || "").toLowerCase();
+        const allowed = ["cp","tp","atp","prota","prosem","rpm"];
+        if (!allowed.includes(jenis)) return json({ ok:false, message:"Jenis perangkat tidak valid." }, 400);
+        const requested = cleanRombel(body.rombel || body.kelas || "");
+        const own = cleanRombel(user.rombel || user.kelas || "");
+        if (user.role !== "admin" && requested && requested !== own) return json({ ok:false, message:"Akses rombel ditolak." }, 403);
+        if (!env.OPENAI_API_KEY) return json({ ok:false, message:"OPENAI_API_KEY belum dipasang di Cloudflare Worker." }, 503);
+
+        const mapel = String(body.mapel || "").trim();
+        const context = String(body.context || "").trim();
+        const existing = String(body.existing || "").trim().slice(0, 18000);
+        const tahun = String(body.tahun || "2026/2027");
+        const fase = String(body.fase || "");
+        const model = String(env.OPENAI_MODEL || "gpt-5.6-luna");
+        const names = {cp:"Capaian Pembelajaran (CP)",tp:"Tujuan Pembelajaran (TP)",atp:"Alur Tujuan Pembelajaran (ATP)",prota:"Program Tahunan (Prota)",prosem:"Program Semester (Prosem)",rpm:"Rencana Pembelajaran Mendalam (RPM)"};
+        const instructions = `Anda adalah AI perancang perangkat pembelajaran SD Indonesia. Buat ${names[jenis]} yang siap dipakai guru, bukan sekadar contoh generik. Gunakan bahasa Indonesia formal, jelas, operasional, dan realistis untuk kelas SD. Selaraskan dengan Kurikulum Merdeka dan pendekatan Pembelajaran Mendalam: berkesadaran (mindful), bermakna (meaningful), menggembirakan (joyful), serta alur pengalaman belajar memahami, mengaplikasi, dan merefleksi. Jangan mengaku sebagai kutipan resmi jika bukan kutipan resmi. Jika ada bagian yang membutuhkan penyesuaian satuan pendidikan, tulis sebagai rancangan yang dapat disesuaikan.
+
+ATURAN DOKUMEN:
+- CP: fokus pada capaian fase dan elemen/kompetensi inti, tidak membuat klaim sebagai teks resmi pemerintah.
+- TP: rumuskan tujuan yang terukur, menggunakan kata kerja operasional dan terkait materi/konteks.
+- ATP: susun urutan TP logis dari prasyarat menuju penerapan dan refleksi.
+- Prota: tabel/daftar unit atau lingkup materi sepanjang tahun, semester, alokasi JP, asesmen, dan catatan.
+- Prosem: susun per minggu/pertemuan dengan unit, materi, aktivitas, asesmen, alokasi JP, dan tindak lanjut.
+- RPM: buat lengkap dengan identitas, tujuan, pemahaman bermakna, pertanyaan pemantik, asesmen awal/proses/akhir, pengalaman memahami-mengaplikasi-merefleksi, diferensiasi, media/sumber, kolaborasi, remedial/pengayaan, dan refleksi guru/murid. Sesuaikan durasi dan karakter SD.
+- Hindari angka atau kebijakan yang tidak diberikan pengguna jika tidak diperlukan. Gunakan rancangan yang masuk akal dan mudah diedit.
+
+KELAS/ROMBEL: ${requested || own || "SD"}
+FASE: ${fase || "sesuai kelas"}
+MAPEL: ${mapel || "sesuai konteks"}
+TAHUN: ${tahun}
+KONTEKS TAMBAHAN: ${context || "tidak ada; gunakan konteks umum sekolah dasar dan lingkungan sekitar murid"}
+RANCANGAN SEBELUMNYA (boleh diperbaiki):\n${existing || "belum ada"}`;
+
+        const apiRes = await fetch("https://api.openai.com/v1/responses", {
+          method:"POST",
+          headers:{"Content-Type":"application/json","Authorization":`Bearer ${env.OPENAI_API_KEY}`},
+          body:JSON.stringify({
+            model,
+            store:false,
+            input:[
+              {role:"developer",content:instructions},
+              {role:"user",content:`Buat ${names[jenis]} untuk kelas/rombel ${requested || own}, mapel ${mapel}, tahun ${tahun}. Kembangkan secara substansial dan siap ditempel ke dokumen sekolah. ${context ? "Perhatikan konteks: "+context : ""}`}
+            ],
+            text:{verbosity:"high"}
+          })
+        });
+        const raw = await apiRes.text();
+        let data={}; try{ data=JSON.parse(raw); }catch{}
+        if (!apiRes.ok) return json({ok:false,message:data?.error?.message || "AI gagal memproses permintaan.",status:apiRes.status}, 502);
+        const text = String(data.output_text || (data.output||[]).flatMap(x=>x.content||[]).find(x=>x.type==='output_text')?.text || "").trim();
+        if (!text) return json({ok:false,message:"AI tidak mengembalikan isi dokumen."}, 502);
+        return json({ok:true,jenis,text,model});
+      }
+
       // DATA GURU / USERS
       if (url.pathname === "/api/guru" && request.method === "GET") {
         if (user.role !== "admin") return json({ ok: false, message: "Khusus administrator." }, 403);

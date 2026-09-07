@@ -44,7 +44,7 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb;box-shadow:0 0 0 3p
       <button class="btn primary wide" type="submit">MASUK KE SISTEM</button>
       <div id="loginError" class="alert">Username atau password salah.</div>
     </form>
-    <div class="demo"><b>Login terpusat:</b> akun diverifikasi melalui Cloudflare Worker + D1.<br><span class="muted">Gunakan username yang terdaftar di tabel users (admin / wali1–wali6). Hak akses dan kelas guru mengikuti server.</span></div>
+    <div class="demo"><b>Login terpusat:</b> akun diverifikasi melalui Cloudflare Worker + D1.<br><span class="muted">Gunakan username yang terdaftar di tabel users (admin / akun guru sesuai rombel). Hak akses dan kelas guru mengikuti server.</span></div>
   </div>
 </section>
 
@@ -69,31 +69,31 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb;box-shadow:0 0 0 3p
   </section>
 
   <section id="students" class="page">
-    <h2>Data Siswa</h2><p class="muted">Data siswa ditampilkan sesuai kelas guru yang login. Admin dapat mengelola semua kelas.</p>
+    <h2>Data Siswa</h2><p class="muted">Data siswa ditampilkan sesuai rombel guru yang login. Admin dapat mengelola semua rombel.</p>
     <div class="card panel">
-      <div class="grid" style="grid-template-columns:2fr 1fr 1fr 1fr"><input id="sName" placeholder="Nama siswa"><input id="sNis" placeholder="NIS"><select id="sClass"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select><input id="sAbsen" placeholder="No. absen"></div>
+      <div class="grid" style="grid-template-columns:2fr 1fr 1fr 1fr"><input id="sName" placeholder="Nama siswa"><input id="sNis" placeholder="NIS"><select id="sClass"></select><input id="sAbsen" placeholder="No. absen"></div>
       <button class="btn primary" style="margin-top:10px" id="addStudent">+ Tambah Siswa</button>
     </div>
-    <div class="card panel tablewrap"><table class="table"><thead><tr><th>No</th><th>Nama</th><th>NIS</th><th>Kelas</th><th>Absen</th><th>Aksi</th></tr></thead><tbody id="studentTable"></tbody></table></div>
+    <div class="card panel tablewrap"><table class="table"><thead><tr><th>No</th><th>Nama</th><th>NIS</th><th>Rombel</th><th>Absen</th><th>Aksi</th></tr></thead><tbody id="studentTable"></tbody></table></div>
   </section>
 
   <section id="import" class="page">
-    <h2>Import Data Siswa</h2><p class="muted">Gunakan CSV sederhana: nama,nis,kelas,absen. Baris pertama boleh berupa judul kolom.</p>
+    <h2>Import Data Siswa</h2><p class="muted">Gunakan CSV sederhana: nama,nis,rombel,absen. Baris pertama boleh berupa judul kolom.</p>
     <div class="card panel"><input type="file" id="csvFile" accept=".csv,text/csv"><button class="btn primary" id="importCsv" style="margin-top:10px">Import CSV</button><div id="importMsg" class="alert"></div></div>
   </section>
 
-  <section id="cp" class="page"><h2>CP — Capaian Pembelajaran</h2><p class="muted">CP terisi otomatis per kelas dan mata pelajaran. Kelas I–II = Fase A, III–IV = Fase B, V–VI = Fase C.</p><div class="card panel"><div class="grid" style="grid-template-columns:1fr 2fr"><select id="cpKelas"></select><select id="cpMapel"></select></div><textarea id="cpText" rows="14" style="margin-top:10px" placeholder="CP..."></textarea><button class="btn primary" id="saveCp">Simpan CP</button></div></section>
-  <section id="tp" class="page"><h2>TP — Tujuan Pembelajaran</h2><p class="muted">TP disusun per kelas dan mata pelajaran sebagai turunan operasional dari CP.</p><div class="card panel"><div class="grid" style="grid-template-columns:1fr 2fr"><select id="tpKelas"></select><select id="tpMapel"></select></div><textarea id="tpText" rows="14" style="margin-top:10px" placeholder="TP..."></textarea><button class="btn primary" id="saveTp">Simpan TP</button></div></section>
-  <section id="atp" class="page"><h2>ATP — Alur Tujuan Pembelajaran</h2><p class="muted">ATP sudah disediakan per kelas dan mata pelajaran; dapat disesuaikan dengan konteks sekolah.</p><div class="card panel"><div class="grid" style="grid-template-columns:1fr 2fr"><select id="atpKelas"></select><select id="atpMapel"></select></div><textarea id="atpText" rows="16" style="margin-top:10px" placeholder="ATP..."></textarea><button class="btn primary" id="saveAtp">Simpan ATP</button></div></section>
-  <section id="prota" class="page"><h2>Prota — Program Tahunan</h2><p class="muted">Program tahunan terisi per kelas dan mata pelajaran. Alokasi waktu adalah rancangan awal dan perlu disesuaikan kalender pendidikan sekolah.</p><div class="card panel"><div class="grid" style="grid-template-columns:1fr 2fr"><select id="protaKelas"></select><select id="protaMapel"></select></div><textarea id="protaText" rows="18" style="margin-top:10px" placeholder="Prota..."></textarea><button class="btn primary" id="saveProta">Simpan Prota</button></div></section>
-  <section id="prosem" class="page"><h2>Prosem — Program Semester</h2><p class="muted">Program semester terisi per kelas dan mata pelajaran, dibagi Semester 1 dan 2.</p><div class="card panel"><div class="grid" style="grid-template-columns:1fr 2fr"><select id="prosemKelas"></select><select id="prosemMapel"></select></div><textarea id="prosemText" rows="20" style="margin-top:10px" placeholder="Prosem..."></textarea><button class="btn primary" id="saveProsem">Simpan Prosem</button></div></section>
+  <section id="cp" class="page"><h2>CP — Capaian Pembelajaran</h2><p class="muted">CP terisi otomatis per rombel dan mata pelajaran. Kelas I–II = Fase A, III–IV = Fase B, V–VI = Fase C.</p><div class="card panel"><div class="grid" style="grid-template-columns:1fr 2fr"><select id="cpKelas"></select><select id="cpMapel"></select></div><textarea id="cpText" rows="14" style="margin-top:10px" placeholder="CP..."></textarea><button class="btn primary" id="saveCp">Simpan CP</button></div></section>
+  <section id="tp" class="page"><h2>TP — Tujuan Pembelajaran</h2><p class="muted">TP disusun per rombel dan mata pelajaran sebagai turunan operasional dari CP.</p><div class="card panel"><div class="grid" style="grid-template-columns:1fr 2fr"><select id="tpKelas"></select><select id="tpMapel"></select></div><textarea id="tpText" rows="14" style="margin-top:10px" placeholder="TP..."></textarea><button class="btn primary" id="saveTp">Simpan TP</button></div></section>
+  <section id="atp" class="page"><h2>ATP — Alur Tujuan Pembelajaran</h2><p class="muted">ATP sudah disediakan per rombel dan mata pelajaran; dapat disesuaikan dengan konteks sekolah.</p><div class="card panel"><div class="grid" style="grid-template-columns:1fr 2fr"><select id="atpKelas"></select><select id="atpMapel"></select></div><textarea id="atpText" rows="16" style="margin-top:10px" placeholder="ATP..."></textarea><button class="btn primary" id="saveAtp">Simpan ATP</button></div></section>
+  <section id="prota" class="page"><h2>Prota — Program Tahunan</h2><p class="muted">Program tahunan terisi per rombel dan mata pelajaran. Alokasi waktu adalah rancangan awal dan perlu disesuaikan kalender pendidikan sekolah.</p><div class="card panel"><div class="grid" style="grid-template-columns:1fr 2fr"><select id="protaKelas"></select><select id="protaMapel"></select></div><textarea id="protaText" rows="18" style="margin-top:10px" placeholder="Prota..."></textarea><button class="btn primary" id="saveProta">Simpan Prota</button></div></section>
+  <section id="prosem" class="page"><h2>Prosem — Program Semester</h2><p class="muted">Program semester terisi per rombel dan mata pelajaran, dibagi Semester 1 dan 2.</p><div class="card panel"><div class="grid" style="grid-template-columns:1fr 2fr"><select id="prosemKelas"></select><select id="prosemMapel"></select></div><textarea id="prosemText" rows="20" style="margin-top:10px" placeholder="Prosem..."></textarea><button class="btn primary" id="saveProsem">Simpan Prosem</button></div></section>
 
-  <section id="rpm" class="page"><h2>RPM — Rencana Pembelajaran Mendalam</h2><p class="muted">Rencana Pembelajaran Mendalam (RPM) per kelas, mata pelajaran, dan BAB/Unit. Setiap RPM sudah memiliki identifikasi, dimensi profil lulusan, desain pembelajaran, pengalaman memahami–mengaplikasi–merefleksi, asesmen, diferensiasi, media, dan refleksi guru.</p><div class="card panel"><div class="grid" style="grid-template-columns:1fr 2fr"><select id="rpmKelas"></select><select id="rpmMapel"></select></div><select id="rpmBab" style="margin-top:10px"></select><textarea id="rpmText" rows="16" style="margin-top:10px" placeholder="Tujuan, kegiatan, asesmen, diferensiasi, refleksi..."></textarea><button class="btn primary" id="saveRpm">Simpan RPM</button></div></section>
+  <section id="rpm" class="page"><h2>RPM — Rencana Pembelajaran Mendalam</h2><p class="muted">Rencana Pembelajaran Mendalam (RPM) per rombel, mata pelajaran, dan BAB/Unit. Setiap RPM sudah memiliki identifikasi, dimensi profil lulusan, desain pembelajaran, pengalaman memahami–mengaplikasi–merefleksi, asesmen, diferensiasi, media, dan refleksi guru.</p><div class="card panel"><div class="grid" style="grid-template-columns:1fr 2fr"><select id="rpmKelas"></select><select id="rpmMapel"></select></div><select id="rpmBab" style="margin-top:10px"></select><textarea id="rpmText" rows="16" style="margin-top:10px" placeholder="Tujuan, kegiatan, asesmen, diferensiasi, refleksi..."></textarea><button class="btn primary" id="saveRpm">Simpan RPM</button></div></section>
 
   <section id="scores" class="page">
-    <h2>Penilaian Per BAB</h2><p class="muted">Nilai dapat diinput per siswa dan per BAB/Unit. STS tidak digunakan.</p>
+    <h2>Penilaian Per BAB</h2><p class="muted">Nilai dapat diinput per siswa dan per BAB/Unit. STS tidak digunakan. Guru hanya dapat menginput rombelnya.</p>
     <div class="card panel">
-      <select id="scoreMapel"></select><select id="scoreKelas" style="margin-top:8px"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select><select id="scoreBab" style="margin-top:8px"></select>
+      <select id="scoreMapel"></select><select id="scoreKelas" style="margin-top:8px"></select><select id="scoreBab" style="margin-top:8px"></select>
       <div class="tablewrap" style="margin-top:12px"><table class="table"><thead><tr><th>Nama</th><th>Nilai</th><th>Catatan</th></tr></thead><tbody id="scoreTable"></tbody></table></div>
       <button class="btn success" id="saveScores">Simpan Nilai</button>
     </div>
@@ -101,7 +101,7 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb;box-shadow:0 0 0 3p
 
   <section id="report" class="page"><h2>Rapor</h2><p class="muted">Rekap sederhana dari nilai yang tersimpan. Pilih siswa untuk melihat rata-rata.</p><div class="card panel"><select id="reportStudent"></select><div id="reportResult" style="margin-top:15px"></div></div></section>
 
-  <section id="teachers" class="page"><h2>Database Guru</h2><p class="muted">Akun login guru diverifikasi oleh Cloudflare Worker + D1. Saat guru kelas login, aplikasi otomatis mengunci ke kelas yang dikirim server dan hanya menampilkan data siswa kelas tersebut. Administrator dapat melihat seluruh kelas.</p><div class="card panel"><input id="tUser" placeholder="Username guru"><input id="tName" placeholder="Nama guru" style="margin-top:8px"><input id="tPass" type="password" placeholder="Password" style="margin-top:8px"><select id="tRole" style="margin-top:8px"><option value="guru">Guru Kelas</option><option value="admin">Administrator</option></select><select id="tClass" style="margin-top:8px"><option value="1">Kelas 1</option><option value="2">Kelas 2</option><option value="3">Kelas 3</option><option value="4">Kelas 4</option><option value="5">Kelas 5</option><option value="6">Kelas 6</option></select><button class="btn primary" id="addTeacher" style="margin-top:10px">+ Tambah Guru</button></div><div class="card panel tablewrap"><table class="table"><thead><tr><th>Username</th><th>Nama</th><th>Peran</th><th>Kelas</th><th>Aksi</th></tr></thead><tbody id="teacherTable"></tbody></table></div></section>
+  <section id="teachers" class="page"><h2>Database Guru</h2><p class="muted">Data guru dipetakan ke rombel IA, IB, IIA, IIB, IIIA, IIIB, IVA, IVB, V, VI. Login guru tetap diverifikasi oleh Cloudflare Worker + D1.</p><div class="card panel"><input id="tUser" placeholder="Username / NIP guru"><input id="tName" placeholder="Nama guru" style="margin-top:8px"><input id="tPass" type="password" placeholder="Password lokal (opsional)" style="margin-top:8px"><select id="tRole" style="margin-top:8px"><option value="guru">Guru Kelas</option><option value="admin">Administrator</option></select><select id="tClass" style="margin-top:8px"></select><button class="btn primary" id="addTeacher" style="margin-top:10px">+ Tambah Guru</button></div><div class="card panel"><b>Import Data Guru</b><p class="muted">CSV: username/nip,nama,rombel,role,password. Rom-bel seperti 1 A otomatis menjadi IA. Password boleh dikosongkan; akun login server tetap mengikuti D1.</p><input type="file" id="teacherCsvFile" accept=".csv,text/csv"><button class="btn secondary" id="importTeacherCsv" style="margin-top:10px">Import CSV Guru</button><div id="teacherImportMsg" class="alert"></div></div><div class="card panel tablewrap"><table class="table"><thead><tr><th>Username/NIP</th><th>Nama</th><th>Peran</th><th>Rombel</th><th>Aksi</th></tr></thead><tbody id="teacherTable"></tbody></table></div></section>
 
   <section id="reference" class="page"><h2>Referensi SIBI</h2><div class="card panel"><p>Perangkat di aplikasi dibuat sebagai rancangan kerja yang dapat diedit. Selaraskan CP dan materi dengan panduan mata pelajaran serta buku yang digunakan sekolah.</p><p><a href="https://buku.kemendikdasmen.go.id/katalog" target="_blank" rel="noopener">Buka Katalog Buku SIBI</a></p><p><a href="https://kurikulum.kemendikdasmen.go.id/panduan-mapel" target="_blank" rel="noopener">Panduan Mata Pelajaran</a></p><div id="babReference"></div></div></section>
 
@@ -128,8 +128,25 @@ const BAB={
 'Pendidikan Pancasila':{4:['Mengenal Lingkungan Sekitar','Aku Anak yang Disiplin','Kerja Sama di Lingkunganku','Pancasila dalam Diriku']},
 'Matematika':{4:['Bilangan Cacah sampai 10.000','Pecahan','Pola Gambar dan Pola Bilangan','Pengukuran Luas dan Volume','Bangun Datar','Piktogram dan Diagram Batang']}
 };
-const DOC_KELAS=[1,2,3,4,5,6];
-function fase(k){return k<=2?'A':k<=4?'B':'C'}
+const ROMBELS=['IA','IB','IIA','IIB','IIIA','IIIB','IVA','IVB','V','VI'];
+function normalizeRombel(v){
+  const raw=String(v??'').trim().toUpperCase().replace(/\s+/g,'');
+  const map={
+    '1A':'IA','1B':'IB','2A':'IIA','2B':'IIB','3A':'IIIA','3B':'IIIB',
+    '4A':'IVA','4B':'IVB','5':'V','6':'VI',
+    'KELAS1A':'IA','KELAS1B':'IB','KELAS2A':'IIA','KELAS2B':'IIB',
+    'KELAS3A':'IIIA','KELAS3B':'IIIB','KELAS4A':'IVA','KELAS4B':'IVB',
+    'KELAS5':'V','KELAS6':'VI','KELASIA':'IA','KELASIB':'IB','KELASIIA':'IIA',
+    'KELASIIB':'IIB','KELASIIIA':'IIIA','KELASIIIB':'IIIB','KELASIVA':'IVA',
+    'KELASIVB':'IVB','KELASV':'V','KELASVI':'VI'
+  };
+  return map[raw]||raw;
+}
+function gradeOf(v){
+  const r=normalizeRombel(v);
+  return ({IA:1,IB:1,IIA:2,IIB:2,IIIA:3,IIIB:3,IVA:4,IVB:4,V:5,VI:6}[r]||Number(r)||0);
+}
+function fase(k){const g=gradeOf(k);return g<=2?'A':g<=4?'B':'C'}
 function subjectFocus(m,k){
 const f=fase(k);
 const map={
@@ -147,9 +164,9 @@ const map={
 }; return map[m]+' pada Fase '+f+'.'
 }
 function unitTitles(m,k){
-const grade={1:'Kelas 1',2:'Kelas 2',3:'Kelas 3',4:'Kelas 4',5:'Kelas 5',6:'Kelas 6'}[k];
+const g=gradeOf(k); const grade={1:'Kelas 1',2:'Kelas 2',3:'Kelas 3',4:'Kelas 4',5:'Kelas 5',6:'Kelas 6'}[g];
 const sets={
-'Bahasa Indonesia':BAB['Bahasa Indonesia'][k]||['Aku dan Lingkunganku','Cerita dan Pengalaman','Informasi di Sekitar Kita','Kegemaranku','Hidup Bersih dan Sehat','Bermain dan Bekerja Sama','Lingkungan dan Alam','Karya dan Ekspresi'],
+'Bahasa Indonesia':BAB['Bahasa Indonesia'][g]||['Aku dan Lingkunganku','Cerita dan Pengalaman','Informasi di Sekitar Kita','Kegemaranku','Hidup Bersih dan Sehat','Bermain dan Bekerja Sama','Lingkungan dan Alam','Karya dan Ekspresi'],
 'Pendidikan Pancasila':['Aku dan Identitasku','Aturan dan Kesepakatan','Hak dan Kewajiban','Kebinekaan Indonesia','Gotong Royong','Pancasila dalam Kehidupan','Musyawarah dan Tanggung Jawab','Menjadi Warga Sekolah yang Baik'],
 'Matematika':['Bilangan dan Nilai Tempat','Penjumlahan dan Pengurangan','Perkalian dan Pembagian','Pecahan dan Desimal','Pengukuran','Bangun Datar dan Bangun Ruang','Pola dan Aljabar Awal','Data dan Pemecahan Masalah'],
 'IPAS':['Makhluk Hidup dan Lingkungannya','Benda dan Perubahannya','Gaya dan Gerak','Energi dalam Kehidupan','Bumi dan Cuaca','Lingkungan dan Sumber Daya','Masyarakat dan Budaya','Kegiatan Ekonomi di Sekitar Kita'],
@@ -191,19 +208,33 @@ const units=unitTitles(m,k), f=fase(k);
 return `ALUR TUJUAN PEMBELAJARAN (ATP)\nKelas ${k} • Fase ${f}\nMata Pelajaran: ${m}\nTahun Pelajaran 2026/2027\n\nURUTAN PEMBELAJARAN\n${units.map((u,i)=>`${i+1}. ${u}\n   TP: Murid memahami konsep/keterampilan inti, mengeksplorasi contoh, melakukan latihan atau praktik, menerapkan pada tugas autentik, mengomunikasikan hasil, dan merefleksikan pembelajaran.\n   Aktivitas: apersepsi → eksplorasi → diskusi/praktik → penerapan → presentasi/unjuk kerja → refleksi.\n   Bukti asesmen: pertanyaan pemantik, lembar kerja, observasi, produk/kinerja, dan refleksi.`).join('\n\n')}\n\nPRINSIP ALUR\n• Dari konkret ke abstrak sesuai perkembangan kelas.\n• Dari pengalaman dekat menuju penerapan yang lebih luas.\n• Dari terbimbing menuju mandiri.\n• Mengintegrasikan literasi, numerasi, karakter, komunikasi, kolaborasi, dan pemanfaatan teknologi digital bila relevan.\n• Menyediakan ruang remedial, pengayaan, dan diferensiasi.`}
 function seedProta(m,k){
 const units=unitTitles(m,k), total=units.length*9;
-return `PROGRAM TAHUNAN (PROTA)\nKelas ${k} • Fase ${fase(k)} • ${m}\nTahun Pelajaran 2026/2027\n\nRencana alokasi: ${total} JP/tahun sebagai rancangan awal. Sesuaikan dengan struktur kurikulum, minggu efektif, kalender pendidikan, dan kondisi satuan pendidikan.\n\n${units.map((u,i)=>`No. ${i+1}\nUnit/Materi: ${u}\nTujuan ringkas: memahami → mengaplikasi → merefleksi\nAlokasi: 9 JP\nAsesmen: diagnostik awal, formatif selama proses, sumatif pada akhir unit`).join('\n\n')}\n\nREKAP\nSemester 1: ${Math.ceil(units.length/2)*9} JP\nSemester 2: ${Math.floor(units.length/2)*9} JP\nCadangan remedial/pengayaan dan kegiatan sekolah: disesuaikan kalender pendidikan.`}
+return `PROGRAM TAHUNAN (PROTA)\nRombel ${k} • Kelas ${gradeOf(k)} • Fase ${fase(k)} • ${m}\nTahun Pelajaran 2026/2027\n\nRencana alokasi: ${total} JP/tahun sebagai rancangan awal. Sesuaikan dengan struktur kurikulum, minggu efektif, kalender pendidikan, dan kondisi satuan pendidikan.\n\n${units.map((u,i)=>`No. ${i+1}\nUnit/Materi: ${u}\nTujuan ringkas: memahami → mengaplikasi → merefleksi\nAlokasi: 9 JP\nAsesmen: diagnostik awal, formatif selama proses, sumatif pada akhir unit`).join('\n\n')}\n\nREKAP\nSemester 1: ${Math.ceil(units.length/2)*9} JP\nSemester 2: ${Math.floor(units.length/2)*9} JP\nCadangan remedial/pengayaan dan kegiatan sekolah: disesuaikan kalender pendidikan.`}
 function seedProsem(m,k){
 const units=unitTitles(m,k), mid=Math.ceil(units.length/2);
 const make=(arr,offset)=>arr.map((u,i)=>`Minggu ${offset+i*2+1}–${offset+i*2+2} | ${u} | 9 JP | Memahami, mengaplikasi, asesmen formatif, refleksi`).join('\n');
-return `PROGRAM SEMESTER (PROSEM)\nKelas ${k} • Fase ${fase(k)} • ${m}\nTahun Pelajaran 2026/2027\n\nSEMESTER 1\n${make(units.slice(0,mid),0)}\n\nSEMESTER 2\n${make(units.slice(mid),mid*2)}\n\nKOMPONEN PENGUAT\n• Asesmen diagnostik pada awal lingkup/unit.\n• Asesmen formatif pada proses melalui observasi, tanya jawab, LKPD, latihan, dan unjuk kerja.\n• Asesmen sumatif pada akhir unit/semester sesuai tujuan.\n• Remedial dan pengayaan berdasarkan hasil asesmen.\n• Minggu efektif, libur, projek/kegiatan sekolah, dan penyesuaian alokasi mengikuti kalender pendidikan.`}
+return `PROGRAM SEMESTER (PROSEM)\nRombel ${k} • Kelas ${gradeOf(k)} • Fase ${fase(k)} • ${m}\nTahun Pelajaran 2026/2027\n\nSEMESTER 1\n${make(units.slice(0,mid),0)}\n\nSEMESTER 2\n${make(units.slice(mid),mid*2)}\n\nKOMPONEN PENGUAT\n• Asesmen diagnostik pada awal lingkup/unit.\n• Asesmen formatif pada proses melalui observasi, tanya jawab, LKPD, latihan, dan unjuk kerja.\n• Asesmen sumatif pada akhir unit/semester sesuai tujuan.\n• Remedial dan pengayaan berdasarkan hasil asesmen.\n• Minggu efektif, libur, projek/kegiatan sekolah, dan penyesuaian alokasi mengikuti kalender pendidikan.`}
 function seedRPM(m,k,bab){
 const f=fase(k);
 return `RENCANA PEMBELAJARAN MENDALAM (RPM)\nKelas ${k} • Fase ${f} • ${m}\nUnit/BAB: ${bab}\nTahun Pelajaran 2026/2027\n\nA. IDENTIFIKASI\nKesiapan murid: cek pengetahuan awal, pengalaman, minat, kebutuhan dukungan, dan hambatan belajar melalui pertanyaan singkat/observasi.\nMateri: ${bab}.\nKarakteristik materi: dekat dengan konteks murid, dapat diamati/dipraktikkan, dan dikembangkan dari konkret menuju penerapan.\n\nB. DIMENSI PROFIL LULUSAN\nPenalaran kritis, kreativitas, kolaborasi, komunikasi, kemandirian, kesehatan, kewargaan, dan keimanan/ketakwaan kepada Tuhan Yang Maha Esa sesuai karakter materi.\n\nC. DESAIN PEMBELAJARAN\nTujuan pertemuan: murid mampu menjelaskan konsep inti ${bab}, mempraktikkan/menerapkannya dalam tugas autentik, mengomunikasikan hasil, dan melakukan refleksi.\nPraktik pedagogis: pembelajaran kontekstual, diskusi, demonstrasi, inkuiri/problem solving/projek sederhana sesuai karakter mapel.\nKemitraan: kerja individu, pasangan, kelompok kecil, guru sebagai fasilitator, serta pelibatan lingkungan/keluarga bila relevan.\nLingkungan: aman, inklusif, tertib, memberi ruang bertanya dan mencoba.\nDigital: video, gambar, presentasi, kuis, atau sumber digital digunakan bila tersedia dan relevan.\n\nD. PENGALAMAN BELAJAR MENDALAM\n1. MEMAHAMI\n• Salam, kesiapan, dan apersepsi.\n• Pertanyaan pemantik: “Apa yang sudah kamu ketahui tentang ${bab}?”\n• Murid mengamati/membaca/mendengar contoh.\n• Guru memfasilitasi penemuan konsep melalui pertanyaan bertahap.\n2. MENGAPLIKASI\n• Murid mengerjakan LKPD/tugas praktik secara individu atau kelompok.\n• Murid memecahkan masalah atau membuat produk/karya sesuai materi.\n• Guru memberi scaffolding dan umpan balik selama proses.\n3. MEREFLEKSI\n• Murid mempresentasikan/menunjukkan hasil.\n• Teman dan guru memberi umpan balik.\n• Murid mengisi refleksi: hal yang dipahami, kesulitan, strategi yang membantu, dan rencana perbaikan.\n\nE. ASESMEN\nAsesmen awal: 3–5 pertanyaan/aktivitas untuk memetakan kesiapan.\nAsesmen proses: observasi, pertanyaan lisan, LKPD, catatan anekdot, cek pemahaman, dan unjuk kerja.\nAsesmen akhir: tes/tugas produk/kinerja sesuai tujuan pembelajaran.\nKriteria: ketepatan konsep, proses/strategi, kualitas produk/kinerja, komunikasi, kolaborasi, dan refleksi.\n\nF. DIFERENSIASI\nKonten: gambar, benda konkret, teks bertingkat, atau contoh tambahan.\nProses: kelompok fleksibel, tutor sebaya, langkah bertahap, dan waktu tambahan bila diperlukan.\nProduk: pilihan jawaban tertulis, lisan, visual, praktik, atau karya sesuai tujuan.\nPengayaan: masalah/tugas yang lebih menantang dan penerapan pada situasi baru.\nRemedial: pembelajaran ulang pada konsep prasyarat, contoh konkret, latihan bertahap, dan asesmen ulang.\n\nG. MEDIA & SUMBER\nBuku teks, lingkungan sekitar, alat praktik sesuai materi, LKPD, papan tulis, dan sumber digital yang relevan.\n\nH. REFLEKSI GURU\nApakah tujuan tercapai? Siapa yang memerlukan dukungan? Aktivitas mana yang paling bermakna? Bukti asesmen apa yang menunjukkan perkembangan murid? Apa perbaikan untuk pertemuan berikutnya?\n\nPrinsip pembelajaran mendalam: BERKESADARAN, BERMAKNA, dan MENGGEMBIRAKAN.`}
 
+const INITIAL_TEACHERS=[
+  {username:'198001102008012007',name:'EPIH SUKAESIH, S.Pd.SD.',role:'guru',kelas:'IA',rombel:'IA'},
+  {username:'199110222023212008',name:'CITRA DEWI AMALIA, S.Pd.',role:'guru',kelas:'IB',rombel:'IB'},
+  {username:'199304252024212021',name:'ANNISA PROWATI, S.Pd.',role:'guru',kelas:'IIA',rombel:'IIA'},
+  {username:'199304252024212021',name:'ANNISA PRATIWI, S.Pd.',role:'guru',kelas:'IIB',rombel:'IIB'},
+  {username:'199212022024211009',name:'EKA PERMIAN, S.Pd.',role:'guru',kelas:'IIIA',rombel:'IIIA'},
+  {username:'1991091420212012',name:'PRAWITA SARI, S.Pd.',role:'guru',kelas:'IIIB',rombel:'IIIB'},
+  {username:'198305302021212000',name:'NURLIANA BRU PURBA, S.Pd.SD.',role:'guru',kelas:'IVA',rombel:'IVA'},
+  {username:'198005162022212010',name:'DENI YASIH, S.Pd.',role:'guru',kelas:'IVB',rombel:'IVB'},
+  {username:'199701222024211009',name:'RAMLAN MAULANA, S.Pd.',role:'guru',kelas:'V',rombel:'V'},
+  {username:'199212262019032002',name:'SONTI ESRA OCTAVIA SIMORANGKIR, S.Pd.',role:'guru',kelas:'VI',rombel:'VI'}
+];
 let db=load();
 db.teachers=db.teachers.map(t=>Object.assign({role:'admin',kelas:''},t));
-if(!db.teachers.some(t=>t.username==='guru'))db.teachers.unshift({username:'guru',name:'Administrator',password:'123456',role:'admin',kelas:''});
-function base(){return {students:[],scores:{},teachers:[{username:'guru',name:'Administrator',password:'123456',role:'admin',kelas:''}],texts:{},rpm:{}}}
+if(!db.teachers.some(t=>t.username==='guru'))db.teachers.unshift({username:'guru',name:'Administrator',password:'123456',role:'admin',kelas:'',rombel:''});
+// Tambahkan roster sekolah bila belum ada. Password tidak disimpan dari sheet; login tetap mengikuti D1.
+INITIAL_TEACHERS.forEach(t=>{if(!db.teachers.some(x=>x.username===t.username&&normalizeRombel(x.rombel||x.kelas)===t.rombel))db.teachers.push(t)});
+function base(){return {students:[],scores:{},teachers:[{username:'guru',name:'Administrator',password:'123456',role:'admin',kelas:'',rombel:''}],texts:{},rpm:{}}}
 function load(){try{return Object.assign(base(),JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){return base()}}
 function save(){localStorage.setItem(KEY,JSON.stringify(db));renderStats()}
 function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
@@ -212,13 +243,13 @@ const pages=[['dashboard','Dashboard'],['students','Data Siswa'],['import','Impo
 let currentTeacher=null;
 function currentUser(){try{return JSON.parse(sessionStorage.getItem('siLogin')||'null')}catch(e){return null}}
 function isGuruKelas(){return !!currentTeacher && currentTeacher.role==='guru'}
-function allowedClass(){return isGuruKelas()?String(currentTeacher.kelas||''):''}
+function allowedClass(){return isGuruKelas()?normalizeRombel(currentTeacher.rombel||currentTeacher.kelas||''):''}
 function applyClassLock(){
   const ids=['sClass','scoreKelas','rpmKelas','cpKelas','tpKelas','atpKelas','protaKelas','prosemKelas'];
   ids.forEach(x=>{const el=id(x);if(!el)return;if(isGuruKelas()){el.value=allowedClass();el.disabled=true}else el.disabled=false});
   const box=id('teacherClassBox'), title=id('teacherClassTitle'), info=id('teacherClassInfo');
   if(box&&title&&info){
-    if(isGuruKelas()){box.style.display='block';title.textContent='Kelas Anda: Kelas '+allowedClass();info.textContent='Login sebagai '+currentTeacher.name+'. Data siswa, penilaian, CP/TP/ATP, Prota, Prosem, dan RPM diarahkan ke kelas ini.'}
+    if(isGuruKelas()){box.style.display='block';title.textContent='Rombel Anda: '+allowedClass();info.textContent='Login sebagai '+currentTeacher.name+'. Data siswa, penilaian, CP/TP/ATP, Prota, Prosem, dan RPM diarahkan ke rombel ini.'}
     else {box.style.display='block';title.textContent='Akses: Administrator';info.textContent='Administrator dapat mengelola seluruh kelas.'}
   }
 }
@@ -232,34 +263,34 @@ function syncRoleMenu(){const admin=!isGuruKelas();document.querySelectorAll('.a
 function showPage(p){
   if(isGuruKelas()&&p==='teachers')p='dashboard';
   document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));id(p).classList.add('active');document.querySelectorAll('.navbtn').forEach(x=>x.classList.toggle('active',x.dataset.page===p));id('sidebar').classList.remove('open');if(p==='students')renderStudents();if(p==='teachers')renderTeachers();if(p==='scores')renderScores();if(p==='report')renderReport();if(p==='reference')renderReference()}
-function renderStats(){const students=db.students.filter(s=>!isGuruKelas()||String(s.kelas)===allowedClass());const keys=new Set(students.map(s=>String(s.nis)));const scores=isGuruKelas()?Object.keys(db.scores).filter(k=>keys.has(String(k).split('|')[0])).length:Object.keys(db.scores).length;id('statStudents').textContent=students.length;id('statScores').textContent=scores;id('statTeachers').textContent=isGuruKelas()?'1':db.teachers.length}
+function renderStats(){const students=db.students.filter(s=>!isGuruKelas()||normalizeRombel(s.rombel||s.kelas)===allowedClass());const keys=new Set(students.map(s=>String(s.nis)));const scores=isGuruKelas()?Object.keys(db.scores).filter(k=>keys.has(String(k).split('|')[0])).length:Object.keys(db.scores).length;id('statStudents').textContent=students.length;id('statScores').textContent=scores;id('statTeachers').textContent=isGuruKelas()?'1':db.teachers.length}
 function fillMapels(){
 ['rpmMapel','scoreMapel','cpMapel','tpMapel','atpMapel','protaMapel','prosemMapel'].forEach(k=>id(k).innerHTML=MAPEL.map(x=>'<option>'+esc(x)+'</option>').join(''));
-['rpmKelas','cpKelas','tpKelas','atpKelas','protaKelas','prosemKelas'].forEach(k=>id(k).innerHTML=DOC_KELAS.map(x=>'<option value="'+x+'">Kelas '+x+'</option>').join(''));
+['sClass','scoreKelas','rpmKelas','cpKelas','tpKelas','atpKelas','protaKelas','prosemKelas','tClass'].forEach(k=>id(k).innerHTML=ROMBELS.map(x=>'<option value="'+x+'">'+x+'</option>').join(''));
 updateBab(); loadDocFields();
 }
 function updateBab(){
-let k=id('scoreKelas').value,m=id('scoreMapel').value;
+let k=normalizeRombel(id('scoreKelas').value),m=id('scoreMapel').value;
 id('scoreBab').innerHTML=babList(m,k).map((x,i)=>'<option value="'+i+'">'+esc('BAB '+(i+1)+' — '+x)+'</option>').join('');
-let rk=id('rpmKelas').value,rm=id('rpmMapel').value;
+let rk=normalizeRombel(id('rpmKelas').value),rm=id('rpmMapel').value;
 id('rpmBab').innerHTML=babList(rm,rk).map((x,i)=>'<option value="'+i+'">'+esc('BAB '+(i+1)+' — '+x)+'</option>').join('');
 }
 function docKey(type,k,m){return type+'|'+k+'|'+m}
 function loadDocFields(){
 const pairs=[['cp','cpKelas','cpMapel','cpText'],['tp','tpKelas','tpMapel','tpText'],['atp','atpKelas','atpMapel','atpText'],['prota','protaKelas','protaMapel','protaText'],['prosem','prosemKelas','prosemMapel','prosemText']];
-pairs.forEach(([t,k,m,tx])=>{const key=docKey(t,id(k).value,id(m).value);if(!db.texts[key]) db.texts[key]=t==='cp'?seedCP(id(m).value,+id(k).value):t==='tp'?seedTP(id(m).value,+id(k).value):t==='atp'?seedATP(id(m).value,+id(k).value):t==='prota'?seedProta(id(m).value,+id(k).value):seedProsem(id(m).value,+id(k).value);id(tx).value=db.texts[key]});
-const rb=id('rpmKelas').value,rm=id('rpmMapel').value,ri=Number(id('rpmBab').value||0),rname=babList(rm,rb)[ri]||'Unit Pembelajaran 1';const rk=docKey('rpm',rb,rm)+'|'+ri;if(!db.rpm[rk]) db.rpm[rk]=seedRPM(rm,+rb,rname);id('rpmText').value=db.rpm[rk];
+pairs.forEach(([t,k,m,tx])=>{const key=docKey(t,id(k).value,id(m).value);if(!db.texts[key]) db.texts[key]=t==='cp'?seedCP(id(m).value,id(k).value):t==='tp'?seedTP(id(m).value,id(k).value):t==='atp'?seedATP(id(m).value,id(k).value):t==='prota'?seedProta(id(m).value,id(k).value):seedProsem(id(m).value,id(k).value);id(tx).value=db.texts[key]});
+const rb=id('rpmKelas').value,rm=id('rpmMapel').value,ri=Number(id('rpmBab').value||0),rname=babList(rm,rb)[ri]||'Unit Pembelajaran 1';const rk=docKey('rpm',rb,rm)+'|'+ri;if(!db.rpm[rk]) db.rpm[rk]=seedRPM(rm,rb,rname);id('rpmText').value=db.rpm[rk];
 save();
 }
 function renderStudents(){
-  const rows=db.students.map((s,i)=>({s,i})).filter(x=>!isGuruKelas()||String(x.s.kelas)===allowedClass());
+  const rows=db.students.map((s,i)=>({s,i})).filter(x=>!isGuruKelas()||normalizeRombel(x.s.rombel||x.s.kelas)===allowedClass());
   id('studentTable').innerHTML=rows.map((x,n)=>{const s=x.s,i=x.i;return '<tr><td>'+(n+1)+'</td><td>'+esc(s.name)+'</td><td>'+esc(s.nis)+'</td><td>'+esc(s.kelas)+'</td><td>'+esc(s.absen)+'</td><td><button class="btn danger" data-del="'+i+'">Hapus</button></td></tr>'}).join('')||'<tr><td colspan="6" class="muted">Belum ada siswa untuk kelas ini.</td></tr>';
   document.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{if(isGuruKelas()&&String(db.students[+b.dataset.del].kelas)!==allowedClass())return;db.students.splice(+b.dataset.del,1);save();renderStudents();renderReport();renderScores()})
 }
-function renderScores(){let k=isGuruKelas()?allowedClass():id('scoreKelas').value;id('scoreKelas').value=k;let ss=db.students.filter(s=>String(s.kelas)===String(k));id('scoreTable').innerHTML=ss.map(s=>{let key=s.nis+'|'+id('scoreMapel').value+'|'+k+'|'+id('scoreBab').value;let v=db.scores[key]||{};return '<tr><td>'+esc(s.name)+'</td><td><input class="scoreInput" data-key="'+esc(key)+'" type="number" min="0" max="100" value="'+esc(v.nilai||'')+'"></td><td><input class="noteInput" data-key="'+esc(key)+'" value="'+esc(v.catatan||'')+'" placeholder="Catatan"></td></tr>'}).join('')||'<tr><td colspan="3" class="muted">Belum ada siswa di kelas ini.</td></tr>'}
-function renderReport(){id('reportStudent').innerHTML='<option value="">Pilih siswa</option>'+db.students.filter(s=>!isGuruKelas()||String(s.kelas)===allowedClass()).map(s=>'<option value="'+esc(s.nis)+'">'+esc(s.name)+' — Kelas '+esc(s.kelas)+'</option>').join('')}
+function renderScores(){let k=isGuruKelas()?allowedClass():id('scoreKelas').value;id('scoreKelas').value=k;let ss=db.students.filter(s=>normalizeRombel(s.rombel||s.kelas)===normalizeRombel(k));id('scoreTable').innerHTML=ss.map(s=>{let key=s.nis+'|'+id('scoreMapel').value+'|'+k+'|'+id('scoreBab').value;let v=db.scores[key]||{};return '<tr><td>'+esc(s.name)+'</td><td><input class="scoreInput" data-key="'+esc(key)+'" type="number" min="0" max="100" value="'+esc(v.nilai||'')+'"></td><td><input class="noteInput" data-key="'+esc(key)+'" value="'+esc(v.catatan||'')+'" placeholder="Catatan"></td></tr>'}).join('')||'<tr><td colspan="3" class="muted">Belum ada siswa di kelas ini.</td></tr>'}
+function renderReport(){id('reportStudent').innerHTML='<option value="">Pilih siswa</option>'+db.students.filter(s=>!isGuruKelas()||normalizeRombel(s.rombel||s.kelas)===allowedClass()).map(s=>'<option value="'+esc(s.nis)+'">'+esc(s.name)+' — Rombel '+esc(s.kelas)+'</option>').join('')}
 function renderTeachers(){
-  id('teacherTable').innerHTML=db.teachers.map((t,i)=>'<tr><td>'+esc(t.username)+'</td><td>'+esc(t.name)+'</td><td><span class="badge">'+esc(t.role==='admin'?'Administrator':'Guru Kelas')+'</span></td><td>'+esc(t.kelas?('Kelas '+t.kelas):'Semua Kelas')+'</td><td>'+(i?'<button class="btn danger" data-tdel="'+i+'">Hapus</button>':'<span class="badge">Akun awal</span>')+'</td></tr>').join('');
+  id('teacherTable').innerHTML=db.teachers.map((t,i)=>'<tr><td>'+esc(t.username)+'</td><td>'+esc(t.name)+'</td><td><span class="badge">'+esc(t.role==='admin'?'Administrator':'Guru Kelas')+'</span></td><td>'+esc(t.kelas?('Rombel '+(t.rombel||t.kelas)):'Semua Rombel')+'</td><td>'+(i?'<button class="btn danger" data-tdel="'+i+'">Hapus</button>':'<span class="badge">Akun awal</span>')+'</td></tr>').join('');
   document.querySelectorAll('[data-tdel]').forEach(b=>b.onclick=()=>{db.teachers.splice(+b.dataset.tdel,1);save();renderTeachers()})
 }
 function renderReference(){id('babReference').innerHTML='<h3 style="margin-top:20px">BAB yang tersedia di aplikasi</h3><p class="muted">Untuk kombinasi yang belum diverifikasi dari buku SIBI, aplikasi menggunakan label Unit Pembelajaran agar tidak mengarang judul BAB.</p>'+Object.entries(BAB).map(([m,ks])=>'<div style="margin:12px 0"><b>'+esc(m)+'</b>'+Object.entries(ks).map(([k,arr])=>'<div style="margin-top:5px">Kelas '+k+': '+arr.map((x,i)=>'<span class="badge" style="margin:2px">'+esc('BAB '+(i+1)+' — '+x)+'</span>').join('')+'</div>').join('')).join('')}
@@ -267,8 +298,8 @@ function normalizeLoginResponse(payload, username){
   const raw=payload&&typeof payload==='object'?(payload.user||payload.data||payload):{};
   const roleRaw=raw.role||raw.peran||raw.user_role||raw.type||'';
   const role=String(roleRaw).toLowerCase().includes('admin')?'admin':'guru';
-  const kelas=String(raw.kelas??raw.class??raw.class_id??raw.kelas_id??raw.assigned_class??'').replace(/^kelas\s*/i,'').trim();
-  return {username:String(raw.username??raw.user??username),name:String(raw.name??raw.nama??raw.full_name??raw.nama_guru??username),role,kelas,token:payload?.token||payload?.access_token||raw.token||raw.access_token||''};
+  const kelas=normalizeRombel(raw.rombel??raw.kelas??raw.class??raw.class_id??raw.kelas_id??raw.assigned_class??'');
+  return {username:String(raw.username??raw.user??username),name:String(raw.name??raw.nama??raw.full_name??raw.nama_guru??username),role,kelas,rombel:kelas,token:payload?.token||payload?.access_token||raw.token||raw.access_token||''};
 }
 async function apiGet(path,params={}){
   const token=sessionStorage.getItem('siAuthToken')||'';
@@ -279,25 +310,25 @@ async function apiGet(path,params={}){
   if(!res.ok||payload.ok===false) throw new Error(payload.message||'Gagal mengambil data dari server.');
   return payload;
 }
-function normalizeStudentRow(x){return {name:String(x.name??x.nama??''),nis:String(x.nis??x.nisn??x.id??''),kelas:String(x.kelas??x.class??''),absen:String(x.absen??x.no_absen??x.nomor_absen??'')}}
+function normalizeStudentRow(x){return {name:String(x.name??x.nama??''),nis:String(x.nis??x.nisn??x.id??''),kelas:normalizeRombel(x.rombel??x.kelas??x.class??''),rombel:normalizeRombel(x.rombel??x.kelas??x.class??''),absen:String(x.absen??x.no_absen??x.nomor_absen??'')}}
 function normalizeScoreRow(x,students,kelas,mapel,bab,semester){
   const sid=String(x.siswa_id??x.student_id??x.nis??x.nisn??'');
   const st=students.find(s=>String(s.nis)===sid||String(s.id)===sid);
   const nis=st?String(st.nis):sid; if(!nis)return null;
   const m=String(x.mapel??mapel??''); const sm=String(x.semester??semester??1); const b=String(x.bab??x.unit??x.materi??bab??'');
-  const key=nis+'|'+m+'|'+kelas+'|'+b;
+  const r=normalizeRombel(x.rombel??x.kelas??kelas); const key=nis+'|'+m+'|'+r+'|'+b;
   return {key,obj:{nilai:x.nilai??x.score??x.value??'',catatan:x.catatan??x.note??''},semester:sm};
 }
 async function syncRemoteData(t){
   try{
-    const kelas=t.role==='guru'?t.kelas:'';
-    const sp=await apiGet('/siswa',kelas?{kelas}:{});
+    const rombel=t.role==='guru'?normalizeRombel(t.rombel||t.kelas):'';
+    const sp=await apiGet('/siswa',rombel?{rombel}:{});
     if(Array.isArray(sp.data)) db.students=sp.data.map(normalizeStudentRow).filter(s=>s.name);
-    const classes=t.role==='admin'?DOC_KELAS:[Number(t.kelas)];
+    const classes=t.role==='admin'?ROMBELS:[rombel];
     db.remoteLoaded=true;
     for(const k of classes){
       try{
-        const np=await apiGet('/nilai',{kelas:k,semester:1});
+        const np=await apiGet('/nilai',{rombel:k,semester:1});
         if(Array.isArray(np.data)){
           np.data.forEach(x=>{
             const r=normalizeScoreRow(x,db.students,k,x.mapel||'',x.bab||x.unit||'',x.semester||1);
@@ -306,7 +337,7 @@ async function syncRemoteData(t){
         }
       }catch(e){console.warn('Sinkron nilai kelas '+k,e)}
       try{
-        const pp=await apiGet('/perangkat',{kelas:k});
+        const pp=await apiGet('/perangkat',{rombel:k});
         if(Array.isArray(pp.data)) pp.data.forEach(x=>{
           const jenis=String(x.jenis??'').toLowerCase(); const mapel=String(x.mapel??''); const text=String(x.teks??x.text??x.isi??x.content??x.konten??'');
           const target={cp:'cp',tp:'tp',atp:'atp',prota:'prota',prosem:'prosem'}[jenis];
@@ -314,7 +345,7 @@ async function syncRemoteData(t){
         });
       }catch(e){console.warn('Sinkron perangkat kelas '+k,e)}
       try{
-        const rp=await apiGet('/rpm',{kelas:k});
+        const rp=await apiGet('/rpm',{rombel:k});
         if(Array.isArray(rp.data)) rp.data.forEach(x=>{
           const mapel=String(x.mapel??''); const bab=String(x.bab??x.unit??x.materi??''); const text=String(x.teks??x.text??x.isi??x.content??x.konten??'');
           if(text) db.rpm[docKey('rpm',k,mapel)+'|'+bab]=text;
@@ -349,8 +380,8 @@ async function remoteLogin(username,password){
   const t=normalizeLoginResponse(payload,username);
   if(!t.username)t.username=String(username);
   if(!t.name)t.name=t.username;
-  if(t.role==='guru'&&!/^[1-6]$/.test(String(t.kelas||''))){
-    throw new Error('Akun guru belum memiliki kelas 1–6 di D1.');
+  if(t.role==='guru'&&!ROMBELS.includes(normalizeRombel(t.rombel||t.kelas||''))){
+    throw new Error('Akun guru belum memiliki rombel (IA, IB, IIA, IIB, IIIA, IIIB, IVA, IVB, V, atau VI) di D1.');
   }
   if(!t.token)throw new Error('Login berhasil tetapi token dari Worker tidak diterima.');
   return t;
@@ -359,7 +390,7 @@ async function finishLogin(t){
   currentTeacher=t;
   sessionStorage.setItem('siLogin',JSON.stringify(t));
   if(t.token) sessionStorage.setItem('siAuthToken',t.token); else sessionStorage.removeItem('siAuthToken');
-  id('userLabel').textContent=t.name+' ('+t.username+')'+(t.role==='guru'?' • Kelas '+t.kelas:' • Admin');
+  id('userLabel').textContent=t.name+' ('+t.username+')'+(t.role==='guru'?' • Rombel '+(t.rombel||t.kelas):' • Admin');
   id('loginScreen').style.display='none';id('app').style.display='block';id('loginError').style.display='none';
   applyClassLock();syncRoleMenu();renderStats();renderStudents();renderScores();renderReport();showPage(t.role==='guru'?'students':'dashboard');
   // Sinkronisasi D1 berjalan di belakang layar agar login tidak tertahan.
@@ -376,20 +407,21 @@ id('loginForm').onsubmit=async e=>{
 id('showPass').onclick=()=>{id('loginPass').type=id('loginPass').type==='password'?'text':'password';id('showPass').textContent=id('loginPass').type==='password'?'Lihat':'Sembunyi'}
 id('logoutBtn').onclick=()=>{currentTeacher=null;sessionStorage.removeItem('siLogin');sessionStorage.removeItem('siAuthToken');id('app').style.display='none';id('loginScreen').style.display='grid';id('loginPass').value=''}
 id('menuBtn').onclick=()=>id('sidebar').classList.toggle('open')
-id('addStudent').onclick=()=>{let name=id('sName').value.trim();if(!name)return alert('Nama siswa wajib diisi.');let kelas=isGuruKelas()?allowedClass():id('sClass').value;db.students.push({name,nis:id('sNis').value.trim()||('S'+Date.now()),kelas,absen:id('sAbsen').value.trim()});['sName','sNis','sAbsen'].forEach(x=>id(x).value='');save();renderStudents()}
-id('importCsv').onclick=()=>{let f=id('csvFile').files[0];if(!f)return alert('Pilih file CSV dulu.');let r=new FileReader();r.onload=()=>{let lines=r.result.split(/\r?\n/).filter(x=>x.trim());let count=0;lines.forEach((line,i)=>{let a=line.split(',').map(x=>x.trim().replace(/^"|"$/g,''));if(i===0&&/nama/i.test(a[0]))return;if(a[0]){db.students.push({name:a[0],nis:a[1]||('S'+Date.now()+count),kelas:isGuruKelas()?allowedClass():(a[2]||'1'),absen:a[3]||''});count++}});save();renderStudents();id('importMsg').textContent=count+' siswa berhasil diimport.';id('importMsg').className='alert successbox';id('importMsg').style.display='block'};r.readAsText(f)}
-;[['cp','cpText','cpKelas','cpMapel'],['tp','tpText','tpKelas','tpMapel'],['atp','atpText','atpKelas','atpMapel'],['prota','protaText','protaKelas','protaMapel'],['prosem','prosemText','prosemKelas','prosemMapel']].forEach(([k,el,ck,cm])=>id('save'+k[0].toUpperCase()+k.slice(1)).onclick=()=>{let kelas=String(id(ck).value);if(isGuruKelas()&&kelas!==allowedClass())return alert('Akses ditolak: kelas akun guru tidak sesuai.');db.texts[docKey(k,kelas,id(cm).value)]=id(el).value;save();alert(k.toUpperCase()+' tersimpan.')})
-id('saveRpm').onclick=()=>{if(isGuruKelas()&&String(id('rpmKelas').value)!==allowedClass())return alert('Akses ditolak: kelas akun guru tidak sesuai.');let key=docKey('rpm',id('rpmKelas').value,id('rpmMapel').value)+'|'+id('rpmBab').value;db.rpm[key]=id('rpmText').value;save();alert('RPM tersimpan.')}
+id('addStudent').onclick=()=>{let name=id('sName').value.trim();if(!name)return alert('Nama siswa wajib diisi.');let kelas=isGuruKelas()?allowedClass():normalizeRombel(id('sClass').value);db.students.push({name,nis:id('sNis').value.trim()||('S'+Date.now()),kelas,rombel:kelas,absen:id('sAbsen').value.trim()});['sName','sNis','sAbsen'].forEach(x=>id(x).value='');save();renderStudents()}
+id('importCsv').onclick=()=>{let f=id('csvFile').files[0];if(!f)return alert('Pilih file CSV dulu.');let r=new FileReader();r.onload=()=>{let lines=r.result.split(/\r?\n/).filter(x=>x.trim());let count=0;lines.forEach((line,i)=>{let a=line.split(',').map(x=>x.trim().replace(/^"|"$/g,''));if(i===0&&/nama/i.test(a[0]))return;if(a[0]){const rk=isGuruKelas()?allowedClass():normalizeRombel(a[2]||'IA');db.students.push({name:a[0],nis:a[1]||('S'+Date.now()+count),kelas:rk,rombel:rk,absen:a[3]||''});count++}});save();renderStudents();id('importMsg').textContent=count+' siswa berhasil diimport.';id('importMsg').className='alert successbox';id('importMsg').style.display='block'};r.readAsText(f)}
+;[['cp','cpText','cpKelas','cpMapel'],['tp','tpText','tpKelas','tpMapel'],['atp','atpText','atpKelas','atpMapel'],['prota','protaText','protaKelas','protaMapel'],['prosem','prosemText','prosemKelas','prosemMapel']].forEach(([k,el,ck,cm])=>id('save'+k[0].toUpperCase()+k.slice(1)).onclick=()=>{let kelas=normalizeRombel(id(ck).value);if(isGuruKelas()&&kelas!==allowedClass())return alert('Akses ditolak: kelas akun guru tidak sesuai.');db.texts[docKey(k,kelas,id(cm).value)]=id(el).value;save();alert(k.toUpperCase()+' tersimpan.')})
+id('saveRpm').onclick=()=>{if(isGuruKelas()&&normalizeRombel(id('rpmKelas').value)!==allowedClass())return alert('Akses ditolak: kelas akun guru tidak sesuai.');let key=docKey('rpm',id('rpmKelas').value,id('rpmMapel').value)+'|'+id('rpmBab').value;db.rpm[key]=id('rpmText').value;save();alert('RPM tersimpan.')}
 ;['scoreMapel','scoreKelas'].forEach(k=>id(k).onchange=()=>{updateBab();renderScores()});
 ;['rpmMapel','rpmKelas','rpmBab'].forEach(k=>id(k).onchange=()=>{updateBab();loadDocFields()});
 ;[['cpKelas','cpMapel'],['tpKelas','tpMapel'],['atpKelas','atpMapel'],['protaKelas','protaMapel'],['prosemKelas','prosemMapel']].forEach(([a,b])=>{id(a).onchange=loadDocFields;id(b).onchange=loadDocFields});
 id('saveScores').onclick=()=>{document.querySelectorAll('.scoreInput').forEach(inp=>{let n=document.querySelector('.noteInput[data-key="'+CSS.escape(inp.dataset.key)+'"]');db.scores[inp.dataset.key]={nilai:inp.value,catatan:n?n.value:''}});save();alert('Nilai berhasil disimpan.')}
 id('reportStudent').onchange=()=>{let nis=id('reportStudent').value;if(!nis){id('reportResult').innerHTML='';return}let rows=Object.entries(db.scores).filter(([k])=>k.startsWith(nis+'|'));let nums=rows.map(x=>Number(x[1].nilai)).filter(Number.isFinite);let avg=nums.length?Math.round(nums.reduce((a,b)=>a+b,0)/nums.length):0;id('reportResult').innerHTML='<div class="card panel"><b>Rata-rata nilai: '+avg+'</b><p class="muted">'+nums.length+' nilai tersimpan.</p></div>'}
-id('tRole').onchange=()=>id('tClass').disabled=id('tRole').value==='admin';id('addTeacher').onclick=()=>{let u=id('tUser').value.trim(),n=id('tName').value.trim(),p=id('tPass').value,role=id('tRole').value,kelas=role==='guru'?id('tClass').value:'';if(!u||!n||!p)return alert('Lengkapi username, nama, password.');if(role==='guru'&&!kelas)return alert('Pilih kelas guru.');if(db.teachers.some(t=>t.username===u))return alert('Username sudah ada.');db.teachers.push({username:u,name:n,password:p,role,kelas});save();['tUser','tName','tPass'].forEach(x=>id(x).value='');renderTeachers()}
+id('tRole').onchange=()=>id('tClass').disabled=id('tRole').value==='admin';id('addTeacher').onclick=()=>{let u=id('tUser').value.trim(),n=id('tName').value.trim(),p=id('tPass').value,role=id('tRole').value,kelas=role==='guru'?normalizeRombel(id('tClass').value):'';if(!u||!n||!p)return alert('Lengkapi username, nama, password.');if(role==='guru'&&!kelas)return alert('Pilih rombel guru.');if(db.teachers.some(t=>t.username===u))return alert('Username sudah ada.');db.teachers.push({username:u,name:n,password:p,role,kelas,rombel:kelas});save();['tUser','tName','tPass'].forEach(x=>id(x).value='');renderTeachers()}
+id('importTeacherCsv').onclick=()=>{const f=id('teacherCsvFile').files[0];if(!f)return alert('Pilih CSV guru terlebih dahulu.');const r=new FileReader();r.onload=()=>{let lines=r.result.split(/\r?\n/).filter(x=>x.trim()),count=0;lines.forEach((line,i)=>{const a=line.split(',').map(x=>x.trim().replace(/^"|"$/g,''));if(i===0&&/(username|nip|nama)/i.test(a.join(' ')))return;const u=String(a[0]||'').trim(),n=String(a[1]||'').trim(),rk=normalizeRombel(a[2]||''),role=String(a[3]||'guru').toLowerCase().includes('admin')?'admin':'guru',pw=String(a[4]||'');if(!u||!n)return;const idx=db.teachers.findIndex(t=>t.username===u&&role==='guru');const obj={username:u,name:n,password:pw,role,kelas:role==='guru'?rk:'',rombel:role==='guru'?rk:''};if(idx>=0)db.teachers[idx]=Object.assign({},db.teachers[idx],obj);else db.teachers.push(obj);count++});save();renderTeachers();id('teacherImportMsg').textContent=count+' data guru berhasil diimport ke data lokal.';id('teacherImportMsg').className='alert successbox';id('teacherImportMsg').style.display='block'};r.readAsText(f)}
 id('backupBtn').onclick=()=>{let blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='backup-si-nilai-sd-2026-2027.json';a.click();URL.revokeObjectURL(a.href)}
 id('restoreBtn').onclick=()=>{let f=id('restoreFile').files[0];if(!f)return alert('Pilih file JSON.');let r=new FileReader();r.onload=()=>{try{let x=JSON.parse(r.result);if(!x.students||!x.teachers)throw Error();db=x;save();renderStudents();renderTeachers();alert('Restore berhasil. Silakan login ulang jika diperlukan.')}catch(e){alert('File backup tidak valid.')}};r.readAsText(f)}
 buildNav();fillMapels();renderStats();renderStudents();renderTeachers();loadDocFields();applyClassLock();
-try{const saved=JSON.parse(sessionStorage.getItem('siLogin')||'null');const token=sessionStorage.getItem('siAuthToken');if(saved&&saved.username&&token){if(saved.role==='guru'&&!/^[1-6]$/.test(String(saved.kelas||''))){sessionStorage.removeItem('siLogin');sessionStorage.removeItem('siAuthToken')}else finishLogin(saved)}}catch(e){sessionStorage.removeItem('siLogin');sessionStorage.removeItem('siAuthToken')}
+try{const saved=JSON.parse(sessionStorage.getItem('siLogin')||'null');const token=sessionStorage.getItem('siAuthToken');if(saved&&saved.username&&token){if(saved.role==='guru'&&!ROMBELS.includes(normalizeRombel(saved.rombel||saved.kelas||''))){sessionStorage.removeItem('siLogin');sessionStorage.removeItem('siAuthToken')}else finishLogin(saved)}}catch(e){sessionStorage.removeItem('siLogin');sessionStorage.removeItem('siAuthToken')}
 })();
 </script>
 </body>

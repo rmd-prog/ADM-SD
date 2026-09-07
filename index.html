@@ -40,7 +40,133 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb;box-shadow:0 0 0 3p
 @media(max-width:700px){.doc-controls,.doc-grid,.rpm-extra{grid-template-columns:1fr}.doc-title{font-size:21px}.doc-preview-body{padding:12px}.doc-table{min-width:620px}}
 
 .theme-chip{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:999px;font-size:12px;font-weight:800;background:var(--theme-soft,#eff6ff);color:var(--theme-accent,#2563eb);border:1px solid var(--theme-border,#bfdbfe)}
-.smartbar{display:flex;gap:8px;align-items:center;margin-top:10px;padding:10px;border:1px solid #dbeafe;background:#f8fbff;border-radius:14px}.smartbar>span{font-size:20px}.smartbar input{flex:1}.export-note{font-size:12px;color:#64748b;margin-top:7px}@media(max-width:650px){.smartbar{align-items:stretch;flex-wrap:wrap}.smartbar input{min-width:100%}}</style>
+.smartbar{display:flex;gap:8px;align-items:center;margin-top:10px;padding:10px;border:1px solid #dbeafe;background:#f8fbff;border-radius:14px}.smartbar>span{font-size:20px}.smartbar input{flex:1}.export-note{font-size:12px;color:#64748b;margin-top:7px}@media(max-width:650px){.smartbar{align-items:stretch;flex-wrap:wrap}.smartbar input{min-width:100%}}
+/* ===== MODERN GLASS SCHOOL — VISUAL REFRESH ===== */
+:root{--ms-primary:#4f46e5;--ms-primary2:#7c3aed;--ms-ink:#172033;--ms-muted:#64748b;--ms-glass:rgba(255,255,255,.82);--ms-line:rgba(148,163,184,.22)}
+html{scroll-behavior:smooth}body{background:radial-gradient(circle at 10% 0%,#eef2ff 0,transparent 32%),radial-gradient(circle at 100% 10%,#f5f3ff 0,transparent 30%),#f8fafc;color:var(--ms-ink)}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;background:linear-gradient(120deg,rgba(99,102,241,.035),transparent 35%,rgba(124,58,237,.035));z-index:-1}
+.login{background:radial-gradient(circle at 15% 20%,#c7d2fe 0,transparent 35%),radial-gradient(circle at 85% 80%,#ddd6fe 0,transparent 35%),linear-gradient(135deg,#eef2ff,#faf5ff);animation:msBg 12s ease-in-out infinite alternate}
+.card{background:var(--ms-glass);border:1px solid rgba(255,255,255,.75);box-shadow:0 18px 55px rgba(30,41,59,.10),inset 0 1px 0 rgba(255,255,255,.8);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.login-card{animation:msRise .55s cubic-bezier(.2,.8,.2,1)}
+.logo{border-color:rgba(99,102,241,.18);box-shadow:0 12px 35px rgba(79,70,229,.12)}
+.brand{color:#4338ca!important;letter-spacing:-.02em}.brand-logo{border-color:#c7d2fe;box-shadow:0 4px 14px rgba(79,70,229,.12)}
+.top{height:68px;background:rgba(255,255,255,.78);border-bottom:1px solid rgba(148,163,184,.20);box-shadow:0 8px 30px rgba(15,23,42,.045);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+.side{width:258px;background:linear-gradient(180deg,#111827 0%,#172554 48%,#1e1b4b 100%);box-shadow:10px 0 35px rgba(15,23,42,.12);border-right:1px solid rgba(255,255,255,.06)}
+.side-title{color:#a5b4fc;letter-spacing:.1em;font-size:11px}.navbtn{transition:transform .2s ease,background .2s ease,color .2s ease,box-shadow .2s ease}.navbtn:hover{transform:translateX(3px);background:rgba(255,255,255,.07)!important;color:#fff!important}.navbtn.active{background:linear-gradient(135deg,#4f46e5,#7c3aed)!important;box-shadow:0 8px 22px rgba(79,70,229,.28)}.navgroup{color:#cbd5e1;transition:color .2s}.navgroup:hover{color:#fff}
+.main{padding:24px;animation:msFade .35s ease}.page.active{animation:msPage .3s ease}.panel{border-radius:20px}.grid{gap:16px}.stat{position:relative;overflow:hidden;transition:transform .22s ease,box-shadow .22s ease}.stat:after{content:"";position:absolute;width:90px;height:90px;right:-30px;top:-35px;border-radius:50%;background:linear-gradient(135deg,#c4b5fd55,#93c5fd33)}.stat:hover{transform:translateY(-3px);box-shadow:0 18px 40px rgba(30,41,59,.10)}
+.btn{transition:transform .18s ease,box-shadow .18s ease,filter .18s ease}.btn:hover{transform:translateY(-1px);filter:saturate(1.08);box-shadow:0 8px 18px rgba(30,41,59,.10)}.primary{background:linear-gradient(135deg,#4f46e5,#7c3aed)!important}.secondary{background:#eef2ff;color:#3730a3}.danger{background:linear-gradient(135deg,#ef4444,#dc2626)}
+input,select,textarea{background:rgba(255,255,255,.88);border-color:#dbe3f0;transition:border-color .2s,box-shadow .2s,transform .2s}input:focus,select:focus,textarea:focus{border-color:#818cf8;box-shadow:0 0 0 4px rgba(99,102,241,.12);transform:translateY(-1px)}
+.teacher-profile{background:rgba(255,255,255,.78);border-color:rgba(148,163,184,.25);box-shadow:0 5px 18px rgba(15,23,42,.06);cursor:pointer;transition:.2s}.teacher-profile:hover{transform:translateY(-1px);box-shadow:0 9px 24px rgba(79,70,229,.12)}.teacher-avatar{background:linear-gradient(135deg,#4f46e5,#7c3aed);box-shadow:0 5px 16px rgba(79,70,229,.28)}
+.doc-hero{background:linear-gradient(135deg,rgba(238,242,255,.95),rgba(255,255,255,.9) 55%,rgba(245,243,255,.95));border-color:#e0e7ff;box-shadow:0 15px 40px rgba(79,70,229,.07)}.doc-box{transition:transform .2s ease,box-shadow .2s ease}.doc-box:hover{transform:translateY(-2px);box-shadow:0 14px 30px rgba(30,41,59,.09)}
+.ai-loading-orb{background:linear-gradient(135deg,#eef2ff,#faf5ff);border-color:#c7d2fe}.ai-loading{background:linear-gradient(135deg,#eef2ff,#faf5ff);border-color:#c7d2fe;box-shadow:0 12px 30px rgba(79,70,229,.08)}
+@keyframes msRise{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:none}}@keyframes msFade{from{opacity:0}to{opacity:1}}@keyframes msPage{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}@keyframes msBg{from{background-position:0 0}to{background-position:20px -12px}}
+@media(max-width:850px){.main{padding:14px}.top{height:62px}.side.open{box-shadow:18px 0 45px rgba(15,23,42,.25);animation:msDrawer .25s ease}.top-right .teacher-info{max-width:105px}}@keyframes msDrawer{from{transform:translateX(-18px);opacity:.8}to{transform:none;opacity:1}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.001ms!important;transition-duration:.001ms!important;scroll-behavior:auto!important}}
+.teacher-profile:after{content:'📷';font-size:11px;margin-left:2px;opacity:.55}.teacher-avatar{position:relative}.teacher-avatar:after{content:'+';position:absolute;right:-2px;bottom:-2px;width:15px;height:15px;border-radius:50%;display:grid;place-items:center;background:#fff;color:#4f46e5;font-size:12px;font-weight:900;border:1px solid #c7d2fe}
+
+/* ===== LOGIN SCREEN REDESIGN ===== */
+.login{isolation:isolate;background:radial-gradient(circle at 15% 20%,rgba(99,91,255,.18),transparent 28%),radial-gradient(circle at 85% 75%,rgba(6,182,212,.15),transparent 30%),linear-gradient(135deg,#eef2ff 0%,#f8fafc 48%,#ecfeff 100%)}
+.login:before{width:420px;height:420px;top:-180px;left:-160px;background:rgba(99,91,255,.13);filter:blur(8px);animation:loginFloat 8s ease-in-out infinite}
+.login:after{width:420px;height:420px;right:-170px;bottom:-190px;background:rgba(6,182,212,.12);filter:blur(8px);animation:loginFloat 10s ease-in-out infinite reverse}
+.login-card{width:min(420px,calc(100vw - 28px));padding:34px 32px 30px;border:1px solid rgba(255,255,255,.78);background:rgba(255,255,255,.70);box-shadow:0 35px 90px rgba(30,41,59,.16),inset 0 1px 0 rgba(255,255,255,.85);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-radius:28px}
+.login-card:before{content:"";display:block;width:70px;height:4px;margin:0 auto 24px;border-radius:999px;background:linear-gradient(90deg,#635bff,#06b6d4);opacity:.9}
+.login .logo{width:100px;height:100px;border-radius:28px;border:1px solid rgba(255,255,255,.9);background:rgba(255,255,255,.82);box-shadow:0 18px 45px rgba(99,91,255,.16),0 2px 10px rgba(15,23,42,.05);padding:9px;animation:loginLogo 5s ease-in-out infinite}
+.login .logo img{border-radius:20px}
+.login-card h1{font-size:29px;letter-spacing:-1px;background:linear-gradient(135deg,#312e81,#635bff 55%,#0891b2);-webkit-background-clip:text;background-clip:text;color:transparent}
+.login-card .badge{background:rgba(99,91,255,.10);color:#4f46e5;border:1px solid rgba(99,91,255,.14);font-size:11px;letter-spacing:.3px}
+.login-card label{font-size:13px;color:#334155;margin-top:18px;margin-bottom:7px}
+.login-card input{height:48px;background:rgba(255,255,255,.76);border:1px solid rgba(148,163,184,.28);box-shadow:0 5px 18px rgba(15,23,42,.035)}
+.login-card input:focus{background:#fff;border-color:#8b5cf6;box-shadow:0 0 0 4px rgba(99,91,255,.10),0 8px 22px rgba(99,91,255,.08);transform:none}
+.login-card .toggle{top:6px;right:7px;height:36px;border-radius:9px}
+.login-card .wide{height:50px;margin-top:22px;font-size:14px;letter-spacing:.2px;box-shadow:0 12px 28px rgba(99,91,255,.22)}
+.login-card .wide span{display:inline-block;margin-left:7px;transition:transform .2s ease}
+.login-card .wide:hover span{transform:translateX(4px)}
+.login-card .alert{font-size:13px}
+@keyframes loginFloat{50%{transform:translate3d(18px,-12px,0) scale(1.04)}}
+@keyframes loginLogo{50%{transform:translateY(-4px);box-shadow:0 22px 50px rgba(99,91,255,.20),0 2px 10px rgba(15,23,42,.05)}}
+@media(max-width:520px){.login{padding:14px}.login-card{padding:28px 20px 24px;border-radius:24px}.login .logo{width:88px;height:88px;border-radius:24px}.login-card h1{font-size:25px}}
+@media(prefers-reduced-motion:reduce){.login:before,.login:after,.login .logo{animation:none!important}}
+
+/* ===== MODERN GLASS SCHOOL THEME ===== */
+:root{
+ --ms-bg:#f6f7fb;--ms-surface:rgba(255,255,255,.78);--ms-surface-solid:#fff;
+ --ms-text:#172033;--ms-muted:#64748b;--ms-line:rgba(148,163,184,.22);
+ --ms-primary:#635bff;--ms-primary2:#8b5cf6;--ms-cyan:#06b6d4;
+ --ms-shadow:0 18px 55px rgba(30,41,59,.10);--ms-radius:20px;
+}
+html{scroll-behavior:smooth}
+body{background:radial-gradient(circle at 5% 0%,rgba(99,91,255,.10),transparent 28%),radial-gradient(circle at 95% 10%,rgba(6,182,212,.08),transparent 25%),var(--ms-bg);color:var(--ms-text)}
+.login{background:radial-gradient(circle at 15% 15%,rgba(255,255,255,.9),transparent 25%),linear-gradient(135deg,#eef2ff,#f8fafc 48%,#ecfeff);position:relative;overflow:hidden}
+.login:before,.login:after{content:"";position:absolute;border-radius:999px;filter:blur(2px);pointer-events:none}
+.login:before{width:280px;height:280px;background:rgba(99,91,255,.13);top:-90px;left:-80px}
+.login:after{width:320px;height:320px;background:rgba(6,182,212,.10);right:-100px;bottom:-120px}
+.card{background:var(--ms-surface);border:1px solid rgba(255,255,255,.8);box-shadow:var(--ms-shadow);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-radius:var(--ms-radius)}
+.login-card{position:relative;z-index:1;box-shadow:0 30px 80px rgba(51,65,85,.14);animation:msIn .55s cubic-bezier(.2,.8,.2,1)}
+.logo{border-radius:24px;box-shadow:0 14px 35px rgba(99,91,255,.13)}
+.top{height:70px;background:rgba(255,255,255,.78);border-bottom:1px solid var(--ms-line);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 6px 25px rgba(15,23,42,.04)}
+.brand{letter-spacing:-.3px}
+.brand-logo{width:40px;height:40px;border-radius:12px;box-shadow:0 8px 20px rgba(99,91,255,.12)}
+.side{background:linear-gradient(180deg,#111827,#17152f 58%,#101827);border-right:1px solid rgba(255,255,255,.06);box-shadow:16px 0 45px rgba(15,23,42,.10)}
+.side-title{color:#a5b4fc;letter-spacing:1.5px}
+.navbtn,.navgroup{border-radius:13px;transition:transform .2s ease,background .2s ease,color .2s ease,box-shadow .2s ease}
+.navbtn:hover,.navgroup:hover{transform:translateX(3px);background:rgba(255,255,255,.08)}
+.navbtn.active{background:linear-gradient(135deg,rgba(99,91,255,.95),rgba(139,92,246,.9));box-shadow:0 10px 25px rgba(99,91,255,.25);color:#fff}
+.main{animation:msPage .42s ease both}
+.page.active{animation:msPage .38s cubic-bezier(.2,.8,.2,1) both}
+.page h2{letter-spacing:-.7px}
+.panel{border-radius:20px;transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease}
+.panel:hover{box-shadow:0 20px 55px rgba(30,41,59,.13)}
+input,select,textarea{background:rgba(255,255,255,.82);border:1px solid #dbe1ea;border-radius:13px;transition:border-color .2s ease,box-shadow .2s ease,transform .2s ease}
+input:focus,select:focus,textarea:focus{border-color:#8b5cf6;box-shadow:0 0 0 4px rgba(99,91,255,.10);transform:translateY(-1px)}
+.btn{border-radius:13px;transition:transform .18s ease,box-shadow .18s ease,filter .18s ease}
+.btn:hover{transform:translateY(-2px);box-shadow:0 9px 22px rgba(30,41,59,.12);filter:saturate(1.06)}
+.btn:active{transform:translateY(0) scale(.98)}
+.primary{background:linear-gradient(135deg,var(--ms-primary),var(--ms-primary2));box-shadow:0 8px 20px rgba(99,91,255,.20)}
+.teacher-profile{border:1px solid var(--ms-line);background:rgba(255,255,255,.65);border-radius:16px;padding:5px 9px 5px 6px;transition:transform .2s ease,box-shadow .2s ease}
+.teacher-profile:hover{transform:translateY(-1px);box-shadow:0 8px 25px rgba(30,41,59,.08)}
+.teacher-avatar{width:40px;height:40px;border-radius:13px;background:linear-gradient(135deg,#635bff,#06b6d4);box-shadow:0 8px 18px rgba(99,91,255,.20);overflow:hidden;cursor:pointer}
+.teacher-avatar img{width:100%;height:100%;object-fit:cover;border-radius:inherit}
+.alert{border-radius:15px}
+.tablewrap{border-radius:20px}
+.ai-loading{border-radius:20px!important;background:linear-gradient(135deg,rgba(99,91,255,.10),rgba(6,182,212,.08))!important;box-shadow:0 18px 45px rgba(99,91,255,.10)!important}
+.menu-mobile{border-radius:12px}
+@keyframes msIn{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:none}}
+@keyframes msPage{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media(max-width:760px){
+ .top{height:62px;padding:0 10px}
+ .brand{font-size:14px}
+ .brand-logo{width:34px;height:34px}
+ .teacher-info{display:none}
+ .teacher-profile{padding:4px}
+ .teacher-avatar{width:38px;height:38px}
+ .top-right{gap:6px}
+ .top-right .danger{padding:9px 10px;font-size:12px}
+ .side{box-shadow:18px 0 50px rgba(15,23,42,.22)}
+ .main{padding:14px!important}
+ .card{border-radius:17px}
+}
+@media(prefers-reduced-motion:reduce){
+ *,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+
+
+/* ===== CLEAN UI + WELCOME POPUP ===== */
+.page>h2+ p.muted,.student-head>div>p.muted,.doc-sub{display:none!important}
+.doc-hero{padding-bottom:18px!important}
+.doc-grid{display:none!important}
+#loginScreen .login-card .badge{margin-bottom:4px}
+.welcome-overlay{position:fixed;inset:0;z-index:99999;display:grid;place-items:center;padding:18px;background:rgba(15,23,42,.38);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);opacity:0;visibility:hidden;transition:opacity .25s ease,visibility .25s ease}
+.welcome-overlay.show{opacity:1;visibility:visible}
+.welcome-modal{width:min(420px,100%);padding:30px 24px 24px;text-align:center;border-radius:28px;background:rgba(255,255,255,.92);border:1px solid rgba(255,255,255,.9);box-shadow:0 30px 90px rgba(15,23,42,.25);transform:translateY(18px) scale(.97);transition:transform .3s cubic-bezier(.2,.8,.2,1)}
+.welcome-overlay.show .welcome-modal{transform:none}
+.welcome-icon{width:78px;height:78px;margin:0 auto 14px;border-radius:24px;display:grid;place-items:center;background:linear-gradient(135deg,#635bff,#06b6d4);color:#fff;font-size:40px;box-shadow:0 14px 30px rgba(99,91,255,.22);overflow:hidden}
+.welcome-icon img{width:100%;height:100%;object-fit:cover}
+.welcome-title{font-size:25px;font-weight:800;color:#172033;letter-spacing:-.5px}
+.welcome-name{margin-top:5px;font-size:20px;font-weight:750;background:linear-gradient(135deg,#4f46e5,#0891b2);-webkit-background-clip:text;background-clip:text;color:transparent}
+.welcome-text{margin:8px 0 18px;color:#64748b;font-size:14px}
+.welcome-close{min-width:130px}
+@media(max-width:520px){.welcome-modal{padding:26px 18px 20px;border-radius:24px}.welcome-title{font-size:22px}}
+</style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <meta name="app-version" content="V8-BAB-FIX-2026-09-08">
@@ -50,19 +176,26 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb;box-shadow:0 0 0 3p
   <div class="card login-card">
     <div class="logo"><img src="logo-sekolah.png" alt="Logo sekolah"></div>
     <div class="center" style="margin-top:16px">
-      <h1>SI-NILAI SD</h1><div class="muted">Sistem Penilaian Sekolah Dasar</div>
-      <div class="badge" style="margin-top:10px">TA 2026/2027 • V8 FINAL</div>
+      <h1>SI-NILAI SD</h1><div class="badge" style="margin-top:10px">TA 2026/2027 • V8 FINAL</div>
     </div>
     <form id="loginForm">
       <label>Username</label><input id="loginUser" autocomplete="username" required placeholder="Masukkan username">
       <label>Password</label>
       <div class="password"><input id="loginPass" type="password" autocomplete="current-password" required placeholder="Masukkan password"><button class="toggle" type="button" id="showPass">Lihat</button></div>
-      <button class="btn primary wide" type="submit">MASUK KE SISTEM</button>
+      <button class="btn primary wide" type="submit">MASUK KE SISTEM <span aria-hidden="true">→</span></button>
       <div id="loginError" class="alert">Username atau password salah.</div>
     </form>
-    <div class="demo"><b>Login terpusat:</b> akun diverifikasi melalui Cloudflare Worker + D1.<br><span class="muted">Gunakan username yang terdaftar di tabel users (admin / akun guru sesuai rombel). Hak akses dan kelas guru mengikuti server.</span></div>
   </div>
 </section>
+<div id="welcomeOverlay" class="welcome-overlay" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle">
+  <div class="welcome-modal">
+    <div class="welcome-icon" id="welcomeIcon">👨‍🏫</div>
+    <div class="welcome-title" id="welcomeTitle">Selamat Datang!</div>
+    <div class="welcome-name" id="welcomeName">Guru</div>
+    <div class="welcome-text" id="welcomeText">Semangat mengajar hari ini, Guru! ✨</div>
+    <button type="button" class="btn primary welcome-close" id="welcomeClose">Siap, Gas! 🚀</button>
+  </div>
+</div>
 
 <section id="app" class="app">
 <header class="top">
@@ -519,11 +652,12 @@ function renderAIPaper(type,title,text,k,m,bab,size='A4',orientation='portrait',
 function aiTypeLabel(t){const o=id('aiType')?.options;return o&&o[id('aiType').selectedIndex]?o[id('aiType').selectedIndex].textContent:t}
 
 function updateTeacherProfile(t){
+  const savedPhoto=(()=>{try{return localStorage.getItem('siTeacherPhoto:'+String(t?.username||''))||''}catch(e){return''}})();
   const name=t?.name||t?.username||'Guru';
   const role=t?.role==='admin'?'Administrator':'Guru Kelas'+(t?.rombel||t?.kelas?' • Rombel '+(t.rombel||t.kelas):'');
   const initials=name.replace(/[^A-Za-zÀ-ÿ0-9 ]/g,' ').trim().split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0].toUpperCase()).join('')||'G';
   id('userLabel').textContent=name; id('userRoleLabel').textContent=role;
-  const av=id('teacherAvatar'); if(av){const src=t?.photo||t?.foto||t?.avatar||'';av.innerHTML=src?'<img src="'+esc(src)+'" alt="Foto guru">':initials;}
+  const av=id('teacherAvatar'); if(av){const src=t?.photo||t?.foto||t?.avatar||savedPhoto||'';av.innerHTML=src?'<img src="'+esc(src)+'" alt="Foto guru">':initials;}
 }
 function setAILoading(on,title){const box=id('aiLoading'),btn=id('aiGenerateBtn');if(box)box.classList.toggle('show',on);if(title&&id('aiLoadingText'))id('aiLoadingText').innerHTML=escHtml(title)+'<span class="ai-loading-dots"></span>';if(btn){btn.disabled=on;btn.innerHTML=on?'⏳ SEDANG MEMBUAT...':'🤖 GENERATE DENGAN AI';btn.style.opacity=on?'.75':'1';}}
 function initAIGenerator(){
@@ -699,7 +833,29 @@ async function finishLogin(t){
   applyClassLock();syncRoleMenu();initAIGenerator();renderBookBasisStatus();renderStats();renderStudents();renderScores();renderReport();showPage(t.role==='guru'?'students':'dashboard');
   // Sinkronisasi D1 berjalan di belakang layar agar login tidak tertahan.
   syncRemoteData(t).catch(err=>console.warn('Sinkronisasi D1 gagal:',err));
+  setTimeout(()=>showWelcome(t),220);
 }
+
+
+function showWelcome(t){
+  const name=t?.name||t?.username||'Guru';
+  const raw=String(t?.gender||t?.jk||t?.jenisKelamin||t?.jenis_kelamin||'').toLowerCase();
+  const male=/^(l|lk|laki|laki-laki|male|pria|putra)$/.test(raw);
+  const female=/^(p|pr|perempuan|female|wanita|putri)$/.test(raw);
+  const first=String(name).trim().split(/\s+/)[0]||'Guru';
+  const icon=id('welcomeIcon'),text=id('welcomeText'),nm=id('welcomeName'),ov=id('welcomeOverlay');
+  if(!ov)return;
+  const photo=t?.photo||t?.foto||t?.avatar||'';
+  icon.innerHTML=photo?'<img src="'+esc(photo)+'" alt="Foto guru">':(female?'👩‍🏫':'👨‍🏫');
+  nm.textContent=(male?'Pak ':female?'Bu ':'')+name;
+  text.textContent=male?'Selamat datang, Pak '+first+'! Guru ganteng, semangat mengajar hari ini! 😎':female?'Selamat datang, Bu '+first+'! Guru cantik, semangat mengajar hari ini! 🌷':'Selamat datang, '+name+'! Semangat mengajar dan berkarya hari ini! ✨';
+  ov.classList.add('show');
+  setTimeout(()=>id('welcomeClose')?.focus(),80);
+}
+function closeWelcome(){id('welcomeOverlay')?.classList.remove('show')}
+id('welcomeClose')?.addEventListener('click',closeWelcome);
+id('welcomeOverlay')?.addEventListener('click',e=>{if(e.target.id==='welcomeOverlay')closeWelcome()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeWelcome()});
 
 id('loginForm').onsubmit=async e=>{
   e.preventDefault();
@@ -711,6 +867,9 @@ id('loginForm').onsubmit=async e=>{
 id('showPass').onclick=()=>{id('loginPass').type=id('loginPass').type==='password'?'text':'password';id('showPass').textContent=id('loginPass').type==='password'?'Lihat':'Sembunyi'}
 id('logoutBtn').onclick=()=>{currentTeacher=null;localStorage.removeItem('siLogin');localStorage.removeItem('siAuthToken');id('app').style.display='none';id('loginScreen').style.display='grid';id('loginPass').value=''}
 id('menuBtn').onclick=()=>id('sidebar').classList.toggle('open')
+const photoPicker=document.createElement('input');photoPicker.type='file';photoPicker.accept='image/*';photoPicker.style.display='none';document.body.appendChild(photoPicker);
+id('teacherAvatar')?.addEventListener('click',()=>photoPicker.click());id('teacherAvatar')?.setAttribute('title','Klik untuk mengganti foto profil');
+photoPicker.addEventListener('change',()=>{const f=photoPicker.files?.[0];if(!f||!currentTeacher)return;if(f.size>2*1024*1024){alert('Foto maksimal 2 MB.');photoPicker.value='';return}const r=new FileReader();r.onload=()=>{const src=String(r.result||'');try{localStorage.setItem('siTeacherPhoto:'+String(currentTeacher.username||''),src)}catch(e){alert('Foto terlalu besar untuk penyimpanan browser. Coba foto yang lebih kecil.');return}currentTeacher.photo=src;localStorage.setItem('siLogin',JSON.stringify(currentTeacher));updateTeacherProfile(currentTeacher);photoPicker.value=''};r.readAsDataURL(f)});
 id('sClass').onchange=()=>{if(!isGuruKelas())renderStudents()};
 id('studentFilterClass').onchange=()=>{if(!isGuruKelas()){id('sClass').value=id('studentFilterClass').value;renderStudents()}};
 id('studentSearch').oninput=()=>renderStudents();

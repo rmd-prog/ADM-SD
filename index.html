@@ -490,46 +490,5 @@ buildNav();fillMapels();bindDocumentTools();renderStats();renderStudents();rende
 try{const saved=JSON.parse(sessionStorage.getItem('siLogin')||'null');const token=sessionStorage.getItem('siAuthToken');if(saved&&saved.username&&token){if(saved.role==='guru'&&!ROMBELS.includes(normalizeRombel(saved.rombel||saved.kelas||''))){sessionStorage.removeItem('siLogin');sessionStorage.removeItem('siAuthToken')}else finishLogin(saved)}}catch(e){sessionStorage.removeItem('siLogin');sessionStorage.removeItem('siAuthToken')}
 })();
 </script>
-<script>
-(function(){
-  const API='https://adm-sd.adm-sd.workers.dev/api';
-  const cfg={
-    generateCp:['cp','cpKelas','cpMapel','cpText','cpStatus'],
-    generateTp:['tp','tpKelas','tpMapel','tpText','tpStatus'],
-    generateAtp:['atp','atpKelas','atpMapel','atpText','atpStatus'],
-    generateProta:['prota','protaKelas','protaMapel','protaText','protaStatus'],
-    generateProsem:['prosem','prosemKelas','prosemMapel','prosemText','prosemStatus'],
-    generateRpm:['rpm','rpmKelas','rpmMapel','rpmText','rpmStatus']
-  };
-  const $=x=>document.getElementById(x);
-  const phase=v=>{const s=String(v||'').toUpperCase().replace(/\s/g,'');const g={IA:1,IB:1,IIA:2,IIB:2,IIIA:3,IIIB:3,IVA:4,IVB:4,V:5,VI:6}[s]||4;return g<=2?'A':g<=4?'B':'C'};
-  async function runAI(buttonId){
-    const c=cfg[buttonId]; if(!c)return;
-    const [type,kid,mid,tid,sid]=c, k=$(kid)?.value||'', m=$(mid)?.value||'', tx=$(tid), st=$(sid), b=$(buttonId);
-    const token=sessionStorage.getItem('siAuthToken')||'';
-    if(!token){alert('Sesi login tidak ditemukan. Silakan login ulang.');return;}
-    if(!tx||!st)return;
-    if(tx.value.trim()&&!confirm('Generate AI akan mengganti isi editor dengan rancangan baru. Lanjutkan?'))return;
-    if(b){b.disabled=true;b.dataset.aiBusy='1';b._oldAI=b.innerHTML;b.innerHTML='⏳ Menyusun...';}
-    st.textContent='🤖 AI sedang menyusun perangkat pembelajaran...';st.className='gen-status show';
-    try{
-      const r=await fetch(API+'/ai/generate',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({jenis:type,rombel:k,mapel:m,fase:phase(k),tahun:'2026/2027',context:$(type+'Context')?.value||'',existing:tx.value})});
-      const raw=await r.text(); let d={}; try{d=JSON.parse(raw)}catch(e){}
-      if(!r.ok||!d.ok)throw new Error(d.message||('AI gagal memproses permintaan ('+r.status+').'));
-      tx.value=String(d.text||'');
-      if(typeof window.save==='function')window.save();
-      if(typeof window.setDocPreview==='function')window.setDocPreview(type,'✨ '+type.toUpperCase()+' berhasil dibuat oleh AI untuk Rombel '+k+'.');
-      st.textContent='✅ Selesai • '+(d.model||'AI');st.className='gen-status show';
-    }catch(e){console.error(e);st.textContent='❌ '+(e.message||'AI gagal');st.className='gen-status show';alert(e.message||'AI gagal membuat dokumen.');}
-    finally{if(b){b.disabled=false;b.dataset.aiBusy='';b.innerHTML=b._oldAI||'🤖 Generate dengan AI';}}
-  }
-  document.addEventListener('click',function(e){
-    const b=e.target.closest&&e.target.closest('button[id]');
-    if(!b||!cfg[b.id]||b.dataset.aiBusy==='1')return;
-    e.preventDefault(); e.stopImmediatePropagation();
-    runAI(b.id);
-  },true);
-})();
-</script>
 </body>
 </html>

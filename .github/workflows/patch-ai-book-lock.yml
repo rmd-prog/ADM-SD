@@ -1,0 +1,46 @@
+name: Patch AI Book Lock
+on:
+  push:
+    branches: ["ops/ai-book-lock-20260907"]
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+      - name: Patch worker
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('src/index.js')
+          s=p.read_text()
+          old='''        const bab = String(body.bab || "").trim();\n        const jumlahSoal = Math.min(100, Math.max(1, Number(body.jumlahSoal || 10)));'''
+          new='''        const bab = String(body.bab || "").trim();\n        const bookReference = body.bookReference && typeof body.bookReference === "object" ? body.bookReference : null;\n        const bookLock = body.bookLock === true;\n        const bookTitle = String(bookReference?.title || "").trim();\n        const bookSource = String(bookReference?.source || "").trim();\n        const bookYear = String(bookReference?.year || "").trim();\n        const bookBab = String(bookReference?.bab || "").trim();\n        const bookChapters = Array.isArray(bookReference?.chapters) ? bookReference.chapters.map(x => String(x).trim()).filter(Boolean).slice(0,50) : [];\n        const bookContext = bookLock && bookTitle ? `\\n\\nSUMBER BUKU TERKUNCI:\\n- Judul buku: ${bookTitle}\\n- Sumber: ${bookSource || "SIBI"}\\n- Tahun/Edisi: ${bookYear || "sesuai metadata"}\\n${bookBab ? `- BAB/UNIT TERPILIH: ${bookBab}\\n` : ""}${bookChapters.length ? `- DAFTAR BAB/UNIT YANG TERVERIFIKASI: ${bookChapters.join(" | ")}\\n` : ""}ATURAN WAJIB SUMBER BUKU:\\n1. Jangan mengganti, menerjemahkan, memendekkan, atau mengarang judul buku.\\n2. Jika BAB/UNIT terpilih diberikan, gunakan tepat BAB/UNIT tersebut.\\n3. Jika daftar BAB diberikan, jangan membuat BAB di luar daftar.\\n4. Jangan mengklaim isi BAB yang belum terverifikasi.\\n5. Jika informasi buku tidak cukup, tulis “struktur buku belum terverifikasi” daripada mengarang.` : "";\n        const jumlahSoal = Math.min(100, Math.max(1, Number(body.jumlahSoal || 10)));'''
+          if old not in s: raise SystemExit('PATCH_TARGET_1_NOT_FOUND')
+          s=s.replace(old,new,1)
+          old2='''        const common = `KELAS/ROMBEL: ${requested || own || "SD"}\\nFASE: ${fase || "sesuai kelas"}\\nMAPEL: ${mapel || "sesuai konteks"}\\nTAHUN PELAJARAN: ${tahun}\\nTOPIK/KONTEKS: ${context || "gunakan konteks dekat dengan kehidupan murid"}${bab ? `\\nBAB/UNIT: ${bab}` : ""}`;'''
+          new2='''        const common = `KELAS/ROMBEL: ${requested || own || "SD"}\\nFASE: ${fase || "sesuai kelas"}\\nMAPEL: ${mapel || "sesuai konteks"}\\nTAHUN PELAJARAN: ${tahun}\\nTOPIK/KONTEKS: ${context || "gunakan konteks dekat dengan kehidupan murid"}${bab ? `\\nBAB/UNIT: ${bab}` : ""}${bookContext}`;'''
+          if old2 not in s: raise SystemExit('PATCH_TARGET_2_NOT_FOUND')
+          s=s.replace(old2,new2,1)
+          old3='''        const userPrompt = `Buat ${names[jenis]} untuk ${requested || own || "kelas SD"}, mapel ${mapel || "sesuai konteks"}. ${context ? "Gunakan topik/konteks: "+context : "Gunakan topik yang paling relevan dengan kebutuhan ini."}${bab ? " Unit/BAB: "+bab+"." : ""}`;'''
+          new3='''        const userPrompt = `Buat ${names[jenis]} untuk ${requested || own || "kelas SD"}, mapel ${mapel || "sesuai konteks"}. ${context ? "Gunakan topik/konteks: "+context : "Gunakan topik yang paling relevan dengan kebutuhan ini."}${bab ? " Unit/BAB: "+bab+"." : ""}${bookContext ? "\\n\\nWAJIB: patuhi sumber buku terkunci di atas dan jangan mengganti judul/BAB." : ""}`;'''
+          if old3 not in s: raise SystemExit('PATCH_TARGET_3_NOT_FOUND')
+          s=s.replace(old3,new3,1)
+          old4='''        return json({ok:true,jenis,text,model});'''
+          new4='''        return json({ok:true,jenis,text,model,bookReference: bookReference || null,bookLock});'''
+          if old4 not in s: raise SystemExit('PATCH_TARGET_4_NOT_FOUND')
+          s=s.replace(old4,new4,1)
+          p.write_text(s)
+          PY
+          node --check src/index.js
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/index.js
+          git commit -m "fix: enforce locked book reference in AI generate" || exit 0
+          git push origin main

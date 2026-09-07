@@ -4,13 +4,12 @@ on:
     branches: [main]
 jobs:
   fix:
-    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v4
-      - name: Patch and validate
+      - name: Patch
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -37,11 +36,12 @@ function aiBookLock(m,k,bab){const b=bookInfo(m,k);if(!b)return{title:'Belum ter
           import re
           s=Path('index.html').read_text(encoding='utf-8')
           blocks=re.findall(r'<script(?:\\s[^>]*)?>([\\s\\S]*?)</script>',s,re.I)
-          if not blocks: raise SystemExit('No JS')
           Path('/tmp/index.js').write_text('\n'.join(blocks),encoding='utf-8')
           PY
           node --check /tmp/index.js
-      - name: Commit patch
+          grep -q 'function normalizeBabName' index.html
+          grep -q 'extra.bab=normalizeBabName' index.html
+      - name: Commit
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com

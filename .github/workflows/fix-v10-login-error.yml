@@ -1,0 +1,38 @@
+name: Fix V10 login error
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-v10-login-error.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Remove unsafe inline script
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          start = s.find("<script>\\n(function(){\\n  function sync(){\\n    var app=document.querySelector('.app');")
+          if start == -1:
+              raise SystemExit('target block not found')
+          end = s.find("</script>\\n</body></html>'}", start)
+          if end == -1:
+              raise SystemExit('target end not found')
+          replacement = "</body></html>'}"
+          s = s[:start] + replacement + s[end + len("</script>\\n</body></html>'}"):]
+          p.write_text(s, encoding='utf-8')
+          PY
+      - name: Commit fix
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'fix: prevent script termination in V10 login' || exit 0
+          git push

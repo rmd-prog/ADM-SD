@@ -357,7 +357,25 @@ export default {
         if(!apiRes.ok)return json({ok:false,message:data?.error?.message||"AI gagal memproses permintaan.",status:apiRes.status},502);
         const text=String(data.output_text||(data.output||[]).flatMap(x=>x.content||[]).find(x=>x.type==='output_text')?.text||"").trim();
         if(!text)return json({ok:false,message:"AI tidak mengembalikan isi dokumen."},502);
-        return json({ok:true,jenis,text,model,bookReference: bookReference || null,bookLock});
+
+        // BOOK LOCK V2: metadata buku/BAB selalu dipasang ulang oleh Worker
+        // agar hasil yang tampil di frontend tidak bisa kehilangan identitas sumber.
+        let finalText = text;
+        if (bookLock && bookTitle) {
+          const lockLines = [
+            "🔒 SUMBER BUKU TERKUNCI",
+            `Judul buku: ${bookTitle}`,
+            `Sumber: ${bookSource || "SIBI"}`,
+            `Tahun/Edisi: ${bookYear || "sesuai metadata"}`
+          ];
+          if (bookBab) lockLines.push(`BAB/UNIT: ${bookBab}`);
+          if (bookChapters.length) lockLines.push(`Daftar BAB/UNIT terverifikasi: ${bookChapters.join(" | ")}`);
+          const lockHeader = lockLines.join("\n") + "\n\n";
+          // Jangan pernah mengganti isi guru secara diam-diam; metadata terkunci
+          // ditempatkan di paling atas sebagai identitas sumber yang authoritative.
+          finalText = lockHeader + finalText;
+        }
+        return json({ok:true,jenis,text:finalText,model,bookReference: bookReference || null,bookLock,bookLockEnforced: !!(bookLock && bookTitle)});
       }
 
       // DATA GURU / USERS

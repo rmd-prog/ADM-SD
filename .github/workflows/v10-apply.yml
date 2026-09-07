@@ -1,0 +1,104 @@
+name: Apply GURU+ SD V10
+on:
+  push:
+    paths:
+      - '.github/v10-trigger.txt'
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build V10 portal refresh
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+
+          # Version / branding
+          s=s.replace('<title>🚀 GURU+ SD V9 — 2026/2027 • Administrasi & Pembelajaran Guru</title>','<title>🏛️ GURU+ SD V10 — 2026/2027 • Portal Administrasi Guru</title>',1)
+          s=s.replace('<meta name="app-version" content="V9-BAB-FIX-2026-09-08">','<meta name="app-version" content="V10-BOGOR-PORTAL-2026-09-08">',1)
+          s=s.replace('GURU+ SD V9</div></div>','GURU+ SD V10</div></div>',1)
+          s=s.replace('TA 2026/2027 • V9 FINAL','TA 2026/2027 • V10 FINAL',1)
+          s=s.replace('Referensi SIBI & Basis V9 FINAL','Referensi SIBI & Basis V10',1)
+          s=s.replace("const KEY='guru_plus_sd_v9_2026_2027';","const KEY='guru_plus_sd_v10_2026_2027';",1)
+          s=s.replace("const APP_VERSION='V9 FINAL • AI Terkunci Referensi Buku • Basis BSKAP 2025 + SIBI';","const APP_VERSION='V10 FINAL • Portal Administrasi Guru • AI Terkunci Referensi Buku';",1)
+
+          # V10 visual system inspired by integrated public-service portals.
+          css=r'''/* ===== GURU+ SD V10 • BOGOR PORTAL UI ===== */
+          :root{--v10-blue:#1d4ed8;--v10-indigo:#4338ca;--v10-cyan:#0891b2;--v10-ink:#172033;--v10-muted:#64748b;--v10-line:#e2e8f0}
+          html{scroll-behavior:auto!important;scroll-padding-top:0!important}
+          body{overflow-x:hidden}
+          #app{min-height:100svh}
+          .top{height:72px!important;padding:0 18px!important;background:rgba(255,255,255,.90)!important}
+          .brand{font-size:16px!important;font-weight:950!important;color:#1e3a8a!important}
+          .brand:after{content:'• PORTAL ADMINISTRASI GURU';display:block;font-size:9px;color:#64748b;letter-spacing:1px;font-weight:800;margin-left:49px;margin-top:-2px}
+          .side{width:270px!important;background:linear-gradient(180deg,#0f172a 0%,#172554 52%,#1e1b4b 100%)!important;padding:16px 12px!important}
+          .side-title{padding:10px 12px 14px!important;font-size:10px!important;letter-spacing:1.7px!important;color:#93c5fd!important}
+          .navbtn,.navgroup{min-height:42px!important;border-radius:12px!important}
+          .navbtn.active{background:linear-gradient(135deg,#2563eb,#4f46e5)!important;box-shadow:0 8px 22px rgba(37,99,235,.25)!important}
+          .main{padding:22px!important;background:transparent}
+          #dashboard{max-width:1400px;margin:0 auto}
+          #dashboard .v10-hero{position:relative;overflow:hidden;padding:24px!important;border-radius:24px!important;background:linear-gradient(135deg,#172554 0%,#1d4ed8 54%,#0891b2 100%)!important;color:#fff!important;box-shadow:0 22px 55px rgba(30,64,175,.22)!important;margin-bottom:16px}
+          #dashboard .v10-hero:after{content:'';position:absolute;width:240px;height:240px;border-radius:50%;right:-70px;top:-90px;background:rgba(255,255,255,.10);box-shadow:-90px 150px 0 20px rgba(255,255,255,.045)}
+          .v10-kicker{font-size:10px;font-weight:900;letter-spacing:1.8px;opacity:.82;text-transform:uppercase}
+          .v10-hero h2{font-size:28px!important;margin:4px 0 6px!important;letter-spacing:-.8px!important;position:relative;z-index:1}
+          .v10-hero p{max-width:720px;margin:0!important;color:rgba(255,255,255,.82)!important;line-height:1.55;position:relative;z-index:1}
+          .v10-pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:15px;position:relative;z-index:1}
+          .v10-pill{display:inline-flex;align-items:center;gap:6px;padding:7px 11px;border-radius:999px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.16);font-size:11px;font-weight:800}
+          .v10-services{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;margin:16px 0}
+          .v10-service{border:1px solid #e2e8f0!important;border-radius:18px!important;padding:15px!important;background:rgba(255,255,255,.86)!important;box-shadow:0 10px 28px rgba(15,23,42,.055)!important;cursor:pointer;transition:.2s;min-height:112px}
+          .v10-service:hover{transform:translateY(-3px);box-shadow:0 18px 35px rgba(15,23,42,.10)!important;border-color:#bfdbfe!important}
+          .v10-service-icon{width:40px;height:40px;border-radius:13px;display:grid;place-items:center;background:#eff6ff;font-size:21px;margin-bottom:9px}
+          .v10-service b{display:block;font-size:13px}.v10-service span{display:block;color:#64748b;font-size:11px;margin-top:3px;line-height:1.35}
+          .v10-section-title{display:flex;align-items:end;justify-content:space-between;gap:10px;margin:20px 0 10px}.v10-section-title h3{margin:0;font-size:17px}.v10-section-title span{font-size:11px;color:#64748b}
+          .v10-stat-grid{margin-top:0!important}
+          .v10-stat-grid .stat{border-radius:18px!important;padding:17px!important;background:rgba(255,255,255,.88)!important;border:1px solid #e2e8f0;box-shadow:0 10px 28px rgba(15,23,42,.045)}
+          .v10-stat-grid .stat span{font-size:11px}.v10-stat-grid .stat b{font-size:26px!important;margin-top:4px}
+          .v10-workflow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+          .v10-step{padding:15px;border:1px solid #e2e8f0;border-radius:17px;background:#fff;position:relative}.v10-step-num{font-size:10px;font-weight:900;color:#2563eb}.v10-step b{display:block;margin:4px 0;font-size:13px}.v10-step span{font-size:11px;color:#64748b;line-height:1.4}
+          .v10-quick{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.v10-quick .btn{border-radius:11px!important}
+          .v10-admin-card{margin-top:16px!important;border-radius:18px!important;background:rgba(255,255,255,.76)!important}
+          @media(max-width:1050px){.v10-services{grid-template-columns:repeat(3,minmax(0,1fr))}.v10-workflow{grid-template-columns:repeat(2,minmax(0,1fr))}}
+          @media(max-width:760px){.top{height:64px!important;padding:0 10px!important}.brand{font-size:13px!important}.brand:after{display:none}.main{padding:12px!important}.v10-services{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.v10-service{min-height:102px;padding:12px!important}.v10-hero{padding:20px!important}.v10-hero h2{font-size:23px!important}.v10-workflow{grid-template-columns:1fr}.v10-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+          @media(max-width:420px){.v10-services{grid-template-columns:1fr 1fr}.v10-service-icon{width:36px;height:36px}.v10-service b{font-size:12px}.v10-service span{font-size:10px}}
+          /* Fix the post-login jump permanently. */
+          body.v10-logged-in{overflow-x:hidden!important;overflow-y:auto!important}
+          body.v10-login{overflow:hidden!important}
+          '''
+          if 'GURU+ SD V10 • BOGOR PORTAL UI' not in s:
+              s=s.replace('</style>',css+'\n</style>',1)
+
+          # Replace dashboard with V10 portal landing while retaining all existing stats IDs.
+          old='''<section id="dashboard" class="page active">\n    <h2>Dashboard</h2><p class="muted">Selamat datang di 🚀 GURU+ SD. Data akun dan data yang tersedia di D1 dibaca melalui Cloudflare Worker. Fitur lokal tetap dipertahankan untuk data kerja yang belum memiliki endpoint simpan di Worker.</p>\n    <div id="teacherClassBox" class="card panel" style="margin-top:12px;background:#eff6ff"><b id="teacherClassTitle">Kelas</b><div id="teacherClassInfo" class="muted" style="margin-top:4px"></div></div>\n    <div class="grid">\n      <div class="card stat"><span class="muted">Siswa</span><b id="statStudents">0</b></div>\n      <div class="card stat"><span class="muted">Nilai</span><b id="statScores">0</b></div>\n      <div class="card stat"><span class="muted">Guru</span><b id="statTeachers">1</b></div>\n      <div class="card stat"><span class="muted">Tahun</span><b>2026/27</b></div>\n    </div>\n    <div class="card panel" style="margin-top:15px"><h3>Alur kerja</h3><p>1. Isi/import siswa → 2. CP/TP/ATP sudah terisi per kelas → 3. Prota/Prosem/RPM sudah terisi per kelas → 4. Input penilaian per BAB → 5. Cetak/lihat rapor → 6. Backup data.</p></div>\n  </section>'''
+          new='''<section id="dashboard" class="page active">\n    <div class="v10-hero">\n      <div class="v10-kicker">Portal Administrasi Guru • Kota Bogor</div>\n      <h2>Selamat datang di GURU+ SD V10 👋</h2>\n      <p>Satu portal untuk data siswa, penilaian, perangkat pembelajaran, AI Generate, LKPD, dan laporan guru. Dirancang dengan pola layanan terintegrasi seperti portal publik modern.</p>\n      <div class="v10-pills"><span class="v10-pill">🏫 SDN Muarasari 1</span><span class="v10-pill">📍 Kota Bogor</span><span class="v10-pill">📅 2026/2027</span><span class="v10-pill">⚡ Cloudflare + D1</span></div>\n    </div>\n    <div id="teacherClassBox" class="card panel v10-admin-card" style="background:#eff6ff"><b id="teacherClassTitle">Kelas</b><div id="teacherClassInfo" class="muted" style="margin-top:4px"></div></div>\n    <div class="v10-section-title"><h3>🚀 Akses layanan utama</h3><span>Pilih layanan untuk mulai bekerja</span></div>\n    <div class="v10-services">\n      <div class="v10-service" data-v10-page="students"><div class="v10-service-icon">👥</div><b>Data Siswa</b><span>Kelola data siswa & rombel</span></div>\n      <div class="v10-service" data-v10-page="scores"><div class="v10-service-icon">📝</div><b>Penilaian</b><span>Input nilai per BAB</span></div>\n      <div class="v10-service" data-v10-page="aiGenerate"><div class="v10-service-icon">🤖</div><b>AI Generate</b><span>Dokumen pembelajaran otomatis</span></div>\n      <div class="v10-service" data-v10-page="cp"><div class="v10-service-icon">📚</div><b>Perangkat</b><span>CP, TP, ATP, Prota, Prosem & RPM</span></div>\n      <div class="v10-service" data-v10-page="report"><div class="v10-service-icon">📊</div><b>Rapor</b><span>Rekap dan hasil belajar</span></div>\n      <div class="v10-service" data-v10-page="reference"><div class="v10-service-icon">📖</div><b>Referensi SIBI</b><span>Basis buku dan materi</span></div>\n    </div>\n    <div class="v10-section-title"><h3>📊 Ringkasan sistem</h3><span>Data akun aktif</span></div>\n    <div class="grid v10-stat-grid">\n      <div class="card stat"><span class="muted">Siswa</span><b id="statStudents">0</b></div>\n      <div class="card stat"><span class="muted">Nilai</span><b id="statScores">0</b></div>\n      <div class="card stat"><span class="muted">Guru</span><b id="statTeachers">1</b></div>\n      <div class="card stat"><span class="muted">Tahun</span><b>2026/27</b></div>\n    </div>\n    <div class="v10-section-title"><h3>🧭 Alur kerja</h3><span>Langkah kerja guru</span></div>\n    <div class="v10-workflow">\n      <div class="v10-step"><span class="v10-step-num">01</span><b>Data Master</b><span>Isi atau import siswa dan rombel.</span></div>\n      <div class="v10-step"><span class="v10-step-num">02</span><b>Perangkat</b><span>Siapkan CP, TP, ATP, Prota, Prosem dan RPM.</span></div>\n      <div class="v10-step"><span class="v10-step-num">03</span><b>Penilaian</b><span>Input nilai per BAB dan pantau perkembangan.</span></div>\n      <div class="v10-step"><span class="v10-step-num">04</span><b>Laporan</b><span>Cek rapor, cetak dokumen, dan backup data.</span></div>\n    </div>\n    <div class="v10-quick"><button class="btn primary" data-v10-page="aiGenerate">🤖 Mulai AI Generate</button><button class="btn secondary" data-v10-page="students">👥 Kelola Siswa</button><button class="btn secondary" data-v10-page="scores">📝 Input Nilai</button></div>\n  </section>'''
+          if old in s:
+              s=s.replace(old,new,1)
+
+          # Login/app state + scroll reset.
+          s=s.replace("async function finishLogin(t){\n  currentTeacher=t;", "async function finishLogin(t){\n  currentTeacher=t;\n  document.body.classList.remove('v10-login');\n  document.body.classList.add('v10-logged-in');\n  window.scrollTo(0,0);document.documentElement.scrollTop=0;document.body.scrollTop=0;",1)
+          s=s.replace("id('loginScreen').style.display='none';id('app').style.display='block';", "id('loginScreen').style.display='none';id('app').style.display='block';window.scrollTo({top:0,left:0,behavior:'auto'});document.documentElement.scrollTop=0;document.body.scrollTop=0;",1)
+          s=s.replace("id('logoutBtn').onclick=()=>{currentTeacher=null;localStorage.removeItem('siLogin');localStorage.removeItem('siAuthToken');id('app').style.display='none';id('loginScreen').style.display='grid';id('loginPass').value=''}", "id('logoutBtn').onclick=()=>{currentTeacher=null;localStorage.removeItem('siLogin');localStorage.removeItem('siAuthToken');document.body.classList.remove('v10-logged-in');document.body.classList.add('v10-login');id('app').style.display='none';id('loginScreen').style.display='grid';id('loginPass').value='';window.scrollTo(0,0);document.documentElement.scrollTop=0;document.body.scrollTop=0}",1)
+
+          # V10 quick-service navigation.
+          marker="function showPage(p){"
+          if "data-v10-page" not in s[s.find(marker):s.find(marker)+2500]:
+              s=s.replace(marker, "document.addEventListener('click',function(e){const el=e.target.closest('[data-v10-page]');if(el&&typeof showPage==='function'){showPage(el.getAttribute('data-v10-page'));window.scrollTo({top:0,left:0,behavior:'auto'});}});\n"+marker,1)
+
+          # Ensure login state is locked before authentication.
+          s=s.replace("<body><!-- GURU+ SD V9 • FINAL LOGIN DESIGN -->", "<body class=\"v10-login\"><!-- GURU+ SD V10 • FINAL LOGIN DESIGN -->",1)
+
+          p.write_text(s,encoding='utf-8')
+          Path('.github/v10-trigger.txt').unlink(missing_ok=True)
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html .github/v10-trigger.txt .github/workflows/v10-apply.yml
+          git commit -m 'feat: launch GURU+ SD V10 Bogor portal UI [skip ci]' || true
+          git push origin main
+          git rm .github/workflows/v10-apply.yml || true
+          git commit -m 'chore: remove temporary V10 patch workflow [skip ci]' || true
+          git push origin main || true

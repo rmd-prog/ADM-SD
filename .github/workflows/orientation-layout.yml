@@ -1,0 +1,123 @@
+name: Apply responsive HP PC orientation layout
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - .github/workflows/orientation-layout.yml
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Patch responsive layout
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          if 'GURU+ SD V9 • AUTO ORIENTATION' in s:
+              print('Patch already present')
+              raise SystemExit(0)
+          css=r'''
+          /* ===== GURU+ SD V9 • AUTO ORIENTATION ===== */
+          body{--ui-scale:1}
+          .top,.side,.main{transition:all .25s ease}
+          .top .brand{font-size:clamp(13px,1.2vw,16px)}
+          .main{font-size:calc(14px * var(--ui-scale))}
+          @media (min-width:761px){
+            body{--ui-scale:1}
+            .top{height:68px}
+            .side{width:250px}
+            .main{padding:22px!important}
+            .page h2{font-size:24px!important}
+            .panel{border-radius:18px}
+          }
+          @media (max-width:760px) and (orientation:portrait){
+            body{--ui-scale:.92}
+            .top{height:58px;padding:0 9px}
+            .brand{font-size:13px!important}
+            .brand-logo{width:32px;height:32px}
+            .main{padding:11px!important}
+            .page h2{font-size:20px!important;margin-bottom:8px!important}
+            .panel{border-radius:15px;padding:14px!important}
+            .stat b{font-size:21px}
+            .navbtn,.navgroup{font-size:12px}
+            input,select,textarea{min-height:40px;font-size:13px}
+            .btn{min-height:40px;font-size:12px}
+            .tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+          }
+          @media (max-width:760px) and (orientation:landscape){
+            body{--ui-scale:.88}
+            .top{height:52px;padding:0 10px}
+            .brand{font-size:12px!important}
+            .brand-logo{width:30px;height:30px}
+            .main{padding:9px 13px!important}
+            .page h2{font-size:18px!important;margin-bottom:6px!important}
+            .panel{border-radius:13px;padding:11px!important}
+            .stat b{font-size:19px}
+            .navbtn,.navgroup{font-size:11px}
+            input,select,textarea{min-height:36px;font-size:12px}
+            .btn{min-height:36px;font-size:11px}
+            .teacher-avatar{width:34px;height:34px}
+            .top-right .danger{padding:7px 9px;font-size:11px}
+            .tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+          }
+          @media (min-width:1200px){
+            .main{padding:24px 28px!important}
+            .page h2{font-size:26px!important}
+          }
+          /* Login also adapts to portrait/landscape */
+          @media (max-width:760px) and (orientation:portrait){
+            .login-card{width:min(340px,calc(100vw - 24px));padding:18px 16px!important}
+            .login .logo{width:62px;height:62px}
+            .login-card h1{font-size:21px!important}
+          }
+          @media (max-width:760px) and (orientation:landscape){
+            .login{padding:10px!important}
+            .login-card{width:min(370px,78vw);padding:12px 18px!important}
+            .login .logo{width:48px;height:48px}
+            .login-card h1{font-size:18px!important}
+            .login-card label{margin:7px 0 3px}
+            .login-card input{height:34px}
+            .login-card .wide{height:36px;margin-top:10px}
+            .bogor-corner{top:8px;right:10px}
+          }
+          '''
+          css='\n'.join(x.strip() for x in css.splitlines() if x.strip())
+          s=s.replace('</style>',css+'\n</style>',1)
+          js=r'''
+          <!-- GURU+ SD V9 • AUTO ORIENTATION -->
+          <script>
+          (function(){
+            function setOrientation(){
+              var w=window.innerWidth||document.documentElement.clientWidth;
+              var h=window.innerHeight||document.documentElement.clientHeight;
+              var root=document.documentElement;
+              root.dataset.device=w<=760?'hp':'pc';
+              root.dataset.orientation=w>=h?'landscape':'portrait';
+              root.style.setProperty('--screen-width',w+'px');
+              root.style.setProperty('--screen-height',h+'px');
+            }
+            setOrientation();
+            window.addEventListener('resize',setOrientation,{passive:true});
+            window.addEventListener('orientationchange',function(){setTimeout(setOrientation,80)},{passive:true});
+          })();
+          </script>
+          '''
+          s=s.replace('</head>',js+'\n</head>',1)
+          p.write_text(s,encoding='utf-8')
+          print('Patched responsive HP/PC orientation layout')
+          PY
+      - name: Commit and push
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          if git diff --cached --quiet; then echo "No changes to commit"; else git commit -m "feat: responsive HP PC portrait landscape layout [skip ci]"; git push; fi

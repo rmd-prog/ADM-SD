@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#2563eb">
-<title>🚀 GURU+ SD V9 FINAL FINAL — 2026/2027 • Perangkat Pembelajaran Lengkap</title>
+<title>🚀 GURU+ SD V9 — 2026/2027 • Administrasi & Pembelajaran Guru</title>
 <style>
 *{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:#f1f5f9;color:#172033}
 button,input,select,textarea{font:inherit}button{cursor:pointer}#aiGenerate select,#aiGenerate input,#aiGenerate button{position:relative;z-index:2;pointer-events:auto;touch-action:manipulation}#aiGenerate .panel,#aiGenerate .doc-hero{position:relative;z-index:1}
@@ -166,13 +166,39 @@ input:focus,select:focus,textarea:focus{border-color:#8b5cf6;box-shadow:0 0 0 4p
 .welcome-text{margin:8px 0 18px;color:#64748b;font-size:14px}
 .welcome-close{min-width:130px}
 @media(max-width:520px){.welcome-modal{padding:26px 18px 20px;border-radius:24px}.welcome-title{font-size:22px}}
+/* ===== GURU+ SD V9 • BOGOR LOGIN ===== */
+body{font-size:14px}
+h1,h2,h3{letter-spacing:-.25px}
+.page h2{font-size:22px!important}
+.panel{font-size:14px}
+.stat b{font-size:23px}
+.navbtn,.navgroup{font-size:13px}
+.login{position:relative;isolation:isolate;overflow:hidden;min-height:100vh;padding:18px;background:#17395f}
+.login:before{content:"";position:absolute;inset:0;z-index:-2;background-image:linear-gradient(180deg,rgba(8,32,58,.16),rgba(8,25,44,.58)),url("https://commons.wikimedia.org/wiki/Special:FilePath/Kota%20Bogor%20%26%20Gunung%20Salak%20%28cropped%29.jpg"),url("https://cdn-sekolah.annibuku.com/20201762/1.jpg"),url("https://upload.wikimedia.org/wikipedia/commons/1/18/Tugu_Kujang%2C_the_landmark_of_the_rain_city%3B_Bogor.jpg");background-position:center,left bottom,right center,center;background-size:cover,34% auto,27% auto,31% auto;background-repeat:no-repeat;filter:saturate(1.05)}
+.login:after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(7,29,52,.12),rgba(7,29,52,.03) 40%,rgba(7,29,52,.18)),linear-gradient(180deg,rgba(255,255,255,.05),rgba(4,18,32,.28));pointer-events:none}
+.login-card{width:min(360px,calc(100vw - 28px));padding:23px 24px 21px;border-radius:22px;background:rgba(255,255,255,.91);border:1px solid rgba(255,255,255,.9);box-shadow:0 22px 60px rgba(5,20,40,.25);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.login .logo{width:72px;height:72px;border-radius:18px;margin:auto;box-shadow:0 10px 28px rgba(5,20,40,.12)}
+.login-card h1{font-size:23px!important;margin-bottom:4px}
+.login-card .center{margin-top:10px!important}
+.login-card .badge{font-size:10px;padding:4px 8px}
+.login-card label{font-size:12px;margin:12px 0 5px}
+.login-card input{height:43px;padding:10px 12px;font-size:13px}
+.login-card .password input{padding-right:62px}
+.login-card .toggle{top:5px;font-size:12px}
+.login-card .wide{height:44px;margin-top:17px;font-size:12px}
+.bogor-corner{position:absolute;top:18px;right:22px;z-index:2;display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:14px;background:rgba(255,255,255,.88);box-shadow:0 8px 24px rgba(5,20,40,.14);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.bogor-corner img{width:38px;height:48px;object-fit:contain}
+.bogor-corner span{font-size:11px;font-weight:900;color:#17395f;letter-spacing:.5px}
+.login-location{position:absolute;left:22px;top:22px;z-index:2;color:#fff;font-weight:900;font-size:12px;letter-spacing:1px;text-shadow:0 2px 8px rgba(0,0,0,.45)}
+@media(max-width:700px){.login:before{background-position:center,left bottom,right bottom,center;background-size:cover,45% auto,38% auto,42% auto}.bogor-corner{top:12px;right:12px;padding:5px 7px}.bogor-corner img{width:31px;height:39px}.bogor-corner span{font-size:9px}.login-location{left:12px;top:15px;font-size:10px}.login-card{width:min(340px,calc(100vw - 24px));padding:20px 18px 18px}.login .logo{width:64px;height:64px}}
+@media(max-width:430px){.login:before{background-size:cover,48% auto,42% auto,48% auto}.login-card{padding:18px 16px}.login-card h1{font-size:21px!important}.login-location{display:none}.bogor-corner span{display:none}}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <meta name="app-version" content="V9-BAB-FIX-2026-09-08">
 </head>
 <body>
-<section id="loginScreen" class="login">
+<section id="loginScreen" class="login"><div class="bogor-corner"><img src="https://disdukcapil.jabarprov.go.id/files/image/portal/kabkota/3271.png" alt="Lambang Kota Bogor"><span>KOTA BOGOR</span></div><div class="login-location">BOGOR • JAWA BARAT</div>
   <div class="card login-card">
     <div class="logo"><img src="logo-sekolah.png" alt="Logo sekolah"></div>
     <div class="center" style="margin-top:16px">

@@ -5,8 +5,6 @@ on:
   push:
     branches:
       - main
-    paths-ignore:
-      - .github/workflows/apply-guru-bogor.yml
 
 permissions:
   contents: write
@@ -28,18 +26,15 @@ jobs:
           if 'GURU+ SD V9 • BOGOR LOGIN' in s:
               print('Patch already present')
               raise SystemExit(0)
-
           replacements={
             '<title>🚀 GURU+ SD V9 FINAL FINAL — 2026/2027 • Perangkat Pembelajaran Lengkap</title>':'<title>🚀 GURU+ SD V9 — 2026/2027 • Administrasi & Pembelajaran Guru</title>',
             '<h1>SI-NILAI SD</h1>':'<h1>🚀 GURU+ SD</h1>',
             'TA 2026/2027 • V8 FINAL':'TA 2026/2027 • V9 FINAL',
-            '<div class="brand">SI-NILAI SD</div>':'<div class="brand">🚀 GURU+ SD V9</div>',
             'SI-NILAI SD':'GURU+ SD',
             'Basis V8 FINAL':'Basis V9 FINAL',
           }
           for a,b in replacements.items(): s=s.replace(a,b)
-
-          css=r'''
+          css='''
           /* ===== GURU+ SD V9 • BOGOR LOGIN ===== */
           body{font-size:14px}
           h1,h2,h3{letter-spacing:-.25px}
@@ -69,25 +64,17 @@ jobs:
           '''
           css='\n'.join(line.strip() for line in css.splitlines() if line.strip())
           s=s.replace('</style>',css+'\n</style>',1)
-
           marker='<section id="loginScreen" class="login">'
-          if marker not in s:
-              raise SystemExit('login marker not found')
+          if marker not in s: raise SystemExit('login marker not found')
           insert='<div class="bogor-corner"><img src="https://disdukcapil.jabarprov.go.id/files/image/portal/kabkota/3271.png" alt="Lambang Kota Bogor"><span>KOTA BOGOR</span></div><div class="login-location">BOGOR • JAWA BARAT</div>'
           s=s.replace(marker,marker+insert,1)
           p.write_text(s,encoding='utf-8')
           print('Patched index.html')
           PY
-
       - name: Commit and push
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html
-          if git diff --cached --quiet; then
-            echo "No changes to commit"
-          else
-            git commit -m "feat: GURU+ SD V9 Bogor login redesign [skip ci]"
-            git push
-          fi
+          if git diff --cached --quiet; then echo "No changes to commit"; else git commit -m "feat: GURU+ SD V9 Bogor login redesign [skip ci]"; git push; fi

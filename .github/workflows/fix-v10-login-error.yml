@@ -1,4 +1,4 @@
-name: Fix V10 login and scroll
+name: Fix V10 login without hard lock
 
 on:
   push:
@@ -13,32 +13,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Restore known working V10 index and hard-lock login viewport
+      - name: Restore known working index and apply safe CSS
         run: |
+          git checkout 9221283d48e344d7ca5b5ba9852b5a97c64d025a -- index.html
           python - <<'PY'
           from pathlib import Path
-          from urllib.request import urlopen
-          url = 'https://raw.githubusercontent.com/rmd-prog/ADM-SD/9221283d48e344d7ca5b5ba9852b5a97c64d025a/index.html'
-          s = urlopen(url, timeout=30).read().decode('utf-8')
-          marker = '</style>'
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
           css = '''
-/* V10 LOGIN HARD LOCK — CSS ONLY */
-html,body{margin:0!important;width:100%!important;min-height:100%!important;overflow-x:hidden!important}
-body.v10-login{position:fixed!important;left:0!important;top:0!important;width:100%!important;height:100svh!important;min-height:100svh!important;overflow:hidden!important;overscroll-behavior:none!important;touch-action:pan-x!important}
-body.v10-login #loginScreen{position:fixed!important;inset:0!important;width:100%!important;height:100svh!important;min-height:100svh!important;max-height:100svh!important;overflow:hidden!important;box-sizing:border-box!important;padding:14px!important;display:grid!important;place-items:center!important}
-body.v10-login #loginScreen .login-card{max-height:none!important;overflow:visible!important;margin:0!important;transform:none}
-body.v10-logged-in{position:static!important;width:auto!important;height:auto!important;min-height:100%!important;overflow-x:hidden!important;overflow-y:auto!important;overscroll-behavior:auto!important;touch-action:auto!important}
-body.v10-logged-in #app{min-height:100svh!important}
+/* V10 SAFE LOGIN VIEWPORT */
+.login{min-height:100svh!important;height:100svh!important;overflow:hidden!important;padding:14px!important}
+.login-card{max-height:calc(100svh - 28px);overflow:auto}
 '''
+          marker = '</style>'
           if marker not in s:
               raise SystemExit('style marker not found')
           s = s.replace(marker, css + marker, 1)
-          Path('index.html').write_text(s, encoding='utf-8')
+          p.write_text(s, encoding='utf-8')
           PY
-      - name: Commit fix
+      - name: Commit stable fix
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
-          git commit -m 'fix: hard lock V10 login viewport' || exit 0
+          git commit -m 'fix: restore stable V10 login viewport' || exit 0
           git push

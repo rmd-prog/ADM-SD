@@ -155,6 +155,43 @@ export default {
         return json({ ok: true, rombel: requested || own, data: result.results });
       }
 
+      // DATA SISWA - CREATE / UPDATE / DELETE
+      if (url.pathname === "/api/siswa" && request.method === "POST") {
+        const body = await request.json();
+        const nama = String(body.nama ?? body.name ?? "").trim();
+        const nis = String(body.nis ?? "").trim();
+        const absen = String(body.absen ?? "").trim();
+        const classInfo = normalizeClass(body.rombel ?? body.kelas ?? (user.role === "guru" ? user.rombel : ""));
+        if (!nama || !classInfo) return json({ ok:false, message:"Nama dan rombel wajib diisi dengan benar." },400);
+        if (user.role !== "admin" && cleanRombel(classInfo.rombel) !== cleanRombel(user.rombel || user.kelas)) return json({ok:false,message:"Akses rombel ditolak."},403);
+        const c=await columns(env,"siswa");
+        const cols=["nama","nis","kelas"]; const vals=[nama,nis,classInfo.kelas];
+        if(c.has("nisn")){cols.push("nisn");vals.push(String(body.nisn??""));}
+        if(c.has("rombel")){cols.push("rombel");vals.push(classInfo.rombel);}
+        if(c.has("absen")){cols.push("absen");vals.push(absen);}
+        const r=await env.DB.prepare(`INSERT INTO siswa (${cols.join(",")}) VALUES (${cols.map(()=>"?").join(",")}) RETURNING *`).bind(...vals).first();
+        return json({ok:true,data:r});
+      }
+
+      if (url.pathname.startsWith("/api/siswa/") && ["PUT","DELETE"].includes(request.method)) {
+        const sid=url.pathname.split("/").pop();
+        if(!/^\d+$/.test(sid)) return json({ok:false,message:"ID siswa tidak valid."},400);
+        const existing=await env.DB.prepare("SELECT * FROM siswa WHERE id=?").bind(Number(sid)).first();
+        if(!existing) return json({ok:false,message:"Siswa tidak ditemukan."},404);
+        const own=cleanRombel(user.rombel||user.kelas); const er=cleanRombel(existing.rombel||existing.kelas);
+        if(user.role!=="admin"&&er!==own)return json({ok:false,message:"Akses rombel ditolak."},403);
+        if(request.method==="DELETE"){await env.DB.prepare("DELETE FROM siswa WHERE id=?").bind(Number(sid)).run();return json({ok:true,message:"Siswa dihapus."});}
+        const body=await request.json(); const nama=String(body.nama??body.name??existing.nama).trim(); const nis=String(body.nis??existing.nis??"").trim(); const ci=normalizeClass(body.rombel??body.kelas??existing.rombel??existing.kelas);
+        if(!nama||!ci)return json({ok:false,message:"Nama dan rombel tidak valid."},400);
+        if(user.role!=="admin"&&cleanRombel(ci.rombel)!==own)return json({ok:false,message:"Akses rombel ditolak."},403);
+        const c=await columns(env,"siswa"); const sets=["nama=?","nis=?","kelas=?"]; const vals=[nama,nis,ci.kelas];
+        if(c.has("nisn")){sets.push("nisn=?");vals.push(String(body.nisn??existing.nisn??""));}
+        if(c.has("rombel")){sets.push("rombel=?");vals.push(ci.rombel);}
+        if(c.has("absen")){sets.push("absen=?");vals.push(String(body.absen??existing.absen??""));}
+        vals.push(Number(sid)); await env.DB.prepare(`UPDATE siswa SET ${sets.join(",")} WHERE id=?`).bind(...vals).run();
+        const r=await env.DB.prepare("SELECT * FROM siswa WHERE id=?").bind(Number(sid)).first(); return json({ok:true,data:r});
+      }
+
       // IMPORT SISWA - POST
       // Endpoint ini dipanggil langsung oleh index.html: POST /api/siswa/import
       if (url.pathname === "/api/siswa/import" && request.method === "POST") {

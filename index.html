@@ -27,6 +27,8 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb;box-shadow:0 0 0 3p
 .alert{padding:11px 13px;border-radius:12px;margin-top:10px;background:#fef2f2;color:#991b1b;display:none}.successbox{background:#f0fdf4;color:#166534}.menu-mobile{display:none}
 @media(max-width:850px){.side{display:none}.menu-mobile{display:inline-block}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.main{padding:13px}.top{height:60px}.side.open{display:block!important;position:fixed;z-index:100;top:60px;left:0;bottom:0;width:280px;max-width:88vw;min-height:calc(100vh - 60px);box-shadow:10px 0 30px #0005;overflow-y:auto}}
 @media(max-width:520px){.grid{grid-template-columns:1fr}.login-card{padding:22px}.top-right .user{display:none}}
+
+.menu-group{margin:2px 0}.navgroup{width:100%;border:0;background:transparent;text-align:left;padding:10px 12px;font-weight:800;cursor:pointer;color:inherit;display:flex;justify-content:space-between;align-items:center}.submenu{display:none;padding-left:10px}.menu-group.open .submenu{display:block}.submenu .navbtn{font-size:14px;padding:9px 12px}.navbtn{width:100%;text-align:left;border:0;background:transparent;cursor:pointer;border-radius:10px;padding:10px 12px;margin:1px 0}.navbtn:hover{background:#f1f5f9}.navbtn.active{background:#e0f2fe;font-weight:800}.side{overflow-y:auto}
 </style>
 </head>
 <body>
@@ -54,7 +56,23 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb;box-shadow:0 0 0 3p
   <div class="top-right"><span class="user" id="userLabel"></span><button id="logoutBtn" class="btn danger">Logout</button></div>
 </header>
 <div class="layout">
-<aside id="sidebar" class="side"><div class="side-title">MENU UTAMA</div><button type="button" class="navbtn active" data-page="dashboard">Dashboard</button><button type="button" class="navbtn" data-page="students">Data Siswa</button><button type="button" class="navbtn" data-page="import">Import Data Siswa</button><button type="button" class="navbtn" data-page="cp">CP</button><button type="button" class="navbtn" data-page="tp">TP</button><button type="button" class="navbtn" data-page="atp">ATP</button><button type="button" class="navbtn" data-page="prota">Prota</button><button type="button" class="navbtn" data-page="prosem">Prosem</button><button type="button" class="navbtn" data-page="rpm">RPM — Rencana Pembelajaran Mendalam</button><button type="button" class="navbtn" data-page="scores">Penilaian Per BAB</button><button type="button" class="navbtn" data-page="report">Rapor</button><button type="button" class="navbtn admin-only" data-page="teachers">Database Guru</button><button type="button" class="navbtn" data-page="reference">Referensi SIBI</button><button type="button" class="navbtn" data-page="backup">Backup / Restore</button></aside>
+<aside id="sidebar" class="side"><div class="side-title">MENU UTAMA</div>
+<button type="button" class="navbtn active" data-page="dashboard">🏠 Dashboard</button>
+<div class="menu-group"><button type="button" class="navgroup">👥 DATA MASTER <span>▾</span></button><div class="submenu">
+<button type="button" class="navbtn" data-page="students">Data Siswa</button>
+<button type="button" class="navbtn admin-only" data-page="teachers">Data Guru</button>
+</div></div>
+<div class="menu-group"><button type="button" class="navgroup">📚 PEMBELAJARAN <span>▾</span></button><div class="submenu">
+<button type="button" class="navbtn" data-page="cp">CP</button><button type="button" class="navbtn" data-page="tp">TP</button><button type="button" class="navbtn" data-page="atp">ATP</button><button type="button" class="navbtn" data-page="prota">Prota</button><button type="button" class="navbtn" data-page="prosem">Prosem</button><button type="button" class="navbtn" data-page="rpm">RPM — Rencana Pembelajaran Mendalam</button>
+</div></div>
+<div class="menu-group"><button type="button" class="navgroup">📝 PENILAIAN <span>▾</span></button><div class="submenu">
+<button type="button" class="navbtn" data-page="scores">Nilai Per BAB</button><button type="button" class="navbtn admin-only" data-page="importScores">Import Nilai</button><button type="button" class="navbtn" data-page="report">Rapor</button>
+</div></div>
+<button type="button" class="navbtn" data-page="reference">📖 Referensi SIBI</button>
+<div class="menu-group admin-only"><button type="button" class="navgroup">⚙️ SISTEM <span>▾</span></button><div class="submenu">
+<button type="button" class="navbtn" data-page="backup">Backup / Restore</button>
+</div></div>
+</aside>
 <main class="main">
   <section id="dashboard" class="page active">
     <h2>Dashboard</h2><p class="muted">Selamat datang di SI-NILAI SD. Data akun dan data yang tersedia di D1 dibaca melalui Cloudflare Worker. Fitur lokal tetap dipertahankan untuk data kerja yang belum memiliki endpoint simpan di Worker.</p>
@@ -77,6 +95,7 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb;box-shadow:0 0 0 3p
     <div class="card panel tablewrap"><table class="table"><thead><tr><th>No</th><th>Nama</th><th>NIS</th><th>Rombel</th><th>Absen</th><th>Aksi</th></tr></thead><tbody id="studentTable"></tbody></table></div>
   </section>
 
+  <section id="importScores" class="page"><h2>Import Nilai</h2><p class="muted">Import nilai melalui CSV. Fitur ini disiapkan untuk data penilaian massal.</p><div class="card panel"><input type="file" id="scoreCsvFile" accept=".csv,text/csv"><button class="btn primary" id="importScoreCsv" style="margin-top:10px">Import CSV Nilai</button><div id="scoreImportMsg" class="alert"></div></div></section>
   <section id="import" class="page">
     <h2>Import Data Siswa</h2><p class="muted">Gunakan CSV sederhana: nama,nis,rombel,absen. Baris pertama boleh berupa judul kolom.</p>
     <div class="card panel"><input type="file" id="csvFile" accept=".csv,text/csv"><button class="btn primary" id="importCsv" style="margin-top:10px">Import CSV</button><div id="importMsg" class="alert"></div></div>
@@ -258,8 +277,8 @@ function setClassSelect(idName, value){
   el.value=String(value);
   el.disabled=isGuruKelas();
 }
-function buildNav(){const side=id('sidebar');if(!side)return;side.querySelectorAll('.navbtn').forEach(b=>b.onclick=()=>showPage(b.dataset.page));syncRoleMenu()}
-function syncRoleMenu(){const admin=!isGuruKelas();document.querySelectorAll('.admin-only').forEach(b=>b.style.display=admin?'block':'none')}
+function buildNav(){const side=id('sidebar');if(!side)return;side.querySelectorAll('.navbtn').forEach(b=>b.onclick=()=>showPage(b.dataset.page));side.querySelectorAll('.navgroup').forEach(b=>b.onclick=()=>b.parentElement.classList.toggle('open'));syncRoleMenu()}
+function syncRoleMenu(){const admin=!isGuruKelas();document.querySelectorAll('.admin-only').forEach(b=>b.style.display=admin?'':'none');document.querySelectorAll('.menu-group.admin-only').forEach(b=>b.style.display=admin?'block':'none')}
 function showPage(p){
   if(isGuruKelas()&&p==='teachers')p='dashboard';
   document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));id(p).classList.add('active');document.querySelectorAll('.navbtn').forEach(x=>x.classList.toggle('active',x.dataset.page===p));id('sidebar').classList.remove('open');if(p==='students')renderStudents();if(p==='teachers')renderTeachers();if(p==='scores')renderScores();if(p==='report')renderReport();if(p==='reference')renderReference()}
@@ -420,6 +439,7 @@ id('saveScores').onclick=()=>{document.querySelectorAll('.scoreInput').forEach(i
 id('reportStudent').onchange=()=>{let nis=id('reportStudent').value;if(!nis){id('reportResult').innerHTML='';return}let rows=Object.entries(db.scores).filter(([k])=>k.startsWith(nis+'|'));let nums=rows.map(x=>Number(x[1].nilai)).filter(Number.isFinite);let avg=nums.length?Math.round(nums.reduce((a,b)=>a+b,0)/nums.length):0;id('reportResult').innerHTML='<div class="card panel"><b>Rata-rata nilai: '+avg+'</b><p class="muted">'+nums.length+' nilai tersimpan.</p></div>'}
 id('tRole').onchange=()=>id('tClass').disabled=id('tRole').value==='admin';id('addTeacher').onclick=()=>{let u=id('tUser').value.trim(),n=id('tName').value.trim(),p=id('tPass').value,role=id('tRole').value,kelas=role==='guru'?normalizeRombel(id('tClass').value):'';if(!u||!n||!p)return alert('Lengkapi username, nama, password.');if(role==='guru'&&!kelas)return alert('Pilih rombel guru.');if(db.teachers.some(t=>t.username===u))return alert('Username sudah ada.');db.teachers.push({username:u,name:n,password:p,role,kelas,rombel:kelas});save();['tUser','tName','tPass'].forEach(x=>id(x).value='');renderTeachers()}
 id('importTeacherCsv').onclick=()=>{const f=id('teacherCsvFile').files[0];if(!f)return alert('Pilih CSV guru terlebih dahulu.');const r=new FileReader();r.onload=()=>{let lines=r.result.split(/\r?\n/).filter(x=>x.trim()),count=0;lines.forEach((line,i)=>{const a=line.split(',').map(x=>x.trim().replace(/^"|"$/g,''));if(i===0&&/(username|nip|nama)/i.test(a.join(' ')))return;const u=String(a[0]||'').trim(),n=String(a[1]||'').trim(),rk=normalizeRombel(a[2]||''),role=String(a[3]||'guru').toLowerCase().includes('admin')?'admin':'guru',pw=String(a[4]||'');if(!u||!n)return;const idx=db.teachers.findIndex(t=>t.username===u&&role==='guru');const obj={username:u,name:n,password:pw,role,kelas:role==='guru'?rk:'',rombel:role==='guru'?rk:''};if(idx>=0)db.teachers[idx]=Object.assign({},db.teachers[idx],obj);else db.teachers.push(obj);count++});save();renderTeachers();id('teacherImportMsg').textContent=count+' data guru berhasil diimport ke data lokal.';id('teacherImportMsg').className='alert successbox';id('teacherImportMsg').style.display='block'};r.readAsText(f)}
+id('importScoreCsv')&&(id('importScoreCsv').onclick=()=>{const f=id('scoreCsvFile').files[0];if(!f)return alert('Pilih CSV nilai terlebih dahulu.');const r=new FileReader();r.onload=()=>{let lines=r.result.split(/\r?\n/).filter(x=>x.trim()),count=0;lines.forEach((line,i)=>{const a=line.split(',').map(x=>x.trim().replace(/^"|"$/g,''));if(i===0&&/(nis|nilai|mapel|bab)/i.test(a.join(' ')))return;const nis=String(a[0]||'').trim(),mapel=String(a[2]||'').trim(),bab=String(a[3]||'').trim(),nilai=Number(a[4]);if(!nis||!mapel||!bab||!Number.isFinite(nilai))return;db.scores[nis+'|'+mapel+'|'+bab]={nilai};count++});save();renderScores();id('scoreImportMsg').textContent=count+' nilai berhasil diimport ke data lokal.';id('scoreImportMsg').className='alert successbox';id('scoreImportMsg').style.display='block'};r.readAsText(f)});
 id('backupBtn').onclick=()=>{let blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='backup-si-nilai-sd-2026-2027.json';a.click();URL.revokeObjectURL(a.href)}
 id('restoreBtn').onclick=()=>{let f=id('restoreFile').files[0];if(!f)return alert('Pilih file JSON.');let r=new FileReader();r.onload=()=>{try{let x=JSON.parse(r.result);if(!x.students||!x.teachers)throw Error();db=x;save();renderStudents();renderTeachers();alert('Restore berhasil. Silakan login ulang jika diperlukan.')}catch(e){alert('File backup tidak valid.')}};r.readAsText(f)}
 buildNav();fillMapels();renderStats();renderStudents();renderTeachers();loadDocFields();applyClassLock();

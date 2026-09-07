@@ -275,69 +275,80 @@ export default {
         return json({ ok:true, openaiKeyBound:hasKey, model });
       }
 
-      // AI GENERATOR PERANGKAT PEMBELAJARAN
+      // AI GURU TERPUSAT — perangkat, bahan ajar, asesmen, dan administrasi guru
       if (url.pathname === "/api/ai/generate" && request.method === "POST") {
         const user = getUser(request);
         if (!user) return json({ ok:false, message:"Sesi login tidak valid." }, 401);
         const body = await request.json();
-        const jenis = String(body.jenis || "").toLowerCase();
-        const allowed = ["cp","tp","atp","prota","prosem","rpm"];
-        if (!allowed.includes(jenis)) return json({ ok:false, message:"Jenis perangkat tidak valid." }, 400);
+        const jenis = String(body.jenis || "").toLowerCase().trim();
+        const allowed = [
+          "cp","tp","atp","prota","prosem","rpm",
+          "lkpd","modul_ajar","bahan_ajar","materi","ringkasan","ide_aktivitas",
+          "soal_sumatif","soal_formatif","kisi_kisi","rubrik","kunci_jawaban","pedoman_skor",
+          "jurnal","refleksi","remedial","pengayaan","deskripsi_hasil"
+        ];
+        if (!allowed.includes(jenis)) return json({ ok:false, message:"Jenis AI Guru tidak valid." }, 400);
         const requested = cleanRombel(body.rombel || body.kelas || "");
         const own = cleanRombel(user.rombel || user.kelas || "");
         if (user.role !== "admin" && requested && requested !== own) return json({ ok:false, message:"Akses rombel ditolak." }, 403);
         const openaiKey = typeof env.OPENAI_API_KEY === "string" ? env.OPENAI_API_KEY.trim() : "";
-        if (!openaiKey) {
-          return json({
-            ok:false,
-            code:"OPENAI_KEY_NOT_BOUND",
-            message:"Worker aktif tidak menerima secret OPENAI_API_KEY. Pastikan secret dipasang pada Worker/environment yang sedang dideploy, lalu Deploy ulang Worker."
-          }, 503);
-        }
+        if (!openaiKey) return json({ok:false,code:"OPENAI_KEY_NOT_BOUND",message:"Worker aktif tidak menerima secret OPENAI_API_KEY. Pastikan secret dipasang pada Worker/environment yang sedang dideploy, lalu Deploy ulang Worker."},503);
 
         const mapel = String(body.mapel || "").trim();
-        const context = String(body.context || "").trim();
-        const existing = String(body.existing || "").trim().slice(0, 18000);
-        const tahun = String(body.tahun || "2026/2027");
-        const fase = String(body.fase || "");
+        const context = String(body.context || "").trim().slice(0,10000);
+        const tahun = String(body.tahun || "2026/2027").trim();
+        const fase = String(body.fase || "").trim();
+        const bab = String(body.bab || "").trim();
+        const jumlahSoal = Math.min(100, Math.max(1, Number(body.jumlahSoal || 10)));
+        const bentukSoal = String(body.bentukSoal || "campuran");
+        const tingkatKesulitan = String(body.tingkatKesulitan || "sedang");
+        const sertakanKunci = body.sertakanKunci !== false;
+        const tujuan = String(body.tujuan || "").trim();
+        const durasi = String(body.durasi || "").trim();
+        const aktivitas = String(body.aktivitas || "").trim();
         const model = String(env.OPENAI_MODEL || "gpt-5.6-luna");
-        const names = {cp:"Capaian Pembelajaran (CP)",tp:"Tujuan Pembelajaran (TP)",atp:"Alur Tujuan Pembelajaran (ATP)",prota:"Program Tahunan (Prota)",prosem:"Program Semester (Prosem)",rpm:"Rencana Pembelajaran Mendalam (RPM)"};
-        const instructions = `Anda adalah AI perancang perangkat pembelajaran SD Indonesia. Buat ${names[jenis]} yang siap dipakai guru, bukan sekadar contoh generik. Gunakan bahasa Indonesia formal, jelas, operasional, dan realistis untuk kelas SD. Selaraskan dengan Kurikulum Merdeka dan pendekatan Pembelajaran Mendalam: berkesadaran (mindful), bermakna (meaningful), menggembirakan (joyful), serta alur pengalaman belajar memahami, mengaplikasi, dan merefleksi. Jangan mengaku sebagai kutipan resmi jika bukan kutipan resmi. Jika ada bagian yang membutuhkan penyesuaian satuan pendidikan, tulis sebagai rancangan yang dapat disesuaikan.
-
-ATURAN DOKUMEN:
-- CP: fokus pada capaian fase dan elemen/kompetensi inti, tidak membuat klaim sebagai teks resmi pemerintah.
-- TP: rumuskan tujuan yang terukur, menggunakan kata kerja operasional dan terkait materi/konteks.
-- ATP: susun urutan TP logis dari prasyarat menuju penerapan dan refleksi.
-- Prota: tabel/daftar unit atau lingkup materi sepanjang tahun, semester, alokasi JP, asesmen, dan catatan.
-- Prosem: susun per minggu/pertemuan dengan unit, materi, aktivitas, asesmen, alokasi JP, dan tindak lanjut.
-- RPM: buat lengkap dengan identitas, tujuan, pemahaman bermakna, pertanyaan pemantik, asesmen awal/proses/akhir, pengalaman memahami-mengaplikasi-merefleksi, diferensiasi, media/sumber, kolaborasi, remedial/pengayaan, dan refleksi guru/murid. Sesuaikan durasi dan karakter SD.
-- Hindari angka atau kebijakan yang tidak diberikan pengguna jika tidak diperlukan. Gunakan rancangan yang masuk akal dan mudah diedit.
-
-KELAS/ROMBEL: ${requested || own || "SD"}
-FASE: ${fase || "sesuai kelas"}
-MAPEL: ${mapel || "sesuai konteks"}
-TAHUN: ${tahun}
-KONTEKS TAMBAHAN: ${context || "tidak ada; gunakan konteks umum sekolah dasar dan lingkungan sekitar murid"}
-RANCANGAN SEBELUMNYA (boleh diperbaiki):\n${existing || "belum ada"}`;
-
-        const apiRes = await fetch("https://api.openai.com/v1/responses", {
-          method:"POST",
-          headers:{"Content-Type":"application/json","Authorization":`Bearer ${openaiKey}`},
-          body:JSON.stringify({
-            model,
-            store:false,
-            input:[
-              {role:"developer",content:instructions},
-              {role:"user",content:`Buat ${names[jenis]} untuk kelas/rombel ${requested || own}, mapel ${mapel}, tahun ${tahun}. Kembangkan secara substansial dan siap ditempel ke dokumen sekolah. ${context ? "Perhatikan konteks: "+context : ""}`}
-            ],
-            text:{verbosity:"high"}
-          })
-        });
-        const raw = await apiRes.text();
-        let data={}; try{ data=JSON.parse(raw); }catch{}
-        if (!apiRes.ok) return json({ok:false,message:data?.error?.message || "AI gagal memproses permintaan.",status:apiRes.status}, 502);
-        const text = String(data.output_text || (data.output||[]).flatMap(x=>x.content||[]).find(x=>x.type==='output_text')?.text || "").trim();
-        if (!text) return json({ok:false,message:"AI tidak mengembalikan isi dokumen."}, 502);
+        const names = {
+          cp:"Capaian Pembelajaran (CP)",tp:"Tujuan Pembelajaran (TP)",atp:"Alur Tujuan Pembelajaran (ATP)",prota:"Program Tahunan (Prota)",prosem:"Program Semester (Prosem)",rpm:"Rencana Pembelajaran Mendalam (RPM)",
+          lkpd:"LKPD (Lembar Kerja Peserta Didik)",modul_ajar:"Modul Ajar",bahan_ajar:"Bahan Ajar",materi:"Materi Pembelajaran",ringkasan:"Ringkasan Materi",ide_aktivitas:"Media dan Ide Aktivitas Pembelajaran",
+          soal_sumatif:"Soal Sumatif",soal_formatif:"Soal Formatif",kisi_kisi:"Kisi-kisi Soal",rubrik:"Rubrik Penilaian",kunci_jawaban:"Kunci Jawaban",pedoman_skor:"Pedoman Penskoran",
+          jurnal:"Jurnal Pembelajaran",refleksi:"Refleksi Pembelajaran",remedial:"Program Remedial",pengayaan:"Program Pengayaan",deskripsi_hasil:"Deskripsi Hasil Belajar"
+        };
+        const common = `KELAS/ROMBEL: ${requested || own || "SD"}\nFASE: ${fase || "sesuai kelas"}\nMAPEL: ${mapel || "sesuai konteks"}\nTAHUN PELAJARAN: ${tahun}\nTOPIK/KONTEKS: ${context || "gunakan konteks dekat dengan kehidupan murid"}${bab ? `\nBAB/UNIT: ${bab}` : ""}`;
+        let specific = "";
+        if (jenis === "lkpd") specific = `\nTUJUAN LKPD: ${tujuan || "rumuskan tujuan yang terukur"}\nDURASI: ${durasi || "sesuaikan kebutuhan"}\nAKTIVITAS KHUSUS: ${aktivitas || "pilih aktivitas kontekstual yang aktif dan bermakna"}`;
+        if (jenis === "soal_sumatif" || jenis === "soal_formatif") specific = `\nJUMLAH SOAL: ${jumlahSoal}\nBENTUK SOAL: ${bentukSoal}\nTINGKAT KESULITAN: ${tingkatKesulitan}\nSERTAKAN KUNCI DAN KISI-KISI: ${sertakanKunci ? "YA" : "TIDAK"}`;
+        const rules = {
+          cp:"Rumusan sebagai rancangan kerja guru yang selaras karakteristik fase dan mapel. Jangan mengklaim sebagai kutipan resmi pemerintah.",
+          tp:"Buat tujuan terukur dengan kata kerja operasional, kondisi/konteks, dan bukti ketercapaian.",
+          atp:"Susun alur TP dari prasyarat menuju konsep, aplikasi, komunikasi, dan refleksi.",
+          prota:"Buat pembagian lingkup materi sepanjang tahun dalam tabel: unit, semester, alokasi JP, asesmen, dan catatan.",
+          prosem:"Buat program semester yang realistis per minggu/pertemuan: materi, aktivitas, asesmen, alokasi JP, dan tindak lanjut.",
+          rpm:"Buat RPM lengkap: identitas, tujuan, pemahaman bermakna, pertanyaan pemantik, asesmen awal/proses/akhir, memahami-mengaplikasi-merefleksi, diferensiasi, media/sumber, kolaborasi, remedial/pengayaan, refleksi guru dan murid.",
+          lkpd:"Buat LKPD siap cetak: identitas, tujuan, petunjuk, materi singkat, alat/bahan bila perlu, langkah aktivitas, tabel/lembar kerja, pertanyaan pemantik, refleksi, dan asesmen.",
+          modul_ajar:"Buat modul ajar praktis dan lengkap untuk guru SD, dengan tujuan, langkah pembelajaran, asesmen, diferensiasi, media/sumber, remedial, pengayaan, dan refleksi.",
+          bahan_ajar:"Buat bahan ajar yang sistematis, ramah murid SD, berisi konsep inti, contoh, ilustrasi tekstual, aktivitas, latihan, dan rangkuman.",
+          materi:"Jelaskan materi secara bertahap dari konsep sederhana ke penerapan, dengan contoh kontekstual dan aktivitas singkat.",
+          ringkasan:"Buat ringkasan padat namun utuh, poin-poin penting, istilah kunci, contoh, dan kesimpulan.",
+          ide_aktivitas:"Berikan ide media dan aktivitas yang murah/realistis, aktif, kontekstual, inklusif, dan menyenangkan, lengkap dengan tujuan serta langkah pelaksanaan.",
+          soal_sumatif:"Buat paket asesmen sumatif. Nomori soal dengan jelas, variasikan stimulus bila sesuai, hindari soal ambigu, dan sesuaikan perkembangan murid.",
+          soal_formatif:"Buat asesmen formatif untuk memantau proses belajar. Sertakan indikator yang diamati dan umpan balik/tindak lanjut bila relevan.",
+          kisi_kisi:"Buat kisi-kisi dalam tabel: nomor, lingkup/materi, indikator, level kognitif, bentuk soal, dan nomor soal.",
+          rubrik:"Buat rubrik analitik dengan kriteria jelas dan 4 tingkat performa, menggunakan bahasa yang dapat dipakai guru saat menilai.",
+          kunci_jawaban:"Buat kunci jawaban berdasarkan soal/topik yang diminta. Untuk uraian, berikan jawaban ideal dan poin penting yang harus muncul.",
+          pedoman_skor:"Buat pedoman penskoran transparan, termasuk bobot tiap bentuk soal dan aturan penilaian uraian/praktik bila ada.",
+          jurnal:"Buat format jurnal pembelajaran yang praktis: tanggal/pertemuan, materi, aktivitas, asesmen, kehadiran/catatan, hasil pengamatan, dan tindak lanjut.",
+          refleksi:"Buat refleksi guru yang konkret: yang berhasil, bukti, kendala, respons murid, hal yang perlu diperbaiki, dan rencana tindak lanjut.",
+          remedial:"Buat program remedial berdasarkan kesulitan belajar: identifikasi, tujuan, strategi, aktivitas, asesmen ulang, dan kriteria keberhasilan.",
+          pengayaan:"Buat program pengayaan untuk murid yang sudah tuntas: tujuan, tantangan lanjutan, aktivitas, produk, dan asesmen.",
+          deskripsi_hasil:"Buat beberapa contoh deskripsi hasil belajar yang positif, spesifik, berbasis kompetensi, dan menyertakan saran pengembangan tanpa memberi label negatif."
+        };
+        const instructions = `Anda adalah AI Guru SD Indonesia yang membantu guru membuat perangkat dan administrasi pembelajaran yang siap diedit dan digunakan. Gunakan Bahasa Indonesia formal tetapi natural. Selaraskan dengan Kurikulum Merdeka dan Pembelajaran Mendalam: berkesadaran (mindful), bermakna (meaningful), menggembirakan (joyful), serta pengalaman memahami, mengaplikasi, dan merefleksi. Sesuaikan bahasa dan beban tugas dengan usia murid. Jangan membuat klaim bahwa rancangan Anda adalah dokumen resmi pemerintah. Jangan mengarang data sekolah, nama murid, kebijakan, atau angka yang tidak diberikan. Jika informasi kurang, buat asumsi wajar dan tandai bagian yang dapat disesuaikan.\n\nJENIS: ${names[jenis]}\n${common}${specific}\n\nTUGAS KHUSUS: ${rules[jenis] || "Buat hasil yang lengkap, sistematis, dan siap dipakai guru."}\n\nKeluaran harus rapi dengan judul, subjudul, tabel bila bermanfaat, dan isi yang substansial. Untuk soal, pastikan jumlah soal tepat ${jumlahSoal} bila jenisnya soal. Untuk pilihan ganda, gunakan opsi A-D dan hanya satu jawaban paling tepat. ${sertakanKunci ? "Sertakan kunci/kisi-kisi sesuai permintaan." : "Jangan sertakan kunci jawaban kecuali diminta."}`;
+        const userPrompt = `Buat ${names[jenis]} untuk ${requested || own || "kelas SD"}, mapel ${mapel || "sesuai konteks"}. ${context ? "Gunakan topik/konteks: "+context : "Gunakan topik yang paling relevan dengan kebutuhan ini."}${bab ? " Unit/BAB: "+bab+"." : ""}`;
+        const apiRes = await fetch("https://api.openai.com/v1/responses",{method:"POST",headers:{"Content-Type":"application/json","Authorization":`Bearer ${openaiKey}`},body:JSON.stringify({model,store:false,input:[{role:"developer",content:instructions},{role:"user",content:userPrompt}],text:{verbosity:"high"}})});
+        const raw=await apiRes.text();let data={};try{data=JSON.parse(raw)}catch{}
+        if(!apiRes.ok)return json({ok:false,message:data?.error?.message||"AI gagal memproses permintaan.",status:apiRes.status},502);
+        const text=String(data.output_text||(data.output||[]).flatMap(x=>x.content||[]).find(x=>x.type==='output_text')?.text||"").trim();
+        if(!text)return json({ok:false,message:"AI tidak mengembalikan isi dokumen."},502);
         return json({ok:true,jenis,text,model});
       }
 

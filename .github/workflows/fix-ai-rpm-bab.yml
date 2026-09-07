@@ -1,0 +1,63 @@
+name: Fix AI RPM BAB Selector
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: github.event.head_commit.message != 'fix: lock AI RPM BAB selector to catalog'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch AI selector
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          marker='<!-- V8 AI RPM BAB SELECTOR LOCK 2026-09-08 -->'
+          if marker not in s:
+              patch=r'''<!-- V8 AI RPM BAB SELECTOR LOCK 2026-09-08 -->
+<script>
+(function(){
+  window.__AI_RPM_BAB_LOCK='V8-AI-RPM-BAB-LOCK-2026-09-08';
+  function lock(){
+    try{
+      if(typeof BOOK_CATALOG==='undefined'||typeof gradeOf!=='function'||typeof normalizeRombel!=='function') return;
+      const k=normalizeRombel(document.getElementById('aiKelas')?.value||'');
+      const m=document.getElementById('aiMapel')?.value||'';
+      const sel=document.getElementById('aiRpmBab');
+      if(!sel) return;
+      const b=BOOK_CATALOG?.[m]?.[gradeOf(k)];
+      const chapters=(b&&Array.isArray(b.chapters))?b.chapters:[];
+      if(!chapters.length) return;
+      const old=Number(sel.value||0);
+      sel.innerHTML=chapters.map((x,i)=>'<option value="'+i+'">BAB '+(i+1)+' — '+esc(String(x))+'</option>').join('');
+      sel.value=String(Math.min(Number.isFinite(old)?old:0,chapters.length-1));
+    }catch(e){console.warn('AI RPM BAB selector lock:',e)}
+  }
+  function run(){lock();setTimeout(lock,50);setTimeout(lock,250);setTimeout(lock,800);}
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',run); else run();
+  document.addEventListener('change',function(e){if(e.target&&['aiKelas','aiMapel','aiType'].includes(e.target.id))setTimeout(lock,0)});
+})();
+</script>
+'''
+              s=s.replace('</body>',patch+'</body>')
+              p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet || git commit -m "fix: lock AI RPM BAB selector to catalog"
+          git push
+      - name: Remove workflow
+        if: success()
+        run: |
+          git rm .github/workflows/fix-ai-rpm-bab.yml || true
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: remove one-time AI RPM BAB workflow" || true
+          git push || true

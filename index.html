@@ -302,7 +302,11 @@ const map={
 function unitTitles(m,k){
 const g=gradeOf(k); const grade={1:'Kelas 1',2:'Kelas 2',3:'Kelas 3',4:'Kelas 4',5:'Kelas 5',6:'Kelas 6'}[g];
 const officialBook=bookInfo(m,k);
-if(officialBook&&Array.isArray(officialBook.chapters)&&officialBook.chapters.length) return officialBook.chapters.slice();
+if(officialBook){
+  if(Array.isArray(officialBook.chapters)&&officialBook.chapters.length) return officialBook.chapters.slice();
+  // Buku terkunci tetapi struktur BAB/Unit belum terverifikasi: jangan mengarang.
+  return [];
+}
 const sets={
 'Bahasa Indonesia':BAB['Bahasa Indonesia'][g]||['Aku dan Lingkunganku','Cerita dan Pengalaman','Informasi di Sekitar Kita','Kegemaranku','Hidup Bersih dan Sehat','Bermain dan Bekerja Sama','Lingkungan dan Alam','Karya dan Ekspresi'],
 'Pendidikan Pancasila':['Aku dan Identitasku','Aturan dan Kesepakatan','Hak dan Kewajiban','Kebinekaan Indonesia','Gotong Royong','Pancasila dalam Kehidupan','Musyawarah dan Tanggung Jawab','Menjadi Warga Sekolah yang Baik'],
@@ -409,9 +413,11 @@ updateBab(); loadDocFields();
 }
 function updateBab(){
 let k=normalizeRombel(id('scoreKelas').value),m=id('scoreMapel').value;
-id('scoreBab').innerHTML=babList(m,k).map((x,i)=>'<option value="'+i+'">'+esc('BAB '+(i+1)+' — '+x)+'</option>').join('');
+const scoreUnits=babList(m,k);
+id('scoreBab').innerHTML=scoreUnits.length?scoreUnits.map((x,i)=>'<option value="'+i+'">'+esc('BAB '+(i+1)+' — '+x)+'</option>').join(''):'<option value="">Struktur BAB/Unit belum terverifikasi</option>';
 let rk=normalizeRombel(id('rpmKelas').value),rm=id('rpmMapel').value;
-id('rpmBab').innerHTML=babList(rm,rk).map((x,i)=>'<option value="'+i+'">'+esc('BAB '+(i+1)+' — '+x)+'</option>').join('');
+const rpmUnits=babList(rm,rk);
+id('rpmBab').innerHTML=rpmUnits.length?rpmUnits.map((x,i)=>'<option value="'+i+'">'+esc('BAB '+(i+1)+' — '+x)+'</option>').join(''):'<option value="">Struktur BAB/Unit belum terverifikasi</option>';
 }
 function docKey(type,k,m){return type+'|'+k+'|'+m}
 function loadDocFields(){

@@ -74,7 +74,18 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb;box-shadow:0 0 0 3p
       <div class="grid" style="grid-template-columns:2fr 1fr 1fr 1fr"><input id="sName" placeholder="Nama siswa"><input id="sNis" placeholder="NIS"><select id="sClass"></select><input id="sAbsen" placeholder="No. absen"></div>
       <button class="btn primary" style="margin-top:10px" id="addStudent">+ Tambah Siswa</button>
     </div>
-    <div class="card panel tablewrap"><table class="table"><thead><tr><th>No</th><th>Nama</th><th>NIS</th><th>Rombel</th><th>Absen</th><th>Aksi</th></tr></thead><tbody id="studentTable"></tbody></table></div>
+    <div class="card panel" id="rombelMovePanel">
+      <h3>Atur Rombel Siswa</h3>
+      <p class="muted">Administrator dapat memilih beberapa siswa sekaligus lalu memindahkannya ke rombel tujuan.</p>
+      <div class="toolbar">
+        <button class="btn secondary" id="selectAllStudents" type="button">☑ Pilih Semua</button>
+        <button class="btn secondary" id="clearSelectedStudents" type="button">☐ Batal Pilih</button>
+        <select id="moveRombel" style="max-width:220px"></select>
+        <button class="btn primary" id="moveStudentsBtn" type="button">Pindahkan Rombel</button>
+      </div>
+      <div id="rombelMoveMsg" class="alert"></div>
+    </div>
+    <div class="card panel tablewrap"><table class="table"><thead><tr><th><input type="checkbox" id="selectAllStudentCheck"></th><th>No</th><th>Nama</th><th>NIS</th><th>Rombel</th><th>Absen</th><th>Aksi</th></tr></thead><tbody id="studentTable"></tbody></table></div>
   </section>
 
   <section id="import" class="page">
@@ -264,6 +275,7 @@ function showPage(p){
   if(isGuruKelas()&&p==='teachers')p='dashboard';
   document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));id(p).classList.add('active');document.querySelectorAll('.navbtn').forEach(x=>x.classList.toggle('active',x.dataset.page===p));id('sidebar').classList.remove('open');if(p==='students')renderStudents();if(p==='teachers')renderTeachers();if(p==='scores')renderScores();if(p==='report')renderReport();if(p==='reference')renderReference()}
 function renderStats(){const students=db.students.filter(s=>!isGuruKelas()||normalizeRombel(s.rombel||s.kelas)===allowedClass());const keys=new Set(students.map(s=>String(s.nis)));const scores=isGuruKelas()?Object.keys(db.scores).filter(k=>keys.has(String(k).split('|')[0])).length:Object.keys(db.scores).length;id('statStudents').textContent=students.length;id('statScores').textContent=scores;id('statTeachers').textContent=isGuruKelas()?'1':db.teachers.length}
+function fillMoveRombel(){const el=id('moveRombel');if(el)el.innerHTML='<option value="">— Pilih rombel tujuan —</option>'+ROMBELS.map(r=>'<option value="'+r+'">'+r+'</option>').join('')}
 function fillMapels(){
 ['rpmMapel','scoreMapel','cpMapel','tpMapel','atpMapel','protaMapel','prosemMapel'].forEach(k=>id(k).innerHTML=MAPEL.map(x=>'<option>'+esc(x)+'</option>').join(''));
 ['sClass','scoreKelas','rpmKelas','cpKelas','tpKelas','atpKelas','protaKelas','prosemKelas','tClass'].forEach(k=>id(k).innerHTML=ROMBELS.map(x=>'<option value="'+x+'">'+x+'</option>').join(''));
@@ -284,8 +296,10 @@ save();
 }
 function renderStudents(){
   const rows=db.students.map((s,i)=>({s,i})).filter(x=>!isGuruKelas()||normalizeRombel(x.s.rombel||x.s.kelas)===allowedClass());
-  id('studentTable').innerHTML=rows.map((x,n)=>{const s=x.s,i=x.i;return '<tr><td>'+(n+1)+'</td><td>'+esc(s.name)+'</td><td>'+esc(s.nis)+'</td><td>'+esc(s.kelas)+'</td><td>'+esc(s.absen)+'</td><td><button class="btn danger" data-del="'+i+'">Hapus</button></td></tr>'}).join('')||'<tr><td colspan="6" class="muted">Belum ada siswa untuk kelas ini.</td></tr>';
-  document.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{if(isGuruKelas()&&String(db.students[+b.dataset.del].kelas)!==allowedClass())return;db.students.splice(+b.dataset.del,1);save();renderStudents();renderReport();renderScores()})
+  const panel=id('rombelMovePanel'); if(panel) panel.style.display=isGuruKelas()?'none':'block';
+  id('studentTable').innerHTML=rows.map((x,n)=>{const s=x.s,i=x.i;return '<tr><td><input type="checkbox" class="studentCheck" data-index="'+i+'"'+(s.id?'':' disabled title="ID D1 tidak tersedia"')+'></td><td>'+(n+1)+'</td><td>'+esc(s.name)+'</td><td>'+esc(s.nis)+'</td><td>'+esc(s.kelas||s.rombel)+'</td><td>'+esc(s.absen)+'</td><td><button class="btn danger" data-del="'+i+'">Hapus</button></td></tr>'}).join('')||'<tr><td colspan="7" class="muted">Belum ada siswa untuk kelas ini.</td></tr>';
+  document.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{if(isGuruKelas()&&normalizeRombel(db.students[+b.dataset.del].kelas||db.students[+b.dataset.del].rombel)!==allowedClass())return;db.students.splice(+b.dataset.del,1);save();renderStudents();renderReport();renderScores()});
+  const master=id('selectAllStudentCheck'); if(master){master.checked=false;master.disabled=!rows.some(x=>x.s.id);master.onchange=()=>document.querySelectorAll('.studentCheck:not(:disabled)').forEach(c=>c.checked=master.checked)}
 }
 function renderScores(){let k=isGuruKelas()?allowedClass():id('scoreKelas').value;id('scoreKelas').value=k;let ss=db.students.filter(s=>normalizeRombel(s.rombel||s.kelas)===normalizeRombel(k));id('scoreTable').innerHTML=ss.map(s=>{let key=s.nis+'|'+id('scoreMapel').value+'|'+k+'|'+id('scoreBab').value;let v=db.scores[key]||{};return '<tr><td>'+esc(s.name)+'</td><td><input class="scoreInput" data-key="'+esc(key)+'" type="number" min="0" max="100" value="'+esc(v.nilai||'')+'"></td><td><input class="noteInput" data-key="'+esc(key)+'" value="'+esc(v.catatan||'')+'" placeholder="Catatan"></td></tr>'}).join('')||'<tr><td colspan="3" class="muted">Belum ada siswa di kelas ini.</td></tr>'}
 function renderReport(){id('reportStudent').innerHTML='<option value="">Pilih siswa</option>'+db.students.filter(s=>!isGuruKelas()||normalizeRombel(s.rombel||s.kelas)===allowedClass()).map(s=>'<option value="'+esc(s.nis)+'">'+esc(s.name)+' — Rombel '+esc(s.kelas)+'</option>').join('')}
@@ -310,7 +324,7 @@ async function apiGet(path,params={}){
   if(!res.ok||payload.ok===false) throw new Error(payload.message||'Gagal mengambil data dari server.');
   return payload;
 }
-function normalizeStudentRow(x){return {name:String(x.name??x.nama??''),nis:String(x.nis??x.nisn??x.id??''),kelas:normalizeRombel(x.rombel??x.kelas??x.class??''),rombel:normalizeRombel(x.rombel??x.kelas??x.class??''),absen:String(x.absen??x.no_absen??x.nomor_absen??'')}}
+function normalizeStudentRow(x){return {id:x.id!=null?String(x.id):'',name:String(x.name??x.nama??''),nis:String(x.nis??x.nisn??''),kelas:normalizeRombel(x.rombel??x.kelas??x.class??''),rombel:normalizeRombel(x.rombel??x.kelas??x.class??''),absen:String(x.absen??x.no_absen??x.nomor_absen??'')}}
 function normalizeScoreRow(x,students,kelas,mapel,bab,semester){
   const sid=String(x.siswa_id??x.student_id??x.nis??x.nisn??'');
   const st=students.find(s=>String(s.nis)===sid||String(s.id)===sid);
@@ -407,6 +421,9 @@ id('loginForm').onsubmit=async e=>{
 id('showPass').onclick=()=>{id('loginPass').type=id('loginPass').type==='password'?'text':'password';id('showPass').textContent=id('loginPass').type==='password'?'Lihat':'Sembunyi'}
 id('logoutBtn').onclick=()=>{currentTeacher=null;sessionStorage.removeItem('siLogin');sessionStorage.removeItem('siAuthToken');id('app').style.display='none';id('loginScreen').style.display='grid';id('loginPass').value=''}
 id('menuBtn').onclick=()=>id('sidebar').classList.toggle('open')
+id('selectAllStudents').onclick=()=>{if(isGuruKelas())return;document.querySelectorAll('.studentCheck:not(:disabled)').forEach(c=>c.checked=true);if(id('selectAllStudentCheck'))id('selectAllStudentCheck').checked=true}
+id('clearSelectedStudents').onclick=()=>{document.querySelectorAll('.studentCheck').forEach(c=>c.checked=false);if(id('selectAllStudentCheck'))id('selectAllStudentCheck').checked=false}
+id('moveStudentsBtn').onclick=async()=>{if(isGuruKelas())return alert('Fitur ini khusus administrator.');const target=normalizeRombel(id('moveRombel').value);const selected=[...document.querySelectorAll('.studentCheck:checked')].map(c=>db.students[+c.dataset.index]).filter(Boolean);if(!ROMBELS.includes(target))return alert('Pilih rombel tujuan.');if(!selected.length)return alert('Pilih siswa yang akan dipindahkan.');if(selected.some(s=>!s.id))return alert('Sebagian siswa tidak memiliki ID D1. Sinkronkan data terlebih dahulu.');if(!confirm('Pindahkan '+selected.length+' siswa ke rombel '+target+'?'))return;const token=sessionStorage.getItem('siAuthToken')||'';const res=await fetch(API_BASE+'/siswa/atur-rombel',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:JSON.stringify({rombel:target,items:selected.map(s=>({id:String(s.id)}))})});let payload={};try{payload=await res.json()}catch(e){}if(!res.ok||payload.ok===false)return alert(payload.message||'Gagal mengatur rombel.');selected.forEach(s=>{s.kelas=target;s.rombel=target});save();id('moveRombel').value='';renderStudents();id('rombelMoveMsg').textContent=payload.updated+' siswa berhasil dipindahkan ke rombel '+target+'.';id('rombelMoveMsg').className='alert successbox';id('rombelMoveMsg').style.display='block'}
 id('addStudent').onclick=()=>{let name=id('sName').value.trim();if(!name)return alert('Nama siswa wajib diisi.');let kelas=isGuruKelas()?allowedClass():normalizeRombel(id('sClass').value);db.students.push({name,nis:id('sNis').value.trim()||('S'+Date.now()),kelas,rombel:kelas,absen:id('sAbsen').value.trim()});['sName','sNis','sAbsen'].forEach(x=>id(x).value='');save();renderStudents()}
 id('importCsv').onclick=()=>{let f=id('csvFile').files[0];if(!f)return alert('Pilih file CSV dulu.');let r=new FileReader();r.onload=()=>{let lines=r.result.split(/\r?\n/).filter(x=>x.trim());let count=0;lines.forEach((line,i)=>{let a=line.split(',').map(x=>x.trim().replace(/^"|"$/g,''));if(i===0&&/nama/i.test(a[0]))return;if(a[0]){const rk=isGuruKelas()?allowedClass():normalizeRombel(a[2]||'IA');db.students.push({name:a[0],nis:a[1]||('S'+Date.now()+count),kelas:rk,rombel:rk,absen:a[3]||''});count++}});save();renderStudents();id('importMsg').textContent=count+' siswa berhasil diimport.';id('importMsg').className='alert successbox';id('importMsg').style.display='block'};r.readAsText(f)}
 ;[['cp','cpText','cpKelas','cpMapel'],['tp','tpText','tpKelas','tpMapel'],['atp','atpText','atpKelas','atpMapel'],['prota','protaText','protaKelas','protaMapel'],['prosem','prosemText','prosemKelas','prosemMapel']].forEach(([k,el,ck,cm])=>id('save'+k[0].toUpperCase()+k.slice(1)).onclick=()=>{let kelas=normalizeRombel(id(ck).value);if(isGuruKelas()&&kelas!==allowedClass())return alert('Akses ditolak: kelas akun guru tidak sesuai.');db.texts[docKey(k,kelas,id(cm).value)]=id(el).value;save();alert(k.toUpperCase()+' tersimpan.')})
@@ -420,7 +437,7 @@ id('tRole').onchange=()=>id('tClass').disabled=id('tRole').value==='admin';id('a
 id('importTeacherCsv').onclick=()=>{const f=id('teacherCsvFile').files[0];if(!f)return alert('Pilih CSV guru terlebih dahulu.');const r=new FileReader();r.onload=()=>{let lines=r.result.split(/\r?\n/).filter(x=>x.trim()),count=0;lines.forEach((line,i)=>{const a=line.split(',').map(x=>x.trim().replace(/^"|"$/g,''));if(i===0&&/(username|nip|nama)/i.test(a.join(' ')))return;const u=String(a[0]||'').trim(),n=String(a[1]||'').trim(),rk=normalizeRombel(a[2]||''),role=String(a[3]||'guru').toLowerCase().includes('admin')?'admin':'guru',pw=String(a[4]||'');if(!u||!n)return;const idx=db.teachers.findIndex(t=>t.username===u&&role==='guru');const obj={username:u,name:n,password:pw,role,kelas:role==='guru'?rk:'',rombel:role==='guru'?rk:''};if(idx>=0)db.teachers[idx]=Object.assign({},db.teachers[idx],obj);else db.teachers.push(obj);count++});save();renderTeachers();id('teacherImportMsg').textContent=count+' data guru berhasil diimport ke data lokal.';id('teacherImportMsg').className='alert successbox';id('teacherImportMsg').style.display='block'};r.readAsText(f)}
 id('backupBtn').onclick=()=>{let blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='backup-si-nilai-sd-2026-2027.json';a.click();URL.revokeObjectURL(a.href)}
 id('restoreBtn').onclick=()=>{let f=id('restoreFile').files[0];if(!f)return alert('Pilih file JSON.');let r=new FileReader();r.onload=()=>{try{let x=JSON.parse(r.result);if(!x.students||!x.teachers)throw Error();db=x;save();renderStudents();renderTeachers();alert('Restore berhasil. Silakan login ulang jika diperlukan.')}catch(e){alert('File backup tidak valid.')}};r.readAsText(f)}
-buildNav();fillMapels();renderStats();renderStudents();renderTeachers();loadDocFields();applyClassLock();
+buildNav();fillMoveRombel();fillMapels();renderStats();renderStudents();renderTeachers();loadDocFields();applyClassLock();
 try{const saved=JSON.parse(sessionStorage.getItem('siLogin')||'null');const token=sessionStorage.getItem('siAuthToken');if(saved&&saved.username&&token){if(saved.role==='guru'&&!ROMBELS.includes(normalizeRombel(saved.rombel||saved.kelas||''))){sessionStorage.removeItem('siLogin');sessionStorage.removeItem('siAuthToken')}else finishLogin(saved)}}catch(e){sessionStorage.removeItem('siLogin');sessionStorage.removeItem('siAuthToken')}
 })();
 </script>

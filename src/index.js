@@ -51,6 +51,16 @@ function normalizeMapel(value) {
   return String(value ?? "").trim();
 }
 
+function isGuruMapelAll(user) {
+  return user?.role === "guru_mapel" && cleanRombel(user?.rombel || user?.kelas) === "ALL";
+}
+
+function canAccessRombel(user, requested) {
+  if (!user || user.role === "admin") return true;
+  if (isGuruMapelAll(user)) return true;
+  return cleanRombel(requested) === cleanRombel(user.rombel || user.kelas);
+}
+
 function subjectAllowed(user, requestedMapel) {
   if (!user || user.role === "admin") return true;
   if (user.role !== "guru_mapel") return true;

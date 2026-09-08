@@ -446,6 +446,22 @@ export default {
         return json({ok:true,message:"Akun Guru Mapel berhasil dibuat.",data:created},201);
       }
 
+      // CREATE GURU MAPEL — administrator only
+      if (url.pathname === "/api/guru" && request.method === "POST") {
+        if (user.role !== "admin") return json({ ok:false, message:"Khusus administrator." }, 403);
+        const body = await request.json();
+        const nama = String(body.nama || "").trim(); const username = String(body.username || "").trim(); const password = String(body.password || "");
+        const role = String(body.role || "guru_mapel").trim(); const rombel = cleanRombel(body.rombel || body.kelas || ""); const mapel = normalizeMapel(body.mapel || "");
+        if (!nama || !username || !password || !rombel || !mapel) return json({ok:false,message:"Nama, username, password, mapel, dan rombel wajib diisi."},400);
+        if (role !== "guru_mapel") return json({ok:false,message:"Endpoint ini khusus akun Guru Mapel."},400);
+        if (!["Pendidikan Agama dan Budi Pekerti","PJOK","Bahasa Inggris"].includes(mapel)) return json({ok:false,message:"Mata pelajaran Guru Mapel tidak valid."},400);
+        let c=await columns(env,"users"); if(!c.has("mapel")){try{await env.DB.prepare("ALTER TABLE users ADD COLUMN mapel TEXT").run()}catch{} c=await columns(env,"users")}
+        const exists=await env.DB.prepare("SELECT id FROM users WHERE username=?").bind(username).first(); if(exists)return json({ok:false,message:"Username sudah digunakan."},409);
+        const fields=[],binds=[]; const add=(n,v)=>{if(c.has(n)){fields.push(n);binds.push(v)}}; add("username",username);add("password",password);add("nama",nama);add("role",role);add("kelas",rombel);add("rombel",rombel);add("mapel",mapel);
+        const marks=fields.map(()=>"?").join(","); await env.DB.prepare(`INSERT INTO users (${fields.join(",")}) VALUES (${marks})`).bind(...binds).run();
+        const created=await env.DB.prepare("SELECT id,username,nama,role,kelas,rombel,mapel FROM users WHERE username=?").bind(username).first(); return json({ok:true,message:"Akun Guru Mapel berhasil dibuat.",data:created},201);
+      }
+
       // NILAI
       if (url.pathname === "/api/nilai" && request.method === "GET") {
         const { requested, own } = classFilter(url.searchParams.get("rombel") || url.searchParams.get("kelas"), user);
@@ -482,6 +498,7 @@ export default {
         const { requested, own } = classFilter(url.searchParams.get("rombel") || url.searchParams.get("kelas"), user);
         const jenis = url.searchParams.get("jenis") || "";
         const mapel = url.searchParams.get("mapel") || "";
+        if (!subjectAllowed(user, mapel)) return json({ok:false,message:"Akses mata pelajaran ditolak."},403);
         if (user.role !== "admin" && requested && requested !== own) {
           return json({ ok: false, message: "Akses rombel ditolak." }, 403);
         }
@@ -512,6 +529,7 @@ export default {
       if (url.pathname === "/api/rpm" && request.method === "GET") {
         const { requested, own } = classFilter(url.searchParams.get("rombel") || url.searchParams.get("kelas"), user);
         const mapel = url.searchParams.get("mapel") || "";
+        if (!subjectAllowed(user, mapel)) return json({ok:false,message:"Akses mata pelajaran ditolak."},403);
         if (user.role !== "admin" && requested && requested !== own) {
           return json({ ok: false, message: "Akses rombel ditolak." }, 403);
         }

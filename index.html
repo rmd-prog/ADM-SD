@@ -1110,5 +1110,6 @@ for(const [nama,fn] of [['menu',buildNav],['mapel',fillMapels],['dokumen',bindDo
 try{const saved=JSON.parse(localStorage.getItem('siLogin')||'null');const token=localStorage.getItem('siAuthToken');if(saved&&saved.username&&token){if(saved.role==='guru'&&!ROMBELS.includes(normalizeRombel(saved.rombel||saved.kelas||''))){localStorage.removeItem('siLogin');localStorage.removeItem('siAuthToken')}else finishLogin(saved)}}catch(e){localStorage.removeItem('siLogin');localStorage.removeItem('siAuthToken')}
 })();
 </script>
+<script src="assets/absensi.js"></script>
 </body>
 </html>

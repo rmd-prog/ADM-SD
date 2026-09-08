@@ -25,7 +25,7 @@ jobs:
           marker="id('loginForm').onsubmit=async e=>{"
           if 'window.__ADM_LOGIN=async(username,password)' not in s and marker in s:
               s=s.replace(marker,"window.__ADM_LOGIN=async(username,password)=>{const t=await remoteLogin(username,password);await finishLogin(t);return t};"+marker,1)
-          for tag in ('<script src="assets/absensi.js"></script>','<script src="guru-mapel-ui.js"></script>','<script src="assets/guru-mapel-access.js"></script>','<script src="assets/role-menu.js"></script>'):
+          for tag in ('<script src="assets/absensi.js"></script>','<script src="guru-mapel-ui.js"></script>','<script src="assets/guru-mapel-access.js"></script>','<script src="assets/role-menu.js"></script>','<script src="assets/ai-curriculum-selector.js"></script>'):
               if tag not in s:
                   pos=s.rfind('</body>')
                   if pos<0: raise SystemExit('body marker missing')
@@ -82,7 +82,7 @@ jobs:
           s=Path('index.html').read_text(encoding='utf-8')
           scripts=re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>',s,re.S|re.I)
           Path('/tmp/index-inline.js').write_text('\n'.join(scripts),encoding='utf-8')
-          for tag in ('<script src="assets/absensi.js"></script>','<script src="guru-mapel-ui.js"></script>','<script src="assets/guru-mapel-access.js"></script>','<script src="assets/role-menu.js"></script>'):
+          for tag in ('<script src="assets/absensi.js"></script>','<script src="guru-mapel-ui.js"></script>','<script src="assets/guru-mapel-access.js"></script>','<script src="assets/role-menu.js"></script>','<script src="assets/ai-curriculum-selector.js"></script>'):
               assert tag in s, tag
           b=Path('src/index.js').read_text(encoding='utf-8')
           assert 'function extractRequestedMapel(body, url)' in b
@@ -90,6 +90,9 @@ jobs:
           k=Path('lkpd.html').read_text(encoding='utf-8')
           for marker in ('id="jumlahPg"','id="jumlahIsian"','id="jumlahEssay"','id="asesmen"','id="versi"','id="answerPaper"','answer:q.answer'):
               assert marker in k, marker
+          a=Path('assets/ai-curriculum-selector.js').read_text(encoding='utf-8')
+          for marker in ('aiBabSelector','aiSubbabSelector','KONTEKS KURIKULUM ADM-SD','lkpd.html'):
+              assert marker in a, marker
           PY
           node --check /tmp/index-inline.js
           node --check src/index.js
@@ -97,6 +100,7 @@ jobs:
           node --check guru-mapel-ui.js
           node --check assets/guru-mapel-access.js
           node --check assets/role-menu.js
+          node --check assets/ai-curriculum-selector.js
 
       - name: Commit patched files
         shell: bash
@@ -104,7 +108,7 @@ jobs:
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add index.html src/index.js guru-mapel-ui.js assets/guru-mapel-access.js assets/role-menu.js lkpd.html
+          git add index.html src/index.js guru-mapel-ui.js assets/guru-mapel-access.js assets/role-menu.js lkpd.html assets/ai-curriculum-selector.js
           if git diff --cached --quiet; then echo 'No patch needed'; exit 0; fi
-          git commit -m 'feat: upgrade LKPD generator [skip ci]'
+          git commit -m 'feat: add hierarchical AI curriculum selector [skip ci]'
           git push

@@ -1,0 +1,135 @@
+name: V10 Persist Docs
+on:
+  push:
+    paths:
+      - '.github/v10-persist.trigger'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch Worker persistence
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('src/index.js')
+          s = p.read_text(encoding='utf-8')
+          marker = '      // RPM\n      if (url.pathname === "/api/rpm" && request.method === "GET") {'
+          if 'PERANGKAT PEMBELAJARAN - CREATE / UPDATE / DELETE' in s:
+              print('Persistence routes already present')
+          else:
+              block = r'''      // PERANGKAT PEMBELAJARAN - CREATE / UPDATE / DELETE
+      if (url.pathname === "/api/perangkat" && request.method === "POST") {
+        const body = await request.json();
+        const requested = cleanRombel(body.rombel || body.kelas || user.rombel || user.kelas || "");
+        const own = cleanRombel(user.rombel || user.kelas || "");
+        if (user.role !== "admin" && requested !== own) return json({ok:false,message:"Akses rombel ditolak."},403);
+        const c = await columns(env, "perangkat");
+        const allowed = ["jenis","mapel","kelas","rombel","judul","isi","konten","tahun","semester","bab","metadata"];
+        const payload = {};
+        for (const key of allowed) if (c.has(key) && body[key] !== undefined) payload[key] = body[key];
+        if (c.has("kelas") && payload.kelas === undefined) payload.kelas = requested;
+        if (c.has("rombel") && payload.rombel === undefined) payload.rombel = requested;
+        if (!payload.jenis) payload.jenis = String(body.type || "").trim();
+        if (!payload.mapel) payload.mapel = String(body.subject || "").trim();
+        const cols = Object.keys(payload).filter(k => c.has(k));
+        if (!cols.length) return json({ok:false,message:"Tidak ada kolom data perangkat yang cocok dengan struktur D1."},400);
+        const vals = cols.map(k => payload[k]);
+        const r = await env.DB.prepare(`INSERT INTO perangkat (${cols.join(",")}) VALUES (${cols.map(()=>"?").join(",")}) RETURNING *`).bind(...vals).first();
+        return json({ok:true,data:r});
+      }
+
+      if (url.pathname.startsWith("/api/perangkat/") && ["PUT","DELETE"].includes(request.method)) {
+        const id = url.pathname.split("/").pop();
+        if (!/^\\d+$/.test(id)) return json({ok:false,message:"ID perangkat tidak valid."},400);
+        const existing = await env.DB.prepare("SELECT * FROM perangkat WHERE id=?").bind(Number(id)).first();
+        if (!existing) return json({ok:false,message:"Perangkat tidak ditemukan."},404);
+        const own = cleanRombel(user.rombel || user.kelas || "");
+        const er = cleanRombel(existing.rombel || existing.kelas || "");
+        if (user.role !== "admin" && er !== own) return json({ok:false,message:"Akses rombel ditolak."},403);
+        if (request.method === "DELETE") {
+          await env.DB.prepare("DELETE FROM perangkat WHERE id=?").bind(Number(id)).run();
+          return json({ok:true,message:"Perangkat dihapus."});
+        }
+        const body = await request.json();
+        const c = await columns(env, "perangkat");
+        const allowed = ["jenis","mapel","kelas","rombel","judul","isi","konten","tahun","semester","bab","metadata"];
+        const sets=[]; const vals=[];
+        for (const key of allowed) if (c.has(key) && body[key] !== undefined) { sets.push(`${key}=?`); vals.push(body[key]); }
+        if (!sets.length) return json({ok:false,message:"Tidak ada perubahan yang valid."},400);
+        if (c.has("rombel") && user.role !== "admin") { sets.push("rombel=?"); vals.push(own); }
+        vals.push(Number(id));
+        await env.DB.prepare(`UPDATE perangkat SET ${sets.join(",")} WHERE id=?`).bind(...vals).run();
+        const r = await env.DB.prepare("SELECT * FROM perangkat WHERE id=?").bind(Number(id)).first();
+        return json({ok:true,data:r});
+      }
+
+'''
+              if marker not in s:
+                  raise SystemExit('marker perangkat/rpm tidak ditemukan')
+              s = s.replace(marker, block + marker, 1)
+              p.write_text(s, encoding='utf-8')
+          PY
+      - name: Patch RPM persistence
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('src/index.js')
+          s=p.read_text(encoding='utf-8')
+          marker='      return json({ ok: false, message: "Endpoint tidak ditemukan." }, 404);'
+          if 'RPM - CREATE / UPDATE / DELETE' in s:
+              print('RPM routes already present')
+          else:
+              block=r'''      // RPM - CREATE / UPDATE / DELETE
+      if (url.pathname === "/api/rpm" && request.method === "POST") {
+        const body = await request.json();
+        const requested = cleanRombel(body.rombel || body.kelas || user.rombel || user.kelas || "");
+        const own = cleanRombel(user.rombel || user.kelas || "");
+        if (user.role !== "admin" && requested !== own) return json({ok:false,message:"Akses rombel ditolak."},403);
+        const c=await columns(env,"rpm");
+        const allowed=["mapel","kelas","rombel","judul","isi","konten","tahun","semester","bab","metadata","materi","tujuan","aktivitas"];
+        const payload={};
+        for(const key of allowed) if(c.has(key)&&body[key]!==undefined) payload[key]=body[key];
+        if(c.has("kelas")&&payload.kelas===undefined) payload.kelas=requested;
+        if(c.has("rombel")&&payload.rombel===undefined) payload.rombel=requested;
+        if(!payload.mapel) payload.mapel=String(body.subject||"").trim();
+        const cols=Object.keys(payload).filter(k=>c.has(k));
+        if(!cols.length)return json({ok:false,message:"Tidak ada kolom data RPM yang cocok dengan struktur D1."},400);
+        const vals=cols.map(k=>payload[k]);
+        const r=await env.DB.prepare(`INSERT INTO rpm (${cols.join(",")}) VALUES (${cols.map(()=>"?").join(",")}) RETURNING *`).bind(...vals).first();
+        return json({ok:true,data:r});
+      }
+
+      if(url.pathname.startsWith("/api/rpm/")&&["PUT","DELETE"].includes(request.method)){
+        const id=url.pathname.split("/").pop();
+        if(!/^\\d+$/.test(id))return json({ok:false,message:"ID RPM tidak valid."},400);
+        const existing=await env.DB.prepare("SELECT * FROM rpm WHERE id=?").bind(Number(id)).first();
+        if(!existing)return json({ok:false,message:"RPM tidak ditemukan."},404);
+        const own=cleanRombel(user.rombel||user.kelas||""); const er=cleanRombel(existing.rombel||existing.kelas||"");
+        if(user.role!=="admin"&&er!==own)return json({ok:false,message:"Akses rombel ditolak."},403);
+        if(request.method==="DELETE"){await env.DB.prepare("DELETE FROM rpm WHERE id=?").bind(Number(id)).run();return json({ok:true,message:"RPM dihapus."});}
+        const body=await request.json(); const c=await columns(env,"rpm"); const allowed=["mapel","kelas","rombel","judul","isi","konten","tahun","semester","bab","metadata","materi","tujuan","aktivitas"]; const sets=[]; const vals=[];
+        for(const key of allowed)if(c.has(key)&&body[key]!==undefined){sets.push(`${key}=?`);vals.push(body[key]);}
+        if(!sets.length)return json({ok:false,message:"Tidak ada perubahan yang valid."},400);
+        if(c.has("rombel")&&user.role!=="admin"){sets.push("rombel=?");vals.push(own);}
+        vals.push(Number(id)); await env.DB.prepare(`UPDATE rpm SET ${sets.join(",")} WHERE id=?`).bind(...vals).run();
+        const r=await env.DB.prepare("SELECT * FROM rpm WHERE id=?").bind(Number(id)).first(); return json({ok:true,data:r});
+      }
+
+'''
+              if marker not in s: raise SystemExit('marker akhir tidak ditemukan')
+              s=s.replace(marker,block+marker,1)
+              p.write_text(s,encoding='utf-8')
+          PY
+      - name: Validate JS syntax
+        run: node --check src/index.js
+      - name: Commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/index.js
+          git diff --cached --quiet || git commit -m 'feat: persist perangkat and rpm documents'
+          git push

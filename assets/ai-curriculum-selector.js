@@ -21,7 +21,13 @@
     return curriculum;
   }
   function currentRoleSubject(){try{const x=JSON.parse(localStorage.getItem('siLogin')||'null');const u=x?.user||x;return norm(u?.role)==='guru_mapel'?String(u?.mapel||''):''}catch{return ''}}
-  function currentKelas(){const x=getKelas();return x?String(x.value||'').replace(/[^0-9]/g,''):''}
+  function currentKelas(){
+    const x=getKelas();
+    const raw=String(x?.value||x?.selectedOptions?.[0]?.textContent||'').trim().toUpperCase().replace(/\s+/g,'');
+    const map={'I':'1','IA':'1','IB':'1','1A':'1','1B':'1','II':'2','IIA':'2','IIB':'2','2A':'2','2B':'2','III':'3','IIIA':'3','IIIB':'3','3A':'3','3B':'3','IV':'4','IVA':'4','IVB':'4','4A':'4','4B':'4','V':'5','5':'5','VI':'6','6':'6'};
+    if(map[raw])return map[raw];
+    const m=raw.match(/[1-6]/);return m?m[0]:'';
+  }
   function applyRoleSubject(){const mapel=getMapel(),own=currentRoleSubject();if(!mapel||!own)return;const opt=[...mapel.options].find(o=>norm(o.value)===norm(own)||norm(o.textContent)===norm(own));if(opt){mapel.value=opt.value;[...mapel.options].forEach(o=>{o.hidden=o!==opt;o.disabled=o!==opt})}}
   function ensureUI(){
     const r=root();if(!r||document.getElementById('aiBabSelector'))return !!r;
@@ -39,7 +45,7 @@
   function refreshSub(){const data=curriculum||{},mapel=getMapel(),bab=document.getElementById('aiBabSelector'),sub=document.getElementById('aiSubbabSelector'),kelas=currentKelas();if(!mapel||!bab||!sub)return;const key=Object.keys(data).find(k=>norm(k)===norm(mapel.value));fill(sub,(data[key]||{})[kelas]?.[bab.value]||[],'Pilih Sub Bab / Topik');syncPrompt()}
   function findPrompt(){const r=root();if(!r)return null;return document.getElementById('aiPrompt')||r.querySelector('textarea')||[...r.querySelectorAll('input')].find(x=>x.type==='text')}
   function syncPrompt(){const p=findPrompt(),bab=document.getElementById('aiBabSelector'),sub=document.getElementById('aiSubbabSelector');if(!p)return;const marker='[KONTEKS KURIKULUM ADM-SD]';const old=String(p.value||'').split(marker)[0].trim();if(bab?.value&&sub?.value){p.value=old+'\n\n'+marker+'\nBab/Materi: '+bab.value+'\nSub Bab/Topik: '+sub.value+'\nGunakan materi ini sebagai fokus utama. Jangan melebar ke bab atau subbab lain.';p.dispatchEvent(new Event('input',{bubbles:true}))}else p.value=old}
-  function guardGenerate(){const r=root();if(!r||r.dataset.curriculumGuard)return;r.dataset.curriculumGuard='1';r.addEventListener('click',e=>{const b=e.target.closest('button');if(!b||!/generate\s+dengan\s+ai/i.test(b.textContent||''))return;const bab=document.getElementById('aiBabSelector'),sub=document.getElementById('aiSubbabSelector');if(!bab?.value||!sub?.value){e.preventDefault();e.stopImmediatePropagation();alert('Pilih Bab/Materi dan Sub Bab/Topik terlebih dahulu agar AI tidak membuat materi secara global.');return}syncPrompt()},true)}
+  function guardGenerate(){const r=root();if(!r||r.dataset.curriculumGuard)return;r.dataset.curriculumGuard='1';r.addEventListener('click',e=>{const b=e.target.closest('button');if(!b||!/generate\s+(dengan\s+ai|lkpd)/i.test(b.textContent||''))return;const bab=document.getElementById('aiBabSelector'),sub=document.getElementById('aiSubbabSelector');if(!bab?.value||!sub?.value){e.preventDefault();e.stopImmediatePropagation();alert('Pilih Bab/Materi dan Sub Bab/Topik terlebih dahulu agar AI tidak membuat materi secara global.');return}syncPrompt()},true)}
   function start(){if(!ensureUI())return;guardGenerate();const r=root();new MutationObserver(()=>{if(!document.getElementById('aiBabSelector'))ensureUI()}).observe(r,{childList:true,subtree:true})}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(start,200));else setTimeout(start,200);
 })();

@@ -1,4 +1,4 @@
-name: Apply Guru Mapel stability patch
+name: Apply Guru Mapel UI and stability patch
 on:
   push:
     paths:
@@ -10,17 +10,43 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Patch and validate
+      - name: Patch frontend and Worker safely
         shell: bash
         run: |
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
+          import re
           p=Path('index.html'); s=p.read_text(encoding='utf-8')
-          # Keep exportHtml valid JavaScript: literal newline must be escaped inside the quoted string.
           bad='<script src="guru-mapel-ui.js"><\\/script>\n</body></html>'
           good='<script src="guru-mapel-ui.js"><\\/script>\\n</body></html>'
-          s=s.replace(bad,good)
+          if bad in s: s=s.replace(bad,good)
+          if 'ADM-SD SAFE LOGIN V12' not in s:
+              css=r'''/* ADM-SD SAFE LOGIN V12 */
+          :root{--v12-bg:#f5f7fb;--v12-card:#fff;--v12-text:#172033;--v12-border:#e2e8f0}
+          html[data-theme=dark]{--v12-bg:#0b1220;--v12-card:#111827;--v12-text:#e5e7eb;--v12-border:#263244}
+          body{background:radial-gradient(circle at 10% 0%,#dbeafe,transparent 32%),radial-gradient(circle at 100% 10%,#ede9fe,transparent 30%),var(--v12-bg)!important;color:var(--v12-text)!important}
+          .top{background:color-mix(in srgb,var(--v12-card) 90%,transparent)!important;backdrop-filter:blur(14px);box-shadow:0 8px 30px #0f172a12}
+          .side{background:linear-gradient(180deg,#0b1220,#172554 58%,#312e81)!important}
+          .navbtn{transition:.16s!important}.navbtn:hover{transform:translateX(2px);box-shadow:0 6px 16px #0002}.v12-icon{display:inline-grid;place-items:center;width:25px;margin-right:5px}
+          .card,.panel,.stat,.doc-box{background:var(--v12-card)!important;border-color:var(--v12-border)!important;color:var(--v12-text)!important}
+          .login{background:radial-gradient(circle at 15% 15%,#bfdbfe,transparent 32%),radial-gradient(circle at 85% 20%,#ddd6fe,transparent 32%),linear-gradient(135deg,#eff6ff,#eef2ff)!important}
+          .login-card{position:relative;overflow:hidden;box-shadow:0 25px 70px #1e3a8a25!important}.login-card:before{content:"";position:absolute;left:0;right:0;top:0;height:5px;background:linear-gradient(90deg,#2563eb,#7c3aed,#06b6d4)}
+          .login .wide{background:linear-gradient(135deg,#2563eb,#6366f1 55%,#7c3aed)!important;box-shadow:0 10px 22px #4f46e53d}
+          html[data-theme=dark] input,html[data-theme=dark] select,html[data-theme=dark] textarea{background:#0f172a!important;color:#e5e7eb!important;border-color:#334155!important}
+          '''
+              js=r'''/* ADM-SD SAFE LOGIN V12 */
+          (function(){'use strict';const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+          function nav(){const m={dashboard:'🏠',students:'👨‍🎓',teachers:'👩‍🏫',aiGenerate:'🤖',scores:'📊',importScores:'📥',report:'📑',reference:'📚',backup:'💾'};$$('.navbtn[data-page]').forEach(b=>{if(b.dataset.v12)return;b.dataset.v12='1';const i=m[b.dataset.page];if(i)b.innerHTML='<span class="v12-icon">'+i+'</span><span>'+b.textContent.replace(/^\s*[\p{Extended_Pictographic}\p{Emoji_Presentation}]+\s*/u,'')+'</span>'})}
+          function theme(){const h=$('.top-right');if(!h||$('#v12Theme'))return;const b=document.createElement('button');b.id='v12Theme';b.type='button';b.className='btn secondary';b.title='Ganti tema';const set=d=>{document.documentElement.dataset.theme=d?'dark':'light';localStorage.setItem('admTheme',d?'dark':'light');b.textContent=d?'☀️':'🌙'};b.onclick=()=>set(document.documentElement.dataset.theme!=='dark');h.insertBefore(b,h.firstChild);set(localStorage.getItem('admTheme')==='dark')}
+          function error(t){const e=$('#loginError');if(e){e.textContent=t;e.className='alert';e.style.display='block'}}
+          async function login(e){e.preventDefault();e.stopImmediatePropagation();const f=$('#loginForm'),u=$('#loginUser'),p=$('#loginPass'),b=f?.querySelector('button[type=submit]');if(!u?.value.trim()||!p?.value)return error('Username dan password wajib diisi.');if(b){b.disabled=true;b.textContent='MEMERIKSA...'}try{if(typeof remoteLogin!=='function')throw Error('Modul login belum siap. Muat ulang halaman.');const t=await remoteLogin(u.value.trim(),p.value);if(!t?.token)throw Error('Token login tidak diterima dari Worker.');currentTeacher=t;localStorage.setItem('siLogin',JSON.stringify(t));localStorage.setItem('siAuthToken',t.token);try{updateTeacherProfile(t)}catch{}$('#loginScreen').style.display='none';$('#app').style.display='block';$('#loginError').style.display='none';for(const fn of [applyClassLock,syncRoleMenu,initAIGenerator,renderStats,renderStudents,renderScores,renderReport])try{fn?.()}catch(x){console.warn(x)}try{showPage(t.role==='guru'||t.role==='guru_mapel'?'students':'dashboard')}catch{}if(typeof syncRemoteData==='function')Promise.resolve(syncRemoteData(t)).catch(console.warn)}catch(x){console.error(x);$('#loginScreen').style.display='grid';$('#app').style.display='none';error(x.message||'Login gagal. Periksa akun dan Worker.')}finally{if(b){b.disabled=false;b.textContent='MASUK KE SISTEM'}}}
+          function boot(){nav();theme();const f=$('#loginForm');if(f){f.addEventListener('submit',login,true);f.onsubmit=login}}
+          if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();})();'''
+              s=s.replace('</head>','<style id="adm-v12">'+css+'</style>\n</head>',1)
+              pos=s.rfind('</script>')
+              if pos<0: raise SystemExit('login script anchor missing')
+              s=s[:pos]+'\n'+js+'\n'+s[pos:]
           old="""    const rombel=(t.role==='guru'||t.role==='guru_mapel')?normalizeRombel(t.rombel||t.kelas):'';
     const sp=await apiGet('/siswa',rombel?{rombel}:{});
     if(Array.isArray(sp.data)) db.students=sp.data.map(normalizeStudentRow).filter(s=>s.name);
@@ -39,14 +65,12 @@ jobs:
       const sp=await apiGet('/siswa',rombel?{rombel}:{});
       if(Array.isArray(sp.data)) db.students=sp.data.map(normalizeStudentRow).filter(s=>s.name);
     }"""
-          if old not in s: raise SystemExit('ABORT: syncRemoteData anchor not found')
+          if old not in s: raise SystemExit('syncRemoteData anchor not found')
           s=s.replace(old,new,1)
           s=s.replace("const rp=await apiGet('/rpm',{rombel:k});","const rp=await apiGet('/rpm',{rombel:k,mapel:t.role==='guru_mapel'?t.mapel:''});",1)
           p.write_text(s,encoding='utf-8')
           w=Path('src/index.js'); x=w.read_text(encoding='utf-8')
-          old='user.role !== "admin" && requested && requested !== own'; new='user.role !== "admin" && requested && !canAccessRombel(user, requested)';
-          if old in x:x=x.replace(old,new)
-          w.write_text(x,encoding='utf-8')
+          old='user.role !== "admin" && requested && requested !== own'; new='user.role !== "admin" && requested && !canAccessRombel(user, requested)'; x=x.replace(old,new); w.write_text(x,encoding='utf-8')
           PY
           python3 - <<'PY'
           from pathlib import Path
@@ -60,5 +84,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html src/index.js
-          git commit -m 'fix: Guru Mapel all-rombel sync [skip ci]' || exit 0
+          git commit -m 'fix: finalize Guru Mapel all-rombel sync [skip ci]' || exit 0
           git push origin main

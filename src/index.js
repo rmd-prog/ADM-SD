@@ -20,7 +20,7 @@ function getUser(request) {
 function createToken(user) {
   return btoa(JSON.stringify({
     id: user.id, username: user.username, nama: user.nama,
-    role: user.role, kelas: user.kelas, rombel: user.rombel
+    role: user.role, kelas: user.kelas, rombel: user.rombel, mapel: user.mapel || ""
   }));
 }
 
@@ -41,6 +41,22 @@ function cleanRombel(value) {
     "KELASIVB":"IVB","KELASV":"V","KELASVI":"VI"
   };
   return map[raw] || raw;
+}
+
+function normalizeMapel(value) {
+  const raw = String(value ?? "").trim().toLowerCase().replace(/\s+/g, " ");
+  if (["agama", "pai", "pendidikan agama", "pendidikan agama dan budi pekerti"].includes(raw)) return "Pendidikan Agama dan Budi Pekerti";
+  if (["pjok", "pendidikan jasmani", "pendidikan jasmani olahraga dan kesehatan"].includes(raw)) return "PJOK";
+  if (["inggris", "bahasa inggris", "english"].includes(raw)) return "Bahasa Inggris";
+  return String(value ?? "").trim();
+}
+
+function subjectAllowed(user, requestedMapel) {
+  if (!user || user.role === "admin") return true;
+  if (user.role !== "guru_mapel") return true;
+  const own = normalizeMapel(user.mapel);
+  const requested = normalizeMapel(requestedMapel);
+  return !!own && !!requested && own === requested;
 }
 
 function rombelVariants(value) {
@@ -112,12 +128,17 @@ export default {
         const body = await request.json();
         const username = String(body.username || "").trim();
         const password = String(body.password || "");
-        const c = await columns(env, "users");
+        let c = await columns(env, "users");
+        if (!c.has("mapel")) {
+          try { await env.DB.prepare("ALTER TABLE users ADD COLUMN mapel TEXT").run(); } catch {}
+          c = await columns(env, "users");
+        }
         const rombelExpr = c.has("rombel")
           ? "COALESCE(NULLIF(TRIM(rombel), ''), TRIM(kelas)) AS rombel"
           : "TRIM(kelas) AS rombel";
+        const mapelExpr = c.has("mapel") ? "TRIM(COALESCE(mapel, '')) AS mapel" : "'' AS mapel";
         const user = await env.DB.prepare(
-          `SELECT id, username, password, nama, role, kelas, ${rombelExpr}
+          `SELECT id, username, password, nama, role, kelas, ${rombelExpr}, ${mapelExpr}
            FROM users WHERE username = ?`
         ).bind(username).first();
         if (!user || user.password !== password) {
@@ -126,7 +147,8 @@ export default {
         const safeUser = {
           id: user.id, username: user.username, nama: user.nama,
           role: user.role, kelas: cleanRombel(user.rombel || user.kelas),
-          rombel: cleanRombel(user.rombel || user.kelas)
+          rombel: cleanRombel(user.rombel || user.kelas),
+          mapel: normalizeMapel(user.mapel || "")
         };
         return json({ ok: true, token: createToken(safeUser), user: safeUser });
       }
@@ -161,7 +183,7 @@ export default {
         const nama = String(body.nama ?? body.name ?? "").trim();
         const nis = String(body.nis ?? "").trim();
         const absen = String(body.absen ?? "").trim();
-        const classInfo = normalizeClass(body.rombel ?? body.kelas ?? (user.role === "guru" ? user.rombel : ""));
+        const classInfo = normalizeClass(body.rombel ?? body.kelas ?? ((user.role === "guru" || user.role === "guru_mapel") ? user.rombel : ""));
         if (!nama || !classInfo) return json({ ok:false, message:"Nama dan rombel wajib diisi dengan benar." },400);
         if (user.role !== "admin" && cleanRombel(classInfo.rombel) !== cleanRombel(user.rombel || user.kelas)) return json({ok:false,message:"Akses rombel ditolak."},403);
         const c=await columns(env,"siswa");
@@ -295,6 +317,9 @@ export default {
         if (!openaiKey) return json({ok:false,code:"OPENAI_KEY_NOT_BOUND",message:"Worker aktif tidak menerima secret OPENAI_API_KEY. Pastikan secret dipasang pada Worker/environment yang sedang dideploy, lalu Deploy ulang Worker."},503);
 
         const mapel = String(body.mapel || "").trim();
+        if (!subjectAllowed(user, mapel)) {
+          return json({ ok:false, message:"Akses mata pelajaran ditolak." }, 403);
+        }
         const context = String(body.context || "").trim().slice(0,10000);
         const tahun = String(body.tahun || "2026/2027").trim();
         const fase = String(body.fase || "").trim();
@@ -385,8 +410,9 @@ export default {
         const rombelExpr = c.has("rombel")
           ? "COALESCE(NULLIF(TRIM(rombel), ''), TRIM(kelas)) AS rombel"
           : "TRIM(kelas) AS rombel";
+        const mapelExpr = c.has("mapel") ? "TRIM(COALESCE(mapel, '')) AS mapel" : "'' AS mapel";
         const result = await env.DB.prepare(
-          `SELECT id, username, nama, role, kelas, ${rombelExpr}
+          `SELECT id, username, nama, role, kelas, ${rombelExpr}, ${mapelExpr}
            FROM users ORDER BY role, rombel, nama`
         ).all();
         return json({ ok: true, data: result.results });
@@ -397,6 +423,9 @@ export default {
         const { requested, own } = classFilter(url.searchParams.get("rombel") || url.searchParams.get("kelas"), user);
         const mapel = url.searchParams.get("mapel") || "";
         const semester = Number(url.searchParams.get("semester") || 1);
+        if (!subjectAllowed(user, mapel)) {
+          return json({ ok:false, message:"Akses mata pelajaran ditolak." }, 403);
+        }
         if (user.role !== "admin" && requested && requested !== own) {
           return json({ ok: false, message: "Akses rombel ditolak." }, 403);
         }

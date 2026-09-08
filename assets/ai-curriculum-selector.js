@@ -1,4 +1,4 @@
-/* ADM-SD — AI Generate hierarchical curriculum selector V2 */
+/* ADM-SD — AI Generate hierarchical curriculum selector V3 */
 (function(){
   'use strict';
   const norm=s=>String(s??'').trim().toLowerCase().replace(/\s+/g,' ');
@@ -19,9 +19,13 @@
   let loading=null;
   async function loadCurriculum(){
     if(curriculum)return curriculum;
+    if(window.ADM_CURRICULUM&&typeof window.ADM_CURRICULUM==='object'){
+      curriculum=window.ADM_CURRICULUM; return curriculum;
+    }
     if(loading)return loading;
     loading=(async()=>{
       try{
+        // Fallback for cached/older deployments: read the standalone LKPD database.
         const url=new URL('lkpd.html',location.href).href;
         const res=await fetch(url,{cache:'no-store'});
         if(!res.ok)throw Error('LKPD HTTP '+res.status);
@@ -39,7 +43,6 @@
         }
         if(end<0)throw Error('akhir curriculum tidak ditemukan');
         curriculum=Function('return ('+text.slice(brace,end)+')')();
-        if(!curriculum||typeof curriculum!=='object')throw Error('curriculum kosong');
       }catch(e){console.warn('[AI curriculum]',e);curriculum={};}
       finally{loading=null}
       return curriculum;
@@ -69,24 +72,37 @@
   }
   function fill(sel,items,placeholder){
     if(!sel)return;
-    sel.innerHTML='<option value="">'+placeholder+'</option>';
-    for(const x of items||[]){const o=document.createElement('option');o.value=x;o.textContent=x;sel.appendChild(o)}
-    sel.disabled=!(items&&items.length);
+    const arr=Array.isArray(items)?items:[];
+    sel.disabled=false;
+    sel.innerHTML='';
+    const first=document.createElement('option');first.value='';first.textContent=placeholder;sel.appendChild(first);
+    for(const x of arr){const o=document.createElement('option');o.value=String(x);o.textContent=String(x);sel.appendChild(o)}
+    sel.value='';
+    sel.disabled=arr.length===0;
+    sel.title=arr.length?'':'Data kurikulum belum tersedia untuk pilihan ini';
   }
+  function getClassNode(data,subject,kelas){
+    const keys=Object.keys(data||{});
+    const key=keys.find(k=>norm(canonicalSubject(k))===norm(subject));
+    if(!key)return null;
+    const node=data[key];
+    if(!node||typeof node!=='object')return null;
+    return node[kelas]||node[String(Number(kelas))]||node[roman(kelas)]||null;
+  }
+  function roman(k){return ({1:'I',2:'II',3:'III',4:'IV',5:'V',6:'VI'})[String(k)]||''}
   function ensureUI(){
-    const r=root(); if(!r)return false;
-    if(document.getElementById('aiBabSelector'))return true;
-    const mapel=getMapel(); if(!mapel)return false;
-    const box=document.createElement('div');
-    box.id='aiCurriculumBox';
-    box.style.cssText='grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px';
-    box.innerHTML='<div><label for="aiBabSelector">📚 Bab / Materi</label><select id="aiBabSelector"><option value="">Memuat Bab / Materi...</option></select></div><div><label for="aiSubbabSelector">📖 Sub Bab / Topik</label><select id="aiSubbabSelector" disabled><option value="">Pilih Sub Bab / Topik</option></select></div>';
-    (mapel.closest('.doc-controls')||mapel.parentElement)?.after(box);
-    const bab=document.getElementById('aiBabSelector'),sub=document.getElementById('aiSubbabSelector');
-    mapel.addEventListener('change',refreshBab);
-    const kelas=getKelas(); kelas?.addEventListener('change',refreshBab);
-    bab.addEventListener('change',refreshSub);
-    sub.addEventListener('change',syncPrompt);
+    const r=root();if(!r)return false;
+    const mapel=getMapel();if(!mapel)return false;
+    let bab=document.getElementById('aiBabSelector'),sub=document.getElementById('aiSubbabSelector');
+    if(!bab||!sub){
+      const box=document.createElement('div');box.id='aiCurriculumBox';
+      box.style.cssText='grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;position:relative;z-index:5';
+      box.innerHTML='<div><label for="aiBabSelector">📚 Bab / Materi</label><select id="aiBabSelector"><option value="">Pilih Bab / Materi</option></select></div><div><label for="aiSubbabSelector">📖 Sub Bab / Topik</label><select id="aiSubbabSelector"><option value="">Pilih Sub Bab / Topik</option></select></div>';
+      (mapel.closest('.doc-controls')||mapel.closest('.grid')||mapel.parentElement)?.appendChild(box);
+      bab=box.querySelector('#aiBabSelector');sub=box.querySelector('#aiSubbabSelector');
+      mapel.addEventListener('change',refreshBab);getKelas()?.addEventListener('change',refreshBab);
+      bab.addEventListener('change',refreshSub);sub.addEventListener('change',syncPrompt);
+    }
     loadCurriculum().then(()=>{applyRoleSubject();refreshBab()});
     return true;
   }
@@ -94,20 +110,18 @@
     const data=await loadCurriculum(),mapel=getMapel(),bab=document.getElementById('aiBabSelector'),sub=document.getElementById('aiSubbabSelector');
     if(!mapel||!bab||!sub)return;
     applyRoleSubject();
-    const kelas=classKey(),subject=canonicalSubject(mapel.value);
-    const key=Object.keys(data).find(k=>norm(canonicalSubject(k))===norm(subject));
-    const byClass=key&&data[key]&&data[key][kelas] ? data[key][kelas] : {};
-    fill(bab,Object.keys(byClass),'Pilih Bab / Materi');
+    const kelas=classKey(),subject=canonicalSubject(mapel.value),node=getClassNode(data,subject,kelas);
+    const names=node&&typeof node==='object'?Object.keys(node):[];
+    fill(bab,names,'Pilih Bab / Materi');
     fill(sub,[],'Pilih Sub Bab / Topik');
     syncPrompt();
   }
   function refreshSub(){
     const data=curriculum||{},mapel=getMapel(),bab=document.getElementById('aiBabSelector'),sub=document.getElementById('aiSubbabSelector');
     if(!mapel||!bab||!sub)return;
-    const kelas=classKey(),subject=canonicalSubject(mapel.value),key=Object.keys(data).find(k=>norm(canonicalSubject(k))===norm(subject));
-    const items=key&&data[key]&&data[key][kelas]&&data[key][kelas][bab.value] ? data[key][kelas][bab.value] : [];
-    fill(sub,items,'Pilih Sub Bab / Topik');
-    syncPrompt();
+    const node=getClassNode(data,canonicalSubject(mapel.value),classKey());
+    const items=node&&bab.value&&Array.isArray(node[bab.value])?node[bab.value]:[];
+    fill(sub,items,'Pilih Sub Bab / Topik');syncPrompt();
   }
   function findPrompt(){
     const r=root();if(!r)return null;
@@ -115,43 +129,15 @@
   }
   function syncPrompt(){
     const p=findPrompt(),bab=document.getElementById('aiBabSelector'),sub=document.getElementById('aiSubbabSelector');if(!p)return;
-    const marker='[KONTEKS KURIKULUM ADM-SD]';
-    const old=String(p.value||'').split(marker)[0].trim();
-    if(bab?.value&&sub?.value){
-      p.value=old+'\n\n'+marker+'\nBab/Materi: '+bab.value+'\nSub Bab/Topik: '+sub.value+'\nGunakan materi ini sebagai fokus utama. Jangan melebar ke bab atau subbab lain.';
-      p.dispatchEvent(new Event('input',{bubbles:true}));
-    }else p.value=old;
+    const marker='[KONTEKS KURIKULUM ADM-SD]';const old=String(p.value||'').split(marker)[0].trim();
+    if(bab?.value&&sub?.value){p.value=old+'\n\n'+marker+'\nBab/Materi: '+bab.value+'\nSub Bab/Topik: '+sub.value+'\nGunakan materi ini sebagai fokus utama. Jangan melebar ke bab atau subbab lain.';p.dispatchEvent(new Event('input',{bubbles:true}))}else p.value=old;
   }
   function guardGenerate(){
-    const r=root();if(!r||r.dataset.curriculumGuard)return;
-    r.dataset.curriculumGuard='1';
-    r.addEventListener('click',e=>{
-      const b=e.target.closest('button');if(!b||!/generate\s+(dengan\s+ai|lkpd)/i.test(b.textContent||''))return;
-      const bab=document.getElementById('aiBabSelector'),sub=document.getElementById('aiSubbabSelector');
-      if(!bab?.value||!sub?.value){e.preventDefault();e.stopImmediatePropagation();alert('Pilih Bab/Materi dan Sub Bab/Topik terlebih dahulu agar AI tidak membuat materi secara global.');return}
-      syncPrompt();
-    },true);
+    const r=root();if(!r||r.dataset.curriculumGuard)return;r.dataset.curriculumGuard='1';
+    r.addEventListener('click',e=>{const b=e.target.closest('button');if(!b||!/generate\s+(dengan\s+ai|lkpd)/i.test(b.textContent||''))return;const bab=document.getElementById('aiBabSelector'),sub=document.getElementById('aiSubbabSelector');if(!bab?.value||!sub?.value){e.preventDefault();e.stopImmediatePropagation();alert('Pilih Bab/Materi dan Sub Bab/Topik terlebih dahulu agar AI tidak membuat materi secara global.');return}syncPrompt()},true);
   }
   let timer=0;
-  function start(){
-    if(timer)clearInterval(timer);
-    let tries=0;
-    timer=setInterval(()=>{
-      tries++;
-      const r=root();
-      if(r&&ensureUI()){clearInterval(timer);timer=0;guardGenerate();observe(r);return}
-      if(tries>40){clearInterval(timer);timer=0;}
-    },250);
-  }
-  function observe(r){
-    if(r.dataset.curriculumObserver)return;
-    r.dataset.curriculumObserver='1';
-    new MutationObserver(()=>{
-      if(!document.getElementById('aiBabSelector')){start();return}
-      const mapel=getMapel(),kelas=getKelas();
-      if(mapel&&kelas&&!mapel.dataset.curriculumHook){mapel.dataset.curriculumHook='1';mapel.addEventListener('change',refreshBab);kelas.dataset.curriculumHook='1';kelas.addEventListener('change',refreshBab)}
-    }).observe(r,{childList:true,subtree:true});
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(start,100));
-  else setTimeout(start,100);
+  function start(){if(timer)clearInterval(timer);let tries=0;timer=setInterval(()=>{tries++;const r=root();if(r&&ensureUI()){clearInterval(timer);timer=0;guardGenerate();observe(r);return}if(tries>80){clearInterval(timer);timer=0}},250)}
+  function observe(r){if(r.dataset.curriculumObserver)return;r.dataset.curriculumObserver='1';new MutationObserver(()=>{if(!document.getElementById('aiBabSelector')){start();return}const mapel=getMapel(),kelas=getKelas();if(mapel&&kelas&&!mapel.dataset.curriculumHook){mapel.dataset.curriculumHook='1';mapel.addEventListener('change',refreshBab);kelas.dataset.curriculumHook='1';kelas.addEventListener('change',refreshBab)}}).observe(r,{childList:true,subtree:true})}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(start,100));else setTimeout(start,100);
 })();

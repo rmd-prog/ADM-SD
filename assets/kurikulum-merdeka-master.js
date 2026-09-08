@@ -4,16 +4,8 @@
  */
 (function(){
   'use strict';
-  const phases={
-    A:{label:'Fase A',classes:['1','2']},
-    B:{label:'Fase B',classes:['3','4']},
-    C:{label:'Fase C',classes:['5','6']}
-  };
-  const subjects=[
-    'Bahasa Indonesia','Matematika','IPAS','Pendidikan Pancasila',
-    'Pendidikan Agama Islam dan Budi Pekerti','PJOK','Bahasa Inggris',
-    'Seni Rupa','Seni Musik','Seni Tari','Seni Teater','Koding dan Kecerdasan Artifisial'
-  ];
+  const phases={A:{label:'Fase A',classes:['1','2']},B:{label:'Fase B',classes:['3','4']},C:{label:'Fase C',classes:['5','6']}};
+  const subjects=['Bahasa Indonesia','Matematika','IPAS','Pendidikan Pancasila','Pendidikan Agama Islam dan Budi Pekerti','PJOK','Bahasa Inggris','Seni Rupa','Seni Musik','Seni Tari','Seni Teater','Koding dan Kecerdasan Artifisial'];
   const books=[
     {subject:'Matematika',class:'1',title:'Matematika untuk SD/MI Kelas I',isbn:'978-602-244-877-8',verified:true,tocVerified:false,officialCatalog:'https://buku.kemendikdasmen.go.id/katalog/matematika-untuk-sdmi-kelas-i'},
     {subject:'Matematika',class:'2',title:'Matematika untuk SD/MI Kelas II',isbn:'978-602-427-915-8',verified:true,tocVerified:false,officialCatalog:'https://buku.kemendikdasmen.go.id/katalog/matematika-untuk-sdmi-kelas-ii'},
@@ -28,9 +20,8 @@
     {subject:'Pendidikan Pancasila',class:'2',title:'Pendidikan Pancasila untuk SD/MI Kelas II',isbn:'978-623-194-630-0',verified:true,tocVerified:false,officialCatalog:'https://buku.kemendikdasmen.go.id/katalog/pendidikan-pancasila-untuk-sdmi-kelas-ii'},
     {subject:'Pendidikan Pancasila',class:'4',title:'Pendidikan Pancasila untuk SD/MI Kelas IV',isbn:'978-623-194-650-8',verified:true,tocVerified:false,officialCatalog:'https://buku.kemendikdasmen.go.id/katalog/pendidikan-pancasila-untuk-sdmi-kelas-iv'},
     {subject:'Pendidikan Pancasila',class:'6',title:'Pendidikan Pancasila untuk SD/MI Kelas VI',isbn:'978-623-194-652-2',verified:true,tocVerified:false,officialCatalog:'https://buku.kemendikdasmen.go.id/katalog/pendidikan-pancasila-untuk-sdmi-kelas-vi'},
-    {subject:'IPAS',class:'6',title:'Ilmu Pengetahuan Alam dan Sosial untuk SD/MI Kelas VI (Edisi Revisi)',isbn:'',verified:true,tocVerified:false,officialCatalog:'https://buku.kemendikdasmen.go.id/katalog/'},
     {subject:'Bahasa Inggris',class:'5',title:'English for Nusantara Kids untuk SD/MI Kelas V — Panduan Guru',isbn:'978-623-388-254-5',verified:true,tocVerified:false,teacherGuide:true,officialCatalog:'https://buku.kemendikdasmen.go.id/katalog/'},
-    {subject:'Koding dan Kecerdasan Artifisial',class:'5',title:'Koding dan Kecerdasan Artifisial untuk SD/MI Kelas V',isbn:'978-623-014-757-9',verified:true,tocVerified:false,officialCatalog:'https://buku.kemendikdasmen.go.id/katalog/'}
+    {subject:'Koding dan Kecerdasan Artifisial',class:'5',title:'Koding dan Kecerdasan Artifisial untuk SD/MI Kelas V',isbn:'978-623-014-757-9',verified:true,tocVerified:false}
   ];
-  window.ADM_KURIKULUM_MASTER={version:'1.0.0',curriculum:'Kurikulum Merdeka',jenjang:'SD/MI',phases,subjects,books,source:'SIBI — Sistem Informasi Perbukuan Indonesia'};
+  window.ADM_KURIKULUM_MASTER={version:'1.0.1',curriculum:'Kurikulum Merdeka',jenjang:'SD/MI',phases,subjects,books,source:'SIBI — Sistem Informasi Perbukuan Indonesia'};
 })();

@@ -1,0 +1,54 @@
+name: Fix Login Viewport
+on:
+  push:
+    paths:
+      - '.github/fix-login-viewport.trigger'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch login CSS safely
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          marker='/* ===== V10 LOGIN VIEWPORT FINAL ===== */'
+          css='''/* ===== V10 LOGIN VIEWPORT FINAL ===== */
+          html:has(.login:not([style*="display: none"])){height:100%;overflow:hidden!important}
+          body:has(.login:not([style*="display: none"])){height:100%;min-height:100%;overflow:hidden!important;overscroll-behavior:none!important;position:relative!important}
+          .login{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;min-height:100dvh!important;max-height:100dvh!important;overflow:hidden!important;padding:12px!important;z-index:99999!important}
+          .login-card{width:min(430px,calc(100vw - 24px))!important;max-height:calc(100dvh - 24px)!important;overflow-y:auto!important;overflow-x:hidden!important;-webkit-overflow-scrolling:touch!important}
+          @media(max-width:520px){.login{padding:8px!important}.login-card{width:calc(100vw - 16px)!important;max-height:calc(100dvh - 16px)!important;padding:16px!important}.login-card input{min-height:40px!important}.login-card .wide{min-height:41px!important}}
+          @media(max-height:620px) and (orientation:landscape){.login{align-items:start!important}.login-card{margin:8px auto!important;max-height:calc(100dvh - 16px)!important;padding:12px!important}.login .logo{width:58px!important;height:58px!important}.login-card label{margin:7px 0 3px!important}.login-card .wide{margin-top:10px!important}}
+          '''
+          if marker not in s:
+              s += '\n<style>\n'+css+'\n</style>\n'
+          else:
+              raise SystemExit('already patched')
+          p.write_text(s,encoding='utf-8')
+          print('login viewport patch applied')
+          PY
+      - name: Validate HTML script blocks
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('index.html').read_text(encoding='utf-8')
+          blocks=re.findall(r'<script[^>]*>(.*?)</script>',s,re.S|re.I)
+          Path('/tmp/scripts.js').write_text('\n'.join(blocks),encoding='utf-8')
+          print('script blocks:',len(blocks))
+          PY
+          node --check /tmp/scripts.js
+      - name: Commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git diff --cached --quiet && echo 'No changes' && exit 0
+          git commit -m 'fix: stabilize login viewport without breaking app'
+          git push

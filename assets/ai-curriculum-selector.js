@@ -1,4 +1,4 @@
-/* ADM-SD — AI Generate hierarchical curriculum selector V5 */
+/* ADM-SD — AI Generate hierarchical curriculum selector V6 */
 (function(){
   'use strict';
   const norm=s=>String(s??'').trim().toLowerCase().replace(/\s+/g,' ');
@@ -9,17 +9,11 @@
   const getJenis=()=>document.getElementById('aiJenis')||findSelectByLabel(/kategori\s*&?\s*jenis|kategori|jenis/i);
   const isRPM=()=>{const x=getJenis();const t=norm(x?.value||x?.selectedOptions?.[0]?.textContent||'');return t.includes('rpm')||t.includes('rencana pembelajaran')};
   let curriculum=null,loading=null,verifiedLoading=null;
-  function loadVerifiedBooks(){
-    if(window.ADM_VERIFIED_BOOKS)return Promise.resolve(window.ADM_VERIFIED_BOOKS);
-    if(verifiedLoading)return verifiedLoading;
-    verifiedLoading=new Promise(resolve=>{
-      const s=document.createElement('script');
-      s.src=new URL('assets/verified-book-sources.js',location.href).href+'?v=1';
-      s.onload=()=>resolve(window.ADM_VERIFIED_BOOKS||null);
-      s.onerror=()=>resolve(null);
-      document.head.appendChild(s);
-    });
-    return verifiedLoading;
+  function loadScript(src){return new Promise(resolve=>{const s=document.createElement('script');s.src=new URL(src,location.href).href+'?v=6';s.onload=()=>resolve(true);s.onerror=()=>resolve(false);document.head.appendChild(s)})}
+  async function loadVerifiedBooks(){
+    if(!window.ADM_VERIFIED_BOOKS)await loadScript('assets/verified-book-sources.js');
+    await loadScript('assets/verified-book-sources-extra.js');
+    return window.ADM_VERIFIED_BOOKS||null;
   }
   async function loadCurriculum(){
     if(curriculum)return curriculum;
@@ -31,14 +25,15 @@
   function canonicalSubject(v){const s=norm(v);if(['agama','pai','pendidikan agama','pendidikan agama dan budi pekerti','pendidikan agama islam dan budi pekerti'].includes(s))return 'Pendidikan Agama Islam dan Budi Pekerti';if(['pjok','pendidikan jasmani','pendidikan jasmani olahraga dan kesehatan'].includes(s))return 'PJOK';if(['inggris','bahasa inggris','english'].includes(s))return 'Bahasa Inggris';return String(v??'').trim()}
   function applyRoleSubject(){const mapel=getMapel(),own=currentRoleSubject();if(!mapel||!own)return;const opt=[...mapel.options].find(o=>norm(canonicalSubject(o.value))===norm(canonicalSubject(own))||norm(canonicalSubject(o.textContent))===norm(canonicalSubject(own)));if(opt){mapel.value=opt.value;[...mapel.options].forEach(o=>{o.hidden=o!==opt;o.disabled=o!==opt})}}
   function fill(sel,items,placeholder){if(!sel)return;const arr=Array.isArray(items)?items:[];sel.disabled=false;sel.innerHTML='';const first=document.createElement('option');first.value='';first.textContent=placeholder;sel.appendChild(first);for(const x of arr){const o=document.createElement('option');o.value=String(x);o.textContent=String(x);sel.appendChild(o)}sel.value='';sel.disabled=arr.length===0;sel.title=arr.length?'':'Data kurikulum belum tersedia untuk pilihan ini'}
-  function verifiedNode(subject,kelas){const books=window.ADM_VERIFIED_BOOKS?.books;if(!Array.isArray(books))return null;const book=books.find(b=>b?.verified&&b?.tocVerified&&norm(canonicalSubject(b.subject))===norm(subject)&&String(b.class)===String(kelas));if(!book||!Array.isArray(book.units)||!book.units.length)return null;const node={};for(const unit of book.units)node[unit]=[];return node}
+  function verifiedNode(subject,kelas){const books=window.ADM_VERIFIED_BOOKS?.books;if(!Array.isArray(books))return null;const book=books.find(b=>b?.verified&&b?.tocVerified&&norm(canonicalSubject(b.subject))===norm(subject)&&String(b.class)===String(kelas)&&Array.isArray(b.units)&&b.units.length);if(!book)return null;const node={};for(const unit of book.units)node[unit]=[];return node}
   function getClassNode(data,subject,kelas){const key=Object.keys(data||{}).find(k=>norm(canonicalSubject(k))===norm(subject));if(key){const node=data[key];if(node&&typeof node==='object'){const found=node[kelas]||node[String(Number(kelas))]||node[roman(kelas)];if(found)return found}}return verifiedNode(subject,kelas)}
   function roman(k){return({1:'I',2:'II',3:'III',4:'IV',5:'V',6:'VI'})[String(k)]||''}
+  function findVerifiedBook(subject,kelas){const books=window.ADM_VERIFIED_BOOKS?.books;if(!Array.isArray(books))return null;return books.find(b=>b?.verified&&norm(canonicalSubject(b.subject))===norm(subject)&&String(b.class)===String(kelas))||null}
   function ensureUI(){const r=root();if(!r)return false;const mapel=getMapel();if(!mapel)return false;let bab=document.getElementById('aiBabSelector'),sub=document.getElementById('aiSubbabSelector');if(!bab||!sub){const box=document.createElement('div');box.id='aiCurriculumBox';box.style.cssText='grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;position:relative;z-index:5';box.innerHTML='<div><label for="aiBabSelector">📚 Bab / Materi</label><select id="aiBabSelector"><option value="">Pilih Bab / Materi</option></select></div><div><label for="aiSubbabSelector">📖 Sub Bab / Topik</label><select id="aiSubbabSelector"><option value="">Pilih Sub Bab / Topik</option></select></div>';(mapel.closest('.doc-controls')||mapel.closest('.grid')||mapel.parentElement)?.appendChild(box);bab=box.querySelector('#aiBabSelector');sub=box.querySelector('#aiSubbabSelector');mapel.addEventListener('change',refreshBab);getKelas()?.addEventListener('change',refreshBab);bab.addEventListener('change',refreshSub);sub.addEventListener('change',syncPrompt)}loadCurriculum().then(()=>{applyRoleSubject();refreshBab()});return true}
   async function refreshBab(){const data=await loadCurriculum(),mapel=getMapel(),bab=document.getElementById('aiBabSelector'),sub=document.getElementById('aiSubbabSelector');if(!mapel||!bab||!sub)return;applyRoleSubject();const node=getClassNode(data,canonicalSubject(mapel.value),classKey());fill(bab,node&&typeof node==='object'?Object.keys(node):[],'Pilih Bab / Materi');fill(sub,[],'Pilih Sub Bab / Topik');syncPrompt()}
   function refreshSub(){const data=curriculum||{},mapel=getMapel(),bab=document.getElementById('aiBabSelector'),sub=document.getElementById('aiSubbabSelector');if(!mapel||!bab||!sub)return;const node=getClassNode(data,canonicalSubject(mapel.value),classKey()),items=node&&bab.value&&Array.isArray(node[bab.value])?node[bab.value]:[];fill(sub,items,'Pilih Sub Bab / Topik');syncPrompt()}
   function findPrompt(){const r=root();if(!r)return null;return document.getElementById('aiPrompt')||r.querySelector('textarea')||[...r.querySelectorAll('input')].find(x=>x.type==='text')}
-  function syncPrompt(){const p=findPrompt(),bab=document.getElementById('aiBabSelector'),sub=document.getElementById('aiSubbabSelector');if(!p)return;const marker='[KONTEKS KURIKULUM ADM-SD]',old=String(p.value||'').split(marker)[0].trim();p.value=bab?.value&&sub?.value?old+'\n\n'+marker+'\nBab/Materi: '+bab.value+'\nSub Bab/Topik: '+sub.value+'\nGunakan materi ini sebagai fokus utama. Jangan melebar ke bab atau subbab lain.':old;p.dispatchEvent(new Event('input',{bubbles:true}))}
+  function syncPrompt(){const p=findPrompt(),bab=document.getElementById('aiBabSelector'),sub=document.getElementById('aiSubbabSelector');if(!p)return;const marker='[KONTEKS KURIKULUM ADM-SD]',old=String(p.value||'').split(marker)[0].trim();const book=findVerifiedBook(getMapel()?.value||'',classKey());const source=book?'\nSumber buku resmi: '+book.title+' | ISBN '+(book.isbn||'-')+(book.officialCatalog?' | '+book.officialCatalog:''):'';p.value=bab?.value&&sub?.value?old+'\n\n'+marker+'\nBab/Materi: '+bab.value+'\nSub Bab/Topik: '+sub.value+source+'\nGunakan materi ini sebagai fokus utama. Jangan melebar ke bab atau subbab lain.':old;p.dispatchEvent(new Event('input',{bubbles:true}))}
   function guardGenerate(){const r=root();if(!r||r.dataset.curriculumGuard)return;r.dataset.curriculumGuard='1';r.addEventListener('click',e=>{const b=e.target.closest('button');if(!b||!/generate\s+(dengan\s+ai|lkpd)/i.test(b.textContent||''))return;if(isRPM())return;const bab=document.getElementById('aiBabSelector'),sub=document.getElementById('aiSubbabSelector');if(!bab?.value||!sub?.value){e.preventDefault();e.stopImmediatePropagation();alert('Pilih Bab/Materi dan Sub Bab/Topik terlebih dahulu agar AI tidak membuat materi secara global.');return}syncPrompt()},true)}
   let timer=0;function start(){if(timer)clearInterval(timer);let tries=0;timer=setInterval(()=>{tries++;const r=root();if(r&&ensureUI()){clearInterval(timer);timer=0;guardGenerate();observe(r);return}if(tries>80){clearInterval(timer);timer=0}},250)}
   function observe(r){if(r.dataset.curriculumObserver)return;r.dataset.curriculumObserver='1';new MutationObserver(()=>{if(!document.getElementById('aiBabSelector')){start();return}const mapel=getMapel(),kelas=getKelas();if(mapel&&kelas&&!mapel.dataset.curriculumHook){mapel.dataset.curriculumHook='1';mapel.addEventListener('change',refreshBab);kelas.dataset.curriculumHook='1';kelas.addEventListener('change',refreshBab)}}).observe(r,{childList:true,subtree:true})}

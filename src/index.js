@@ -176,8 +176,12 @@ export default {
         const field = c.has("rombel") ? "COALESCE(NULLIF(TRIM(rombel), ''), TRIM(kelas))" : "TRIM(kelas)";
         let result;
         if (requested) {
-          const rw = rombelWhere(field, requested);
-          result = await env.DB.prepare(`SELECT * FROM siswa WHERE ${rw.sql} ORDER BY nama`).bind(...rw.binds).all();
+          if (isGuruMapelAll(user) && requested === "ALL") {
+            result = await env.DB.prepare(`SELECT * FROM siswa ORDER BY nama`).all();
+          } else {
+            const rw = rombelWhere(field, requested);
+            result = await env.DB.prepare(`SELECT * FROM siswa WHERE ${rw.sql} ORDER BY nama`).bind(...rw.binds).all();
+          }
         } else if (user.role === "admin") {
           result = await env.DB.prepare(`SELECT * FROM siswa ORDER BY nama`).all();
         } else {

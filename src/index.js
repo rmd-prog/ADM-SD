@@ -268,6 +268,53 @@ export default {
         });
       }
 
+      // PERANGKAT PEMBELAJARAN - GET/POST (D1 persistence)
+      const DOCUMENT_TYPES = ["cp","tp","atp","prota","prosem"];
+      if (url.pathname === "/api/perangkat" && request.method === "GET") {
+        const requested = cleanRombel(url.searchParams.get("rombel") || url.searchParams.get("kelas") || "");
+        const own = cleanRombel(user.rombel || user.kelas || "");
+        if (user.role !== "admin" && requested && requested !== own) return json({ok:false,message:"Akses rombel ditolak."},403);
+        const c = await columns(env,"perangkat");
+        const field = c.has("rombel") ? "COALESCE(NULLIF(TRIM(rombel), ''), TRIM(kelas))" : "TRIM(kelas)";
+        let r;
+        if (requested || user.role !== "admin") { const rw=rombelWhere(field,requested||own); r=await env.DB.prepare(`SELECT * FROM perangkat WHERE ${rw.sql} ORDER BY id DESC`).bind(...rw.binds).all(); }
+        else r=await env.DB.prepare("SELECT * FROM perangkat ORDER BY id DESC").all();
+        return json({ok:true,data:r.results});
+      }
+      if (url.pathname === "/api/perangkat" && request.method === "POST") {
+        const body=await request.json(); const jenis=String(body.jenis||"").toLowerCase().trim();
+        if(!DOCUMENT_TYPES.includes(jenis)) return json({ok:false,message:"Jenis perangkat tidak valid."},400);
+        const kelas=cleanRombel(body.rombel||body.kelas||user.rombel||user.kelas||""); const own=cleanRombel(user.rombel||user.kelas||"");
+        if(!kelas) return json({ok:false,message:"Rombel wajib diisi."},400);
+        if(user.role!=="admin"&&kelas!==own) return json({ok:false,message:"Akses rombel ditolak."},403);
+        const mapel=String(body.mapel||"").trim(); const judul=String(body.judul||jenis.toUpperCase()).trim();
+        const isi=String(body.isi??body.teks??body.text??body.konten??body.content??""); if(!isi.trim()) return json({ok:false,message:"Isi perangkat kosong."},400);
+        const c=await columns(env,"perangkat"); const cols=[]; const vals=[]; const add=(n,v)=>{if(c.has(n)){cols.push(n);vals.push(v)}};
+        add("jenis",jenis);add("mapel",mapel);add("kelas",kelas);add("rombel",kelas);add("judul",judul);add("isi",isi);add("teks",isi);add("content",isi);add("konten",isi);add("tahun",String(body.tahun||"2026/2027"));
+        if(!cols.length)return json({ok:false,message:"Struktur tabel perangkat tidak dikenali."},500);
+        const r=await env.DB.prepare(`INSERT INTO perangkat (${cols.join(",")}) VALUES (${cols.map(()=>"?").join(",")}) RETURNING *`).bind(...vals).first();
+        return json({ok:true,data:r});
+      }
+
+      // RPM - GET/POST (D1 persistence)
+      if (url.pathname === "/api/rpm" && request.method === "GET") {
+        const requested=cleanRombel(url.searchParams.get("rombel")||url.searchParams.get("kelas")||""); const own=cleanRombel(user.rombel||user.kelas||"");
+        if(user.role!=="admin"&&requested&&requested!==own)return json({ok:false,message:"Akses rombel ditolak."},403);
+        const c=await columns(env,"rpm"); const field=c.has("rombel")?"COALESCE(NULLIF(TRIM(rombel), ''), TRIM(kelas))":"TRIM(kelas)"; let r;
+        if(requested||user.role!=="admin"){const rw=rombelWhere(field,requested||own);r=await env.DB.prepare(`SELECT * FROM rpm WHERE ${rw.sql} ORDER BY id DESC`).bind(...rw.binds).all();}
+        else r=await env.DB.prepare("SELECT * FROM rpm ORDER BY id DESC").all();
+        return json({ok:true,data:r.results});
+      }
+      if (url.pathname === "/api/rpm" && request.method === "POST") {
+        const body=await request.json(); const kelas=cleanRombel(body.rombel||body.kelas||user.rombel||user.kelas||""); const own=cleanRombel(user.rombel||user.kelas||"");
+        if(!kelas)return json({ok:false,message:"Rombel wajib diisi."},400); if(user.role!=="admin"&&kelas!==own)return json({ok:false,message:"Akses rombel ditolak."},403);
+        const mapel=String(body.mapel||"").trim(); const bab=String(body.bab||body.unit||body.materi||"").trim(); const judul=String(body.judul||("RPM • "+mapel)).trim(); const isi=String(body.isi??body.teks??body.text??body.konten??body.content??"");
+        if(!isi.trim())return json({ok:false,message:"Isi RPM kosong."},400); const c=await columns(env,"rpm"); const cols=[];const vals=[];const add=(n,v)=>{if(c.has(n)){cols.push(n);vals.push(v)}};
+        add("mapel",mapel);add("kelas",kelas);add("rombel",kelas);add("bab",bab);add("unit",bab);add("judul",judul);add("isi",isi);add("teks",isi);add("content",isi);add("konten",isi);add("tahun",String(body.tahun||"2026/2027"));add("semester",Number(body.semester||1));
+        if(!cols.length)return json({ok:false,message:"Struktur tabel RPM tidak dikenali."},500); const r=await env.DB.prepare(`INSERT INTO rpm (${cols.join(",")}) VALUES (${cols.map(()=>"?").join(",")}) RETURNING *`).bind(...vals).first();
+        return json({ok:true,data:r});
+      }
+
       // AI DIAGNOSTIC — tidak pernah mengembalikan isi secret
       if (url.pathname === "/api/ai/status" && request.method === "GET") {
         const hasKey = typeof env.OPENAI_API_KEY === "string" && env.OPENAI_API_KEY.trim().length > 0;

@@ -30,8 +30,10 @@ if 'url.pathname==="/api/absensi"' not in s:
     s=s.replace(marker,block+marker,1)
     p.write_text(s,encoding='utf-8')
 
-h=Path('index.html');x=h.read_text(encoding='utf-8');tag='<script src="assets/absensi.js"></script>'
-if tag not in x:
-    pos=x.rfind('</body>')
-    if pos<0: raise SystemExit('body marker missing')
-    h.write_text(x[:pos]+tag+'\n'+x[pos:],encoding='utf-8')
+h=Path('index.html');x=h.read_text(encoding='utf-8')
+for tag in ('<script src="assets/absensi.js"></script>','<script src="guru-mapel-ui.js"></script>'):
+    if tag not in x:
+        pos=x.rfind('</body>')
+        if pos<0: raise SystemExit('body marker missing')
+        x=x[:pos]+tag+'\n'+x[pos:]
+h.write_text(x,encoding='utf-8')

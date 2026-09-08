@@ -166,6 +166,34 @@ export default {
       const user = getUser(request);
       if (!user) return json({ ok: false, message: "Belum login." }, 401);
 
+      // DATA GURU MAPEL - UPDATE
+      if (url.pathname.startsWith("/api/guru/") && request.method === "PUT") {
+        if (user.role !== "admin") return json({ ok:false, message:"Hanya administrator yang dapat mengubah data guru." },403);
+        const gid = url.pathname.split("/").pop();
+        if (!/^\d+$/.test(gid)) return json({ ok:false, message:"ID guru tidak valid." },400);
+        const existing = await env.DB.prepare("SELECT * FROM users WHERE id=?").bind(Number(gid)).first();
+        if (!existing) return json({ ok:false, message:"Data guru tidak ditemukan." },404);
+        if (existing.role !== "guru_mapel") return json({ ok:false, message:"Hanya akun Guru Mapel yang dapat diedit dari menu ini." },400);
+        const body = await request.json();
+        const nama = String(body.nama ?? existing.nama ?? "").trim();
+        const username = String(body.username ?? existing.username ?? "").trim();
+        const password = String(body.password ?? "");
+        const mapel = normalizeMapel(body.mapel ?? existing.mapel ?? "");
+        const rombel = cleanRombel(body.rombel ?? existing.rombel ?? existing.kelas ?? "ALL") || "ALL";
+        if (!nama || !username || !mapel) return json({ ok:false, message:"Nama, username, dan mapel wajib diisi." },400);
+        if (!["Pendidikan Agama dan Budi Pekerti","PJOK","Bahasa Inggris"].includes(mapel)) return json({ ok:false, message:"Mata pelajaran Guru Mapel tidak valid." },400);
+        const dup = await env.DB.prepare("SELECT id FROM users WHERE username=? AND id<>?").bind(username,Number(gid)).first();
+        if (dup) return json({ ok:false, message:"Username sudah digunakan guru lain." },409);
+        const c = await columns(env,"users");
+        const sets=["nama=?","username=?","mapel=?","role=?"]; const vals=[nama,username,mapel,"guru_mapel"];
+        if(c.has("rombel")){sets.push("rombel=?");vals.push(rombel);} else {sets.push("kelas=?");vals.push(rombel);}
+        if(password) { sets.push("password=?"); vals.push(password); }
+        vals.push(Number(gid));
+        await env.DB.prepare(`UPDATE users SET ${sets.join(",")} WHERE id=?`).bind(...vals).run();
+        const r = await env.DB.prepare("SELECT id,username,nama,role,kelas,rombel,mapel FROM users WHERE id=?").bind(Number(gid)).first();
+        return json({ ok:true, data:r, message:"Data Guru Mapel berhasil diperbarui." });
+      }
+
       // DATA SISWA - GET
       if (url.pathname === "/api/siswa" && request.method === "GET") {
         const { requested, own } = classFilter(url.searchParams.get("rombel") || url.searchParams.get("kelas"), user);

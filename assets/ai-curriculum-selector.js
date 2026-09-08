@@ -1,4 +1,4 @@
-/* ADM-SD — AI Generate hierarchical curriculum selector V4 */
+/* ADM-SD — AI Generate hierarchical curriculum selector V5 */
 (function(){
   'use strict';
   const norm=s=>String(s??'').trim().toLowerCase().replace(/\s+/g,' ');
@@ -8,18 +8,31 @@
   const getKelas=()=>document.getElementById('aiKelas')||findSelectByLabel(/kelas\s*\/\s*rombel|kelas|rombel/i);
   const getJenis=()=>document.getElementById('aiJenis')||findSelectByLabel(/kategori\s*&?\s*jenis|kategori|jenis/i);
   const isRPM=()=>{const x=getJenis();const t=norm(x?.value||x?.selectedOptions?.[0]?.textContent||'');return t.includes('rpm')||t.includes('rencana pembelajaran')};
-  let curriculum=null,loading=null;
+  let curriculum=null,loading=null,verifiedLoading=null;
+  function loadVerifiedBooks(){
+    if(window.ADM_VERIFIED_BOOKS)return Promise.resolve(window.ADM_VERIFIED_BOOKS);
+    if(verifiedLoading)return verifiedLoading;
+    verifiedLoading=new Promise(resolve=>{
+      const s=document.createElement('script');
+      s.src=new URL('assets/verified-book-sources.js',location.href).href+'?v=1';
+      s.onload=()=>resolve(window.ADM_VERIFIED_BOOKS||null);
+      s.onerror=()=>resolve(null);
+      document.head.appendChild(s);
+    });
+    return verifiedLoading;
+  }
   async function loadCurriculum(){
     if(curriculum)return curriculum;
-    if(window.ADM_CURRICULUM&&typeof window.ADM_CURRICULUM==='object'){curriculum=window.ADM_CURRICULUM;return curriculum}
+    if(window.ADM_CURRICULUM&&typeof window.ADM_CURRICULUM==='object'){curriculum=window.ADM_CURRICULUM;await loadVerifiedBooks();return curriculum}
     if(loading)return loading;
-    loading=(async()=>{try{const res=await fetch(new URL('lkpd.html',location.href).href,{cache:'no-store'});if(!res.ok)throw Error('LKPD HTTP '+res.status);const text=await res.text(),start=text.indexOf('const curriculum=');if(start<0)throw Error('const curriculum tidak ditemukan');const brace=text.indexOf('{',start);let depth=0,end=-1,inStr=false,quote='',esc=false;for(let i=brace;i<text.length;i++){const c=text[i];if(inStr){if(esc)esc=false;else if(c==='\\')esc=true;else if(c===quote)inStr=false;continue}if(c==='"'||c==="'"||c==='`'){inStr=true;quote=c;continue}if(c==='{')depth++;else if(c==='}'&&--depth===0){end=i+1;break}}if(end<0)throw Error('akhir curriculum tidak ditemukan');curriculum=Function('return ('+text.slice(brace,end)+')')()}catch(e){console.warn('[AI curriculum]',e);curriculum={}}finally{loading=null}return curriculum})();return loading}
+    loading=(async()=>{try{const res=await fetch(new URL('lkpd.html',location.href).href,{cache:'no-store'});if(!res.ok)throw Error('LKPD HTTP '+res.status);const text=await res.text(),start=text.indexOf('const curriculum=');if(start<0)throw Error('const curriculum tidak ditemukan');const brace=text.indexOf('{',start);let depth=0,end=-1,inStr=false,quote='',esc=false;for(let i=brace;i<text.length;i++){const c=text[i];if(inStr){if(esc)esc=false;else if(c==='\\')esc=true;else if(c===quote)inStr=false;continue}if(c==='"'||c==="'"||c==='`'){inStr=true;quote=c;continue}if(c==='{')depth++;else if(c==='}'&&--depth===0){end=i+1;break}}if(end<0)throw Error('akhir curriculum tidak ditemukan');curriculum=Function('return ('+text.slice(brace,end)+')')()}catch(e){console.warn('[AI curriculum]',e);curriculum={}}finally{await loadVerifiedBooks();loading=null}return curriculum})();return loading}
   function classKey(){const x=getKelas(),raw=String(x?.value||x?.selectedOptions?.[0]?.textContent||'').trim().toUpperCase().replace(/\s+/g,'');const map={'1':'1','1A':'1','1B':'1','I':'1','IA':'1','IB':'1','2':'2','2A':'2','2B':'2','II':'2','IIA':'2','IIB':'2','3':'3','3A':'3','3B':'3','III':'3','IIIA':'3','IIIB':'3','4':'4','4A':'4','4B':'4','IV':'4','IVA':'4','IVB':'4','5':'5','V':'5','6':'6','VI':'6'};return map[raw]||((raw.match(/[1-6]/)||[])[0]||'')}
   function currentRoleSubject(){try{const x=JSON.parse(localStorage.getItem('siLogin')||'null'),u=x?.user||x;return norm(u?.role)==='guru_mapel'?String(u?.mapel||''):''}catch{return ''}}
-  function canonicalSubject(v){const s=norm(v);if(['agama','pai','pendidikan agama','pendidikan agama dan budi pekerti'].includes(s))return 'Pendidikan Agama dan Budi Pekerti';if(['pjok','pendidikan jasmani','pendidikan jasmani olahraga dan kesehatan'].includes(s))return 'PJOK';if(['inggris','bahasa inggris','english'].includes(s))return 'Bahasa Inggris';return String(v??'').trim()}
+  function canonicalSubject(v){const s=norm(v);if(['agama','pai','pendidikan agama','pendidikan agama dan budi pekerti','pendidikan agama islam dan budi pekerti'].includes(s))return 'Pendidikan Agama Islam dan Budi Pekerti';if(['pjok','pendidikan jasmani','pendidikan jasmani olahraga dan kesehatan'].includes(s))return 'PJOK';if(['inggris','bahasa inggris','english'].includes(s))return 'Bahasa Inggris';return String(v??'').trim()}
   function applyRoleSubject(){const mapel=getMapel(),own=currentRoleSubject();if(!mapel||!own)return;const opt=[...mapel.options].find(o=>norm(canonicalSubject(o.value))===norm(canonicalSubject(own))||norm(canonicalSubject(o.textContent))===norm(canonicalSubject(own)));if(opt){mapel.value=opt.value;[...mapel.options].forEach(o=>{o.hidden=o!==opt;o.disabled=o!==opt})}}
   function fill(sel,items,placeholder){if(!sel)return;const arr=Array.isArray(items)?items:[];sel.disabled=false;sel.innerHTML='';const first=document.createElement('option');first.value='';first.textContent=placeholder;sel.appendChild(first);for(const x of arr){const o=document.createElement('option');o.value=String(x);o.textContent=String(x);sel.appendChild(o)}sel.value='';sel.disabled=arr.length===0;sel.title=arr.length?'':'Data kurikulum belum tersedia untuk pilihan ini'}
-  function getClassNode(data,subject,kelas){const key=Object.keys(data||{}).find(k=>norm(canonicalSubject(k))===norm(subject));if(!key)return null;const node=data[key];return node&&typeof node==='object'?(node[kelas]||node[String(Number(kelas))]||node[roman(kelas)]||null):null}
+  function verifiedNode(subject,kelas){const books=window.ADM_VERIFIED_BOOKS?.books;if(!Array.isArray(books))return null;const book=books.find(b=>b?.verified&&b?.tocVerified&&norm(canonicalSubject(b.subject))===norm(subject)&&String(b.class)===String(kelas));if(!book||!Array.isArray(book.units)||!book.units.length)return null;const node={};for(const unit of book.units)node[unit]=[];return node}
+  function getClassNode(data,subject,kelas){const key=Object.keys(data||{}).find(k=>norm(canonicalSubject(k))===norm(subject));if(key){const node=data[key];if(node&&typeof node==='object'){const found=node[kelas]||node[String(Number(kelas))]||node[roman(kelas)];if(found)return found}}return verifiedNode(subject,kelas)}
   function roman(k){return({1:'I',2:'II',3:'III',4:'IV',5:'V',6:'VI'})[String(k)]||''}
   function ensureUI(){const r=root();if(!r)return false;const mapel=getMapel();if(!mapel)return false;let bab=document.getElementById('aiBabSelector'),sub=document.getElementById('aiSubbabSelector');if(!bab||!sub){const box=document.createElement('div');box.id='aiCurriculumBox';box.style.cssText='grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;position:relative;z-index:5';box.innerHTML='<div><label for="aiBabSelector">📚 Bab / Materi</label><select id="aiBabSelector"><option value="">Pilih Bab / Materi</option></select></div><div><label for="aiSubbabSelector">📖 Sub Bab / Topik</label><select id="aiSubbabSelector"><option value="">Pilih Sub Bab / Topik</option></select></div>';(mapel.closest('.doc-controls')||mapel.closest('.grid')||mapel.parentElement)?.appendChild(box);bab=box.querySelector('#aiBabSelector');sub=box.querySelector('#aiSubbabSelector');mapel.addEventListener('change',refreshBab);getKelas()?.addEventListener('change',refreshBab);bab.addEventListener('change',refreshSub);sub.addEventListener('change',syncPrompt)}loadCurriculum().then(()=>{applyRoleSubject();refreshBab()});return true}
   async function refreshBab(){const data=await loadCurriculum(),mapel=getMapel(),bab=document.getElementById('aiBabSelector'),sub=document.getElementById('aiSubbabSelector');if(!mapel||!bab||!sub)return;applyRoleSubject();const node=getClassNode(data,canonicalSubject(mapel.value),classKey());fill(bab,node&&typeof node==='object'?Object.keys(node):[],'Pilih Bab / Materi');fill(sub,[],'Pilih Sub Bab / Topik');syncPrompt()}

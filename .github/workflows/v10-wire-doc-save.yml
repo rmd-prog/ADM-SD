@@ -1,0 +1,54 @@
+name: V10 Wire Document Save
+on:
+  push:
+    paths:
+      - '.github/v10-wire-doc-save.trigger'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wire document save buttons to D1
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html'); s=p.read_text(encoding='utf-8')
+          old="""[['cp','cpText','cpKelas','cpMapel'],['tp','tpText','tpKelas','tpMapel'],['atp','atpText','atpKelas','atpMapel'],['prota','protaText','protaKelas','protaMapel'],['prosem','prosemText','prosemKelas','prosemMapel']].forEach(([k,el,ck,cm])=>id('save'+k[0].toUpperCase()+k.slice(1)).onclick=()=>{let kelas=normalizeRombel(id(ck).value);if(isGuruKelas()&&kelas!==allowedClass())return alert('Akses ditolak: kelas akun guru tidak sesuai.');db.texts[docKey(k,kelas,id(cm).value)]=id(el).value;save();alert(k.toUpperCase()+' tersimpan.')})
+ id('saveRpm').onclick=()=>{if(isGuruKelas()&&normalizeRombel(id('rpmKelas').value)!==allowedClass())return alert('Akses ditolak: kelas akun guru tidak sesuai.');let key=docKey('rpm',id('rpmKelas').value,id('rpmMapel').value)+'|'+id('rpmBab').value;db.rpm[key]=id('rpmText').value;save();alert('RPM tersimpan.')}"""
+          new="""async function persistDeviceDoc(type,kelas,mapel,text){
+   const token=localStorage.getItem('siAuthToken')||'';
+   if(!token) throw Error('Sesi login tidak ditemukan. Silakan login ulang.');
+   const body={jenis:type,mapel,kelas,rombel:kelas,judul:type.toUpperCase()+' • '+mapel,isi:text,konten:text,tahun:'2026/2027'};
+   const res=await fetch(API_BASE+'/perangkat',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json','Authorization':'Bearer '+token},body:JSON.stringify(body)});
+   let out={};try{out=await res.json()}catch(e){}
+   if(!res.ok||out.ok===false)throw Error(out.message||'Gagal menyimpan perangkat ke D1.');
+   return out.data;
+ }
+ [['cp','cpText','cpKelas','cpMapel'],['tp','tpText','tpKelas','tpMapel'],['atp','atpText','atpKelas','atpMapel'],['prota','protaText','protaKelas','protaMapel'],['prosem','prosemText','prosemKelas','prosemMapel']].forEach(([k,el,ck,cm])=>id('save'+k[0].toUpperCase()+k.slice(1)).onclick=async()=>{let kelas=normalizeRombel(id(ck).value);if(isGuruKelas()&&kelas!==allowedClass())return alert('Akses ditolak: kelas akun guru tidak sesuai.');const text=id(el).value;if(!text.trim())return alert('Isi dokumen masih kosong.');const btn=id('save'+k[0].toUpperCase()+k.slice(1));const old=btn.textContent;btn.disabled=true;btn.textContent='⏳ Menyimpan...';try{db.texts[docKey(k,kelas,id(cm).value)]=text;save();await persistDeviceDoc(k,kelas,id(cm).value,text);alert(k.toUpperCase()+' berhasil tersimpan ke D1.')}catch(e){alert(e.message||'Gagal menyimpan '+k.toUpperCase()+'.')}finally{btn.disabled=false;btn.textContent=old}})
+ id('saveRpm').onclick=async()=>{if(isGuruKelas()&&normalizeRombel(id('rpmKelas').value)!==allowedClass())return alert('Akses ditolak: kelas akun guru tidak sesuai.');let kelas=normalizeRombel(id('rpmKelas').value),mapel=id('rpmMapel').value,babIndex=Number(id('rpmBab').value||0),units=babList(mapel,kelas),bab=units[babIndex]||('Unit Pembelajaran '+(babIndex+1)),text=id('rpmText').value;if(!text.trim())return alert('Isi RPM masih kosong.');const btn=id('saveRpm'),old=btn.textContent;btn.disabled=true;btn.textContent='⏳ Menyimpan...';try{const key=docKey('rpm',kelas,mapel)+'|'+babIndex;db.rpm[key]=text;save();const token=localStorage.getItem('siAuthToken')||'';const res=await fetch(API_BASE+'/rpm',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({mapel,kelas,rombel:kelas,judul:'RPM • '+mapel+' • '+bab,isi:text,konten:text,tahun:'2026/2027',semester:1,bab})});let out={};try{out=await res.json()}catch(e){}if(!res.ok||out.ok===false)throw Error(out.message||'Gagal menyimpan RPM ke D1.');alert('RPM berhasil tersimpan ke D1.')}catch(e){alert(e.message||'Gagal menyimpan RPM.')}finally{btn.disabled=false;btn.textContent=old}}"""
+          if old not in s:
+              raise SystemExit('blok save dokumen tidak ditemukan persis; tidak melakukan perubahan')
+          s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf-8')
+          print('PATCHED')
+          PY
+      - name: Validate HTML script syntax
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, subprocess, tempfile
+          s=Path('index.html').read_text(encoding='utf-8')
+          scripts=re.findall(r'<script(?:[^>]*)>(.*?)</script>',s,re.S|re.I)
+          Path('/tmp/app.js').write_text('\n'.join(scripts),encoding='utf-8')
+          PY
+          node --check /tmp/app.js
+      - name: Commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git diff --cached --quiet || git commit -m 'feat: persist generated documents to D1'
+          git push

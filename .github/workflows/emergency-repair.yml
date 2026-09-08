@@ -1,0 +1,79 @@
+name: Emergency Repair V10
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Repair index.html safely
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          original = s
+
+          # The current file contains a literal newline inside the single-quoted
+          # string returned by exportHtml(), which prevents ALL frontend JS from parsing.
+          s = s.replace("d.body+'" + chr(10), "d.body+'\\n")
+          s = s.replace('d.body+\'\r\n', "d.body+'\\n")
+
+          # Also repair the common variant where the closing HTML is split by a
+          # literal newline immediately after d.body.
+          s = re.sub(r"(function exportHtml\(type\).*?d\.body\+)'(?:\\r?\\n)'", r"\1'\\n'", s, flags=re.S)
+
+          # Ensure the login viewport rules exist once, without touching application logic.
+          css = '''\n/* ===== V10 EMERGENCY LOGIN VIEWPORT ===== */\nhtml.login-active,body.login-active{height:100%!important;overflow:hidden!important;overscroll-behavior:none!important}\n.login{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;min-height:100dvh!important;max-height:100dvh!important;display:grid!important;place-items:center!important;overflow:hidden!important;padding:12px!important;z-index:99999!important}\n.login-card{width:min(430px,calc(100vw - 24px))!important;max-height:calc(100dvh - 24px)!important;overflow-y:auto!important;overflow-x:hidden!important;-webkit-overflow-scrolling:touch!important}\n@media(max-width:520px){.login{padding:8px!important}.login-card{width:calc(100vw - 16px)!important;max-height:calc(100dvh - 16px)!important;padding:16px!important}}\n'''
+          if 'V10 EMERGENCY LOGIN VIEWPORT' not in s:
+              pos = s.find('</style>')
+              if pos == -1: raise SystemExit('style closing tag not found')
+              s = s[:pos] + css + s[pos:]
+
+          if s == original:
+              print('No source change required')
+          else:
+              p.write_text(s, encoding='utf-8')
+              print('index.html repaired')
+
+      - name: Validate JavaScript
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('index.html').read_text(encoding='utf-8')
+          blocks=re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>',s,re.S|re.I)
+          if not blocks:
+              raise SystemExit('No script blocks found')
+          for i,b in enumerate(blocks,1):
+              Path(f'/tmp/script_{i}.js').write_text(b,encoding='utf-8')
+          print('script blocks:',len(blocks))
+          PY
+          for f in /tmp/script_*.js; do node --check "$f"; done
+
+      - name: Commit repair
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          if git diff --cached --quiet; then
+            echo 'Nothing to commit'
+            exit 0
+          fi
+          git commit -m 'fix: repair V10 frontend JavaScript and login viewport'
+          git push origin HEAD:main

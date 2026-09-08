@@ -1,4 +1,4 @@
-/* ADM-SD — AI Generate hierarchical curriculum selector V6 */
+/* ADM-SD — AI Generate hierarchical curriculum selector V7 */
 (function(){
   'use strict';
   const norm=s=>String(s??'').trim().toLowerCase().replace(/\s+/g,' ');
@@ -8,12 +8,17 @@
   const getKelas=()=>document.getElementById('aiKelas')||findSelectByLabel(/kelas\s*\/\s*rombel|kelas|rombel/i);
   const getJenis=()=>document.getElementById('aiJenis')||findSelectByLabel(/kategori\s*&?\s*jenis|kategori|jenis/i);
   const isRPM=()=>{const x=getJenis();const t=norm(x?.value||x?.selectedOptions?.[0]?.textContent||'');return t.includes('rpm')||t.includes('rencana pembelajaran')};
-  let curriculum=null,loading=null,verifiedLoading=null;
-  function loadScript(src){return new Promise(resolve=>{const s=document.createElement('script');s.src=new URL(src,location.href).href+'?v=6';s.onload=()=>resolve(true);s.onerror=()=>resolve(false);document.head.appendChild(s)})}
+  let curriculum=null,loading=null;
+  function loadScript(src){return new Promise(resolve=>{const s=document.createElement('script');s.src=new URL(src,location.href).href+'?v=7';s.onload=()=>resolve(true);s.onerror=()=>resolve(false);document.head.appendChild(s)})}
   async function loadVerifiedBooks(){
+    await loadScript('assets/kurikulum-merdeka-master.js');
     if(!window.ADM_VERIFIED_BOOKS)await loadScript('assets/verified-book-sources.js');
     await loadScript('assets/verified-book-sources-extra.js');
-    return window.ADM_VERIFIED_BOOKS||null;
+    const base=window.ADM_VERIFIED_BOOKS||{books:[]};
+    const master=window.ADM_KURIKULUM_MASTER?.books||[];
+    const existing=Array.isArray(base.books)?base.books:[];
+    for(const b of master){if(!existing.some(x=>norm(x.subject)===norm(b.subject)&&String(x.class)===String(b.class)&&norm(x.title)===norm(b.title)))existing.push(b)}
+    base.books=existing;window.ADM_VERIFIED_BOOKS=base;return base;
   }
   async function loadCurriculum(){
     if(curriculum)return curriculum;

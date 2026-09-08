@@ -1013,3 +1013,14 @@ try{const saved=JSON.parse(localStorage.getItem('siLogin')||'null');const token=
 </script>
 </body>
 </html>
+
+<style>
+/* ===== V10 LOGIN VIEWPORT FINAL ===== */
+html:has(.login:not([style*="display: none"])){height:100%;overflow:hidden!important}
+body:has(.login:not([style*="display: none"])){height:100%;min-height:100%;overflow:hidden!important;overscroll-behavior:none!important;position:relative!important}
+.login{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;min-height:100dvh!important;max-height:100dvh!important;overflow:hidden!important;padding:12px!important;z-index:99999!important}
+.login-card{width:min(430px,calc(100vw - 24px))!important;max-height:calc(100dvh - 24px)!important;overflow-y:auto!important;overflow-x:hidden!important;-webkit-overflow-scrolling:touch!important}
+@media(max-width:520px){.login{padding:8px!important}.login-card{width:calc(100vw - 16px)!important;max-height:calc(100dvh - 16px)!important;padding:16px!important}.login-card input{min-height:40px!important}.login-card .wide{min-height:41px!important}}
+@media(max-height:620px) and (orientation:landscape){.login{align-items:start!important}.login-card{margin:8px auto!important;max-height:calc(100dvh - 16px)!important;padding:12px!important}.login .logo{width:58px!important;height:58px!important}.login-card label{margin:7px 0 3px!important}.login-card .wide{margin-top:10px!important}}
+
+</style>

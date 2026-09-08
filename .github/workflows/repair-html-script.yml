@@ -66,6 +66,12 @@ jobs:
           p.write_text(s,encoding='utf-8')
           PY
 
+      - name: Apply LKPD generator upgrade
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/patch_lkpd_v2.py
+
       - name: Validate
         shell: bash
         run: |
@@ -81,6 +87,9 @@ jobs:
           b=Path('src/index.js').read_text(encoding='utf-8')
           assert 'function extractRequestedMapel(body, url)' in b
           assert 'GURU MAPEL: all rombel for students/attendance' in b
+          k=Path('lkpd.html').read_text(encoding='utf-8')
+          for marker in ('id="jumlahPg"','id="jumlahIsian"','id="jumlahEssay"','id="asesmen"','id="versi"','id="answerPaper"','answer:q.answer'):
+              assert marker in k, marker
           PY
           node --check /tmp/index-inline.js
           node --check src/index.js
@@ -95,7 +104,7 @@ jobs:
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add index.html src/index.js guru-mapel-ui.js assets/guru-mapel-access.js assets/role-menu.js
+          git add index.html src/index.js guru-mapel-ui.js assets/guru-mapel-access.js assets/role-menu.js lkpd.html
           if git diff --cached --quiet; then echo 'No patch needed'; exit 0; fi
-          git commit -m 'feat: separate admin and teacher navigation [skip ci]'
+          git commit -m 'feat: upgrade LKPD generator [skip ci]'
           git push

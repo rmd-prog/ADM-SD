@@ -2,7 +2,8 @@ name: repair html script parser
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
 
 permissions:
   contents: write
@@ -11,89 +12,60 @@ jobs:
   repair:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Repair parser, Guru Mapel access and login scope
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Patch login scope
+        shell: bash
         run: |
+          set -euo pipefail
           python - <<'PY'
           from pathlib import Path
-          import re
 
-          p=Path('index.html')
-          s=p.read_text(encoding='utf-8')
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
 
-          # Keep the escaped closing script tag fix idempotent.
-          old='<script src="guru-mapel-ui.js"></script>'
-          new='<script src="guru-mapel-ui.js"><\\/script>'
-          if old in s:
-              s=s.replace(old,new)
-          bad='<script src="guru-mapel-ui.js"><\\/script>\n</body></html>'
-          good='<script src="guru-mapel-ui.js"><\\/script>\\n</body></html>'
-          if bad in s:
-              s=s.replace(bad,good)
-
-          # Bridge the real login functions from the main IIFE to the later V12 IIFE.
-          marker="id('loginForm').onsubmit=async e=>{"
-          bridge="window.__ADM_LOGIN=async(username,password)=>{const t=await remoteLogin(username,password);await finishLogin(t);return t};\n" + marker
-          if 'window.__ADM_LOGIN=async(username,password)' not in s and marker in s:
-              s=s.replace(marker,bridge,1)
-
-          # Replace only the V12 handler's out-of-scope remoteLogin/state logic.
-          v12_start=s.find('/* ADM-SD SAFE LOGIN V12 */')
-          if v12_start >= 0:
-              before=s[:v12_start]
-              tail=s[v12_start:]
-              pattern=r"async function login\(e\)\{.*?\n\}"
-              replacement="""async function login(e){
-  e.preventDefault();
-  e.stopImmediatePropagation();
-  const f=$('#loginForm'),u=$('#loginUser'),p=$('#loginPass'),b=f?.querySelector('button[type=submit]');
-  if(!u?.value.trim()||!p?.value)return error('Username dan password wajib diisi.');
-  if(b){b.disabled=true;b.textContent='MEMERIKSA...'}
-  try{
-    if(typeof window.__ADM_LOGIN!=='function')throw Error('Modul login belum siap. Muat ulang halaman.');
-    await window.__ADM_LOGIN(u.value.trim(),p.value);
-  }catch(x){
-    console.error(x);
-    $('#loginScreen').style.display='grid';
-    $('#app').style.display='none';
-    error(x.message||'Login gagal. Periksa akun dan Worker.')
-  }finally{if(b){b.disabled=false;b.textContent='MASUK KE SISTEM'}}
-}"""
-              new_tail,n=re.subn(pattern,replacement,tail,count=1,flags=re.S)
-              if n==1:
-                  s=before+new_tail
-
-          p.write_text(s,encoding='utf-8')
-
-          w=Path('src/index.js')
-          x=w.read_text(encoding='utf-8')
-          old='''        if (requested) {\n          const rw = rombelWhere(field, requested);\n          result = await env.DB.prepare(`SELECT * FROM siswa WHERE ${rw.sql} ORDER BY nama`).bind(...rw.binds).all();\n        } else if (user.role === "admin") {'''
-          new='''        if (requested) {\n          if (isGuruMapelAll(user) && requested === "ALL") {\n            result = await env.DB.prepare(`SELECT * FROM siswa ORDER BY nama`).all();\n          } else {\n            const rw = rombelWhere(field, requested);\n            result = await env.DB.prepare(`SELECT * FROM siswa WHERE ${rw.sql} ORDER BY nama`).bind(...rw.binds).all();\n          }\n        } else if (user.role === "admin") {'''
-          if old in x:
-              x=x.replace(old,new,1)
-          w.write_text(x,encoding='utf-8')
-          PY
-      - name: Validate JavaScript
-        run: |
-          set -e
-          python - <<'PY'
-          from pathlib import Path
-          import re
-          s=Path('index.html').read_text(encoding='utf-8')
-          scripts=re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>',s,re.S|re.I)
-          Path('/tmp/index-inline.js').write_text('\n'.join(scripts),encoding='utf-8')
+          marker = "id('loginForm').onsubmit=async e=>{"
+          bridge = "window.__ADM_LOGIN=async(username,password)=>{const t=await remoteLogin(username,password);await finishLogin(t);return t};\\n" + marker
           if 'window.__ADM_LOGIN=async(username,password)' not in s:
-              raise SystemExit('login bridge missing')
-          if 'typeof window.__ADM_LOGIN!==\'function\'' not in s:
-              raise SystemExit('V12 login bridge guard missing')
+              if marker not in s:
+                  raise SystemExit('main login handler marker not found')
+              s = s.replace(marker, bridge, 1)
+
+          old = '''async function login(e){e.preventDefault();e.stopImmediatePropagation();const f=$('#loginForm'),u=$('#loginUser'),p=$('#loginPass'),b=f?.querySelector('button[type=submit]');if(!u?.value.trim()||!p?.value)return error('Username dan password wajib diisi.');if(b){b.disabled=true;b.textContent='MEMERIKSA...'}try{if(typeof remoteLogin!=='function')throw Error('Modul login belum siap. Muat ulang halaman.');const t=await remoteLogin(u.value.trim(),p.value);if(!t?.token)throw Error('Token login tidak diterima dari Worker.');currentTeacher=t;localStorage.setItem('siLogin',JSON.stringify(t));localStorage.setItem('siAuthToken',t.token);try{updateTeacherProfile(t)}catch{}$('#loginScreen').style.display='none';$('#app').style.display='block';$('#loginError').style.display='none';for(const fn of [applyClassLock,syncRoleMenu,initAIGenerator,renderStats,renderStudents,renderScores,renderReport])try{fn?.()}catch(x){console.warn(x)}try{showPage(t.role==='guru'||t.role==='guru_mapel'?'students':'dashboard')}catch{}if(typeof syncRemoteData==='function')Promise.resolve(syncRemoteData(t)).catch(console.warn)}catch(x){console.error(x);$('#loginScreen').style.display='grid';$('#app').style.display='none';error(x.message||'Login gagal. Periksa akun dan Worker.')}finally{if(b){b.disabled=false;b.textContent='MASUK KE SISTEM'}}}'''
+          new = '''async function login(e){e.preventDefault();e.stopImmediatePropagation();const f=$('#loginForm'),u=$('#loginUser'),p=$('#loginPass'),b=f?.querySelector('button[type=submit]');if(!u?.value.trim()||!p?.value)return error('Username dan password wajib diisi.');if(b){b.disabled=true;b.textContent='MEMERIKSA...'}try{if(typeof window.__ADM_LOGIN!=='function')throw Error('Modul login belum siap. Muat ulang halaman.');await window.__ADM_LOGIN(u.value.trim(),p.value)}catch(x){console.error(x);$('#loginScreen').style.display='grid';$('#app').style.display='none';error(x.message||'Login gagal. Periksa akun dan Worker.')}finally{if(b){b.disabled=false;b.textContent='MASUK KE SISTEM'}}}'''
+          if old not in s:
+              raise SystemExit('V12 login block not found')
+          s = s.replace(old, new, 1)
+
+          p.write_text(s, encoding='utf-8')
+          PY
+
+      - name: Validate
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          s = Path('index.html').read_text(encoding='utf-8')
+          scripts = re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>', s, re.S | re.I)
+          Path('/tmp/index-inline.js').write_text('\n'.join(scripts), encoding='utf-8')
+          assert 'window.__ADM_LOGIN=async(username,password)' in s
+          assert "typeof window.__ADM_LOGIN!=='function'" in s
           PY
           node --check /tmp/index-inline.js
-          node --check src/index.js
-      - name: Commit repair
+
+      - name: Commit patched index
+        shell: bash
         run: |
+          set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add index.html src/index.js
-          if git diff --cached --quiet; then echo 'No repair needed'; exit 0; fi
-          git commit -m 'fix: bridge V12 login to main app scope [skip ci]'
+          git add index.html
+          if git diff --cached --quiet; then
+            echo 'No index patch needed'
+            exit 0
+          fi
+          git commit -m 'fix: repair V12 login scope [skip ci]'
           git push

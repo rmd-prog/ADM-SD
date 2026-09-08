@@ -17,8 +17,11 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           import re
-
           p=Path('index.html'); s=p.read_text(encoding='utf-8')
+          # Repair the exact syntax break left in exportHtml: a literal newline was embedded inside a JS string.
+          bad='<script src="guru-mapel-ui.js"><\\/script>\n</body></html>'
+          good='<script src="guru-mapel-ui.js"><\\/script>\\n</body></html>'
+          if bad in s: s=s.replace(bad,good)
           if 'ADM-SD SAFE LOGIN V12' not in s:
               css=r'''/* ADM-SD SAFE LOGIN V12 */
           :root{--v12-bg:#f5f7fb;--v12-card:#fff;--v12-text:#172033;--v12-border:#e2e8f0}
@@ -45,13 +48,10 @@ jobs:
               pos=s.rfind('</script>')
               if pos<0: raise SystemExit('login script anchor missing')
               s=s[:pos]+'\n'+js+'\n'+s[pos:]
-              p.write_text(s,encoding='utf-8')
-
+          p.write_text(s,encoding='utf-8')
           w=Path('src/index.js'); x=w.read_text(encoding='utf-8')
           old='user.role !== "admin" && requested && requested !== own'; new='user.role !== "admin" && requested && !canAccessRombel(user, requested)'; n=x.count(old)
-          if n:
-              x=x.replace(old,new)
-              w.write_text(x,encoding='utf-8')
+          if n: x=x.replace(old,new); w.write_text(x,encoding='utf-8')
           print('rombel guards patched:',n)
           PY
           python3 - <<'PY'

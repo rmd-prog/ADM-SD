@@ -1,0 +1,55 @@
+name: V10 Full Cleanup
+on:
+  push:
+    paths:
+      - '.github/v10-full-cleanup.trigger'
+permissions:
+  contents: write
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Repair V10
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          p=Path('index.html'); s=p.read_text(encoding='utf-8')
+          s=re.sub(r'\n<style id="v10-login-viewport-fix">.*?</style>\s*$', '\n', s, flags=re.S)
+          s=s.replace('html{scroll-behavior:smooth}','html{scroll-behavior:auto!important}')
+          if 'V10 STABLE LOGIN VIEWPORT' not in s:
+              css='''\n/* ===== V10 STABLE LOGIN VIEWPORT ===== */\n.login{position:fixed!important;inset:0!important;width:100%!important;height:100svh!important;min-height:100svh!important;display:grid!important;place-items:center!important;overflow:hidden!important;padding:14px!important;z-index:1000!important}\n.login-card{max-height:calc(100svh - 28px)!important;overflow:auto!important;-webkit-overflow-scrolling:touch!important}\nbody.v10-login{overflow:hidden!important}\nbody.v10-logged-in{overflow-x:hidden!important;overflow-y:auto!important}\n@media(max-width:520px){.login{padding:8px!important}.login-card{width:min(348px,calc(100vw - 16px))!important;max-height:calc(100svh - 16px)!important;padding:16px!important}.login .logo{width:70px!important;height:70px!important}.login-card label{margin:9px 0 4px!important}.login-card input{height:40px!important}.login-card .wide{height:41px!important;margin-top:12px!important}}\n@media(max-height:620px) and (orientation:landscape){.login-card{padding:10px 16px!important}.login .logo{width:48px!important;height:48px!important}.login-card h1{font-size:18px!important}.login-card label{margin:5px 0 3px!important}.login-card input{height:34px!important}.login-card .wide{height:34px!important;margin-top:7px!important}}\n'''
+              s=s.replace('</style>',css+'</style>',1)
+          s=s.replace('V10 FINAL • Portal Administrasi Guru • AI Terkunci Referensi Buku','V10 FINAL • 2026/2027 • Portal Administrasi Guru')
+          s=s.replace('content="V10-BOGOR-PORTAL-2026-09-08"','content="GURU+-SD-V10-2026-2027-STABLE"')
+          p.write_text(s,encoding='utf-8')
+
+          p=Path('lkpd.html'); s=p.read_text(encoding='utf-8')
+          s=s.replace('<title>LKPD Visual AI — SI-NILAI SD V8</title>','<title>LKPD Visual AI — GURU+ SD V10</title>')
+          s=s.replace('Database materi kelas 1–6 • visual hanya bila benar-benar relevan • 1 lembar','Kelas 1–6 • visual kontekstual • 1 lembar • A4 / F4 / Letter')
+          if 'LKPD V10 PRINT STABILITY' not in s:
+              css='''\n/* ===== LKPD V10 PRINT STABILITY ===== */\n@media print{html,body{background:#fff!important;margin:0!important;padding:0!important}.wrap{max-width:none!important;padding:0!important}.stage{margin:0!important;padding:0!important;overflow:visible!important;border:0!important;box-shadow:none!important}.paper{margin:0!important;border:0!important;box-shadow:none!important;page-break-after:avoid!important}.q{break-inside:avoid}}\n@media(max-width:520px){.stage{overflow-x:auto!important}.controls{position:relative;z-index:2}}\n'''
+              s=s.replace('</style>',css+'</style>',1)
+          old="function refreshMapel(){const k=+$('kelas').value;fill($('mapel'),Object.keys(curriculum).filter(m=>curriculum[m][k]),'Pilih mata pelajaran');refreshBab()}"
+          new="function refreshMapel(){const k=+$('kelas').value;const all=['Bahasa Indonesia','Pendidikan Pancasila','Matematika','IPAS','PJOK','Seni Rupa','Seni Musik','Seni Tari','Seni Teater','Bahasa Inggris','Pendidikan Agama dan Budi Pekerti'];fill($('mapel'),all,'Pilih mata pelajaran');refreshBab()}"
+          s=s.replace(old,new)
+          old="function refreshBab(){const k=+$('kelas').value,m=$('mapel').value;fill($('bab'),Object.keys(curriculum[m]?.[k]||{}),'Pilih bab / materi');refreshSubbab()}"
+          new="function refreshBab(){const k=+$('kelas').value,m=$('mapel').value;const units=Object.keys(curriculum[m]?.[k]||{});fill($('bab'),units.length?units:['Materi sesuai buku sekolah / SIBI'],'Pilih bab / materi');refreshSubbab()}"
+          s=s.replace(old,new)
+          old="function refreshSubbab(){const k=+$('kelas').value,m=$('mapel').value,b=$('bab').value;fill($('subbab'),curriculum[m]?.[k]?.[b]||[],'Pilih subbab / topik')}"
+          new="function refreshSubbab(){const k=+$('kelas').value,m=$('mapel').value,b=$('bab').value;fill($('subbab'),curriculum[m]?.[k]?.[b]||['Konsep inti','Contoh kontekstual','Latihan dan penerapan'],'Pilih subbab / topik')}"
+          s=s.replace(old,new)
+          p.write_text(s,encoding='utf-8')
+
+          for f in ['.github/workflows/v10-login-no-scroll.yml','.github/workflows/login-v9-apply.yml','.github/workflows/fix-v10-login-error.yml']:
+              Path(f).unlink(missing_ok=True)
+          Path('.github/v10-full-cleanup.trigger').unlink(missing_ok=True)
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html lkpd.html .github/workflows .github/v10-full-cleanup.trigger
+          git commit -m 'fix: stabilize V10 frontend and LKPD' || exit 0
+          git push origin main

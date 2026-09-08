@@ -15,7 +15,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Patch login scope
+      - name: Patch login scope and feature modules
         shell: bash
         run: |
           set -euo pipefail
@@ -38,6 +38,13 @@ jobs:
               raise SystemExit('V12 login block not found')
           s = s.replace(old, new, 1)
 
+          for tag in ('<script src="assets/absensi.js"></script>', '<script src="guru-mapel-ui.js"></script>'):
+              if tag not in s:
+                  pos = s.rfind('</body>')
+                  if pos < 0:
+                      raise SystemExit('body marker missing')
+                  s = s[:pos] + tag + '\n' + s[pos:]
+
           p.write_text(s, encoding='utf-8')
           PY
 
@@ -53,8 +60,13 @@ jobs:
           Path('/tmp/index-inline.js').write_text('\n'.join(scripts), encoding='utf-8')
           assert 'window.__ADM_LOGIN=async(username,password)' in s
           assert "typeof window.__ADM_LOGIN!=='function'" in s
+          assert '<script src="assets/absensi.js"></script>' in s
+          assert '<script src="guru-mapel-ui.js"></script>' in s
           PY
           node --check /tmp/index-inline.js
+          node --check src/index.js
+          node --check assets/absensi.js
+          node --check guru-mapel-ui.js
 
       - name: Commit patched index
         shell: bash
@@ -67,5 +79,5 @@ jobs:
             echo 'No index patch needed'
             exit 0
           fi
-          git commit -m 'fix: repair V12 login scope [skip ci]'
+          git commit -m 'fix: load attendance and Guru Mapel modules [skip ci]'
           git push

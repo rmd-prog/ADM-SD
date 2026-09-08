@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#2563eb">
-<title>🏛️ GURU+ SD V10 — 2026/2027 • Portal Administrasi Guru</title>
+<title>🏛️ GURU+ SD V11 — 2026/2027 • Portal Administrasi Guru</title>
 <style>
 *{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:#f1f5f9;color:#172033}
 button,input,select,textarea{font:inherit}button{cursor:pointer}#aiGenerate select,#aiGenerate input,#aiGenerate button{position:relative;z-index:2;pointer-events:auto;touch-action:manipulation}#aiGenerate .panel,#aiGenerate .doc-hero{position:relative;z-index:1}
@@ -64,28 +64,6 @@ input,select,textarea{background:rgba(255,255,255,.88);border-color:#dbe3f0;tran
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.001ms!important;transition-duration:.001ms!important;scroll-behavior:auto!important}}
 .teacher-profile:after{content:'📷';font-size:11px;margin-left:2px;opacity:.55}.teacher-avatar{position:relative}.teacher-avatar:after{content:'+';position:absolute;right:-2px;bottom:-2px;width:15px;height:15px;border-radius:50%;display:grid;place-items:center;background:#fff;color:#4f46e5;font-size:12px;font-weight:900;border:1px solid #c7d2fe}
 
-/* ===== LOGIN SCREEN REDESIGN ===== */
-.login{isolation:isolate;background:radial-gradient(circle at 15% 20%,rgba(99,91,255,.18),transparent 28%),radial-gradient(circle at 85% 75%,rgba(6,182,212,.15),transparent 30%),linear-gradient(135deg,#eef2ff 0%,#f8fafc 48%,#ecfeff 100%)}
-.login:before{width:420px;height:420px;top:-180px;left:-160px;background:rgba(99,91,255,.13);filter:blur(8px);animation:loginFloat 8s ease-in-out infinite}
-.login:after{width:420px;height:420px;right:-170px;bottom:-190px;background:rgba(6,182,212,.12);filter:blur(8px);animation:loginFloat 10s ease-in-out infinite reverse}
-.login-card{width:min(420px,calc(100vw - 28px));padding:34px 32px 30px;border:1px solid rgba(255,255,255,.78);background:rgba(255,255,255,.70);box-shadow:0 35px 90px rgba(30,41,59,.16),inset 0 1px 0 rgba(255,255,255,.85);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-radius:28px}
-.login-card:before{content:"";display:block;width:70px;height:4px;margin:0 auto 24px;border-radius:999px;background:linear-gradient(90deg,#635bff,#06b6d4);opacity:.9}
-.login .logo{width:100px;height:100px;border-radius:28px;border:1px solid rgba(255,255,255,.9);background:rgba(255,255,255,.82);box-shadow:0 18px 45px rgba(99,91,255,.16),0 2px 10px rgba(15,23,42,.05);padding:9px;animation:loginLogo 5s ease-in-out infinite}
-.login .logo img{border-radius:20px}
-.login-card h1{font-size:29px;letter-spacing:-1px;background:linear-gradient(135deg,#312e81,#635bff 55%,#0891b2);-webkit-background-clip:text;background-clip:text;color:transparent}
-.login-card .badge{background:rgba(99,91,255,.10);color:#4f46e5;border:1px solid rgba(99,91,255,.14);font-size:11px;letter-spacing:.3px}
-.login-card label{font-size:13px;color:#334155;margin-top:18px;margin-bottom:7px}
-.login-card input{height:48px;background:rgba(255,255,255,.76);border:1px solid rgba(148,163,184,.28);box-shadow:0 5px 18px rgba(15,23,42,.035)}
-.login-card input:focus{background:#fff;border-color:#8b5cf6;box-shadow:0 0 0 4px rgba(99,91,255,.10),0 8px 22px rgba(99,91,255,.08);transform:none}
-.login-card .toggle{top:6px;right:7px;height:36px;border-radius:9px}
-.login-card .wide{height:50px;margin-top:22px;font-size:14px;letter-spacing:.2px;box-shadow:0 12px 28px rgba(99,91,255,.22)}
-.login-card .wide span{display:inline-block;margin-left:7px;transition:transform .2s ease}
-.login-card .wide:hover span{transform:translateX(4px)}
-.login-card .alert{font-size:13px}
-@keyframes loginFloat{50%{transform:translate3d(18px,-12px,0) scale(1.04)}}
-@keyframes loginLogo{50%{transform:translateY(-4px);box-shadow:0 22px 50px rgba(99,91,255,.20),0 2px 10px rgba(15,23,42,.05)}}
-@media(max-width:520px){.login{padding:14px}.login-card{padding:28px 20px 24px;border-radius:24px}.login .logo{width:88px;height:88px;border-radius:24px}.login-card h1{font-size:25px}}
-@media(prefers-reduced-motion:reduce){.login:before,.login:after,.login .logo{animation:none!important}}
 
 /* ===== MODERN GLASS SCHOOL THEME ===== */
 :root{
@@ -96,13 +74,7 @@ input,select,textarea{background:rgba(255,255,255,.88);border-color:#dbe3f0;tran
 }
 html{scroll-behavior:smooth}
 body{background:radial-gradient(circle at 5% 0%,rgba(99,91,255,.10),transparent 28%),radial-gradient(circle at 95% 10%,rgba(6,182,212,.08),transparent 25%),var(--ms-bg);color:var(--ms-text)}
-.login{background:radial-gradient(circle at 15% 15%,rgba(255,255,255,.9),transparent 25%),linear-gradient(135deg,#eef2ff,#f8fafc 48%,#ecfeff);position:relative;overflow:hidden}
-.login:before,.login:after{content:"";position:absolute;border-radius:999px;filter:blur(2px);pointer-events:none}
-.login:before{width:280px;height:280px;background:rgba(99,91,255,.13);top:-90px;left:-80px}
-.login:after{width:320px;height:320px;background:rgba(6,182,212,.10);right:-100px;bottom:-120px}
 .card{background:var(--ms-surface);border:1px solid rgba(255,255,255,.8);box-shadow:var(--ms-shadow);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-radius:var(--ms-radius)}
-.login-card{position:relative;z-index:1;box-shadow:0 30px 80px rgba(51,65,85,.14);animation:msIn .55s cubic-bezier(.2,.8,.2,1)}
-.logo{border-radius:24px;box-shadow:0 14px 35px rgba(99,91,255,.13)}
 .top{height:70px;background:rgba(255,255,255,.78);border-bottom:1px solid var(--ms-line);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 6px 25px rgba(15,23,42,.04)}
 .brand{letter-spacing:-.3px}
 .brand-logo{width:40px;height:40px;border-radius:12px;box-shadow:0 8px 20px rgba(99,91,255,.12)}
@@ -154,7 +126,6 @@ input:focus,select:focus,textarea:focus{border-color:#8b5cf6;box-shadow:0 0 0 4p
 .page>h2+ p.muted,.student-head>div>p.muted,.doc-sub{display:none!important}
 .doc-hero{padding-bottom:18px!important}
 .doc-grid{display:none!important}
-#loginScreen .login-card .badge{margin-bottom:4px}
 .welcome-overlay{position:fixed;inset:0;z-index:99999;display:grid;place-items:center;padding:18px;background:rgba(15,23,42,.38);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);opacity:0;visibility:hidden;transition:opacity .25s ease,visibility .25s ease}
 .welcome-overlay.show{opacity:1;visibility:visible}
 .welcome-modal{width:min(420px,100%);padding:30px 24px 24px;text-align:center;border-radius:28px;background:rgba(255,255,255,.92);border:1px solid rgba(255,255,255,.9);box-shadow:0 30px 90px rgba(15,23,42,.25);transform:translateY(18px) scale(.97);transition:transform .3s cubic-bezier(.2,.8,.2,1)}
@@ -166,24 +137,9 @@ input:focus,select:focus,textarea:focus{border-color:#8b5cf6;box-shadow:0 0 0 4p
 .welcome-text{margin:8px 0 18px;color:#64748b;font-size:14px}
 .welcome-close{min-width:130px}
 @media(max-width:520px){.welcome-modal{padding:26px 18px 20px;border-radius:24px}.welcome-title{font-size:22px}}
-/* ===== GURU+ SD V9 • LOGIN CLEAN ===== */
 body{font-size:14px}
 h1,h2,h3{letter-spacing:-.25px}
 .page h2{font-size:22px!important}.panel{font-size:14px}.stat b{font-size:23px}.navbtn,.navgroup{font-size:13px}
-.login{position:relative;isolation:isolate;overflow:hidden;min-height:100svh;padding:20px!important;display:grid!important;place-items:center!important;background:radial-gradient(circle at 12% 8%,rgba(37,99,235,.18),transparent 28%),radial-gradient(circle at 88% 90%,rgba(124,58,237,.14),transparent 30%),linear-gradient(135deg,#eff6ff,#f8fafc 52%,#eef2ff)!important}
-.login:before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(135deg,rgba(37,99,235,.05),transparent 45%,rgba(6,182,212,.05));pointer-events:none}
-.login-card{width:min(370px,calc(100vw - 30px))!important;padding:22px 24px 20px!important;border-radius:26px!important;background:rgba(255,255,255,.94)!important;border:1px solid rgba(255,255,255,.95)!important;box-shadow:0 28px 80px rgba(15,23,42,.16),0 2px 8px rgba(15,23,42,.06)!important;backdrop-filter:blur(16px)!important;-webkit-backdrop-filter:blur(16px)!important;position:relative!important;overflow:hidden!important}
-.login-card:before{content:"";position:absolute;left:0;right:0;top:0;height:4px;background:linear-gradient(90deg,#2563eb,#7c3aed,#06b6d4)}
-.login .logo{width:70px!important;height:70px!important;border-radius:19px!important;margin:auto!important;box-shadow:0 12px 30px rgba(15,23,42,.10)!important}
-.login-card .center{margin-top:11px!important}.login-card h1{font-size:25px!important;letter-spacing:-.8px!important;margin:0 0 4px!important;color:#172033!important}
-.school-name{display:inline-block;margin:7px auto 2px;padding:6px 16px;border-radius:999px;background:linear-gradient(135deg,#2563eb,#4f46e5);color:#fff;font-size:13px;font-weight:900;letter-spacing:.2px;box-shadow:0 8px 20px rgba(79,70,229,.18)}
-.school-city{font-size:11px;font-weight:800;color:#64748b;letter-spacing:1.2px;margin-top:5px}
-.login-card .badge{font-size:10px!important;padding:4px 9px!important;margin-top:3px!important;background:#eef2ff!important;color:#4f46e5!important;border:1px solid #e0e7ff!important}
-.login-card form{margin-top:8px!important}.login-card label{font-size:11px!important;font-weight:800!important;color:#475569!important;margin:11px 0 5px!important}
-.login-card input{height:42px!important;padding:9px 12px!important;font-size:13px!important;border-radius:12px!important;border:1px solid #d7dee9!important;background:#f8fafc!important}.login-card input:focus{background:#fff!important;border-color:#6366f1!important;box-shadow:0 0 0 4px rgba(99,102,241,.10)!important}
-.login-card .password input{padding-right:60px!important}.login-card .toggle{top:4px!important;right:5px!important;font-size:11px!important;color:#6366f1!important;font-weight:800!important}
-.login-card .wide{height:43px!important;margin-top:15px!important;border-radius:12px!important;font-size:12px!important;letter-spacing:.2px!important;background:linear-gradient(135deg,#2563eb,#6366f1 55%,#7c3aed)!important;box-shadow:0 10px 22px rgba(79,70,229,.24)!important}
-@media(max-width:600px){.login{padding:14px!important}.login-card{width:min(348px,calc(100vw - 24px))!important;padding:20px 18px 18px!important}.login .logo{width:64px!important;height:64px!important}.login-card h1{font-size:22px!important}.school-name{font-size:12px;padding:6px 14px}}
 /* ===== GURU+ SD V10 • BOGOR PORTAL UI ===== */
 :root{--v10-blue:#1d4ed8;--v10-indigo:#4338ca;--v10-cyan:#0891b2;--v10-ink:#172033;--v10-muted:#64748b;--v10-line:#e2e8f0}
 html{scroll-behavior:auto!important;scroll-padding-top:0!important}
@@ -223,14 +179,125 @@ body{overflow-x:hidden}
 @media(max-width:420px){.v10-services{grid-template-columns:1fr 1fr}.v10-service-icon{width:36px;height:36px}.v10-service b{font-size:12px}.v10-service span{font-size:10px}}
 /* Fix the post-login jump permanently. */
 body.v10-logged-in{overflow-x:hidden!important;overflow-y:auto!important}
-body.v10-login{overflow:hidden!important}
+body.v10-login{overflow-y:auto!important;overflow-x:hidden!important}
+
+/* =====================================================================
+   LOGIN V11 — satu sumber gaya untuk layar login (menggantikan semua
+   versi lama V8/V9/V10 yang sebelumnya saling menimpa dengan !important)
+   ===================================================================== */
+.login{position:relative;isolation:isolate;min-height:100svh;overflow-y:auto;overflow-x:hidden;
+  display:flex;flex-direction:column;gap:16px;padding:20px clamp(16px,4vw,40px);
+  background:
+    radial-gradient(circle at 14% 8%,rgba(37,99,235,.20),transparent 34%),
+    radial-gradient(circle at 88% 88%,rgba(124,58,237,.16),transparent 36%),
+    linear-gradient(160deg,#dbeafe 0%,#eff6ff 45%,#e0e7ff 100%)}
+.login:before{content:"";position:absolute;inset:0;z-index:-2;pointer-events:none;
+  background:radial-gradient(ellipse 65% 42% at 50% 80%,rgba(30,64,175,.16),transparent 70%)}
+.login:after{content:"";position:absolute;left:-2%;right:-2%;bottom:0;height:32%;z-index:-1;pointer-events:none;
+  background:linear-gradient(180deg,transparent,rgba(15,23,42,.10) 65%),
+             repeating-linear-gradient(90deg,rgba(30,41,59,.07) 0 24px,transparent 24px 48px);
+  clip-path:polygon(0 42%,6% 30%,13% 46%,20% 16%,28% 40%,36% 22%,44% 44%,52% 10%,60% 40%,
+    68% 24%,76% 46%,84% 18%,92% 40%,100% 28%,100% 100%,0 100%)}
+@media(prefers-reduced-motion:reduce){.login *{animation:none!important;transition:none!important}}
+
+/* --- brand top bar --- */
+.login-topbar{position:relative;z-index:1;display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.login-brand{display:flex;align-items:center;gap:12px;min-width:0}
+.login-brand-logo{width:52px;height:52px;border-radius:16px;background:#fff;border:1px solid #dbeafe;
+  display:grid;place-items:center;overflow:hidden;flex:none;box-shadow:0 10px 25px rgba(30,64,175,.16);font-size:26px}
+.login-brand-logo img{width:100%;height:100%;object-fit:contain}
+.login-brand-text{min-width:0}
+.login-brand-title{font-size:19px;font-weight:900;color:#1e3a8a;letter-spacing:-.3px;line-height:1.15;white-space:nowrap}
+.login-brand-title b{color:#f59e0b}
+.login-brand-sub{font-size:11.5px;color:#475569;font-weight:600;margin-top:2px;max-width:280px;line-height:1.3}
+.login-brand-ver{font-size:10.5px;color:#2563eb;font-weight:800;margin-top:4px;letter-spacing:.3px}
+.login-city-badge{width:46px;height:46px;border-radius:13px;background:#fff;border:1px solid #dbeafe;flex:none;
+  display:grid;place-items:center;font-size:21px;box-shadow:0 8px 20px rgba(30,64,175,.15)}
+
+/* --- login card --- */
+.login-mid{position:relative;z-index:1;flex:1;display:grid;place-items:center;padding:4px 0;min-height:0}
+.login-card{width:min(400px,100%);padding:26px 26px 22px;border-radius:24px;
+  background:rgba(255,255,255,.94);border:1px solid rgba(255,255,255,.9);
+  box-shadow:0 30px 70px rgba(15,23,42,.18);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  animation:loginCardIn .45s cubic-bezier(.2,.8,.2,1)}
+@keyframes loginCardIn{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
+.login-card-mini{display:flex;align-items:center;gap:10px;padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid #eef2f7}
+.login-card-mini-logo{width:42px;height:42px;border-radius:12px;background:#eef2ff;border:1px solid #dbeafe;
+  display:grid;place-items:center;overflow:hidden;flex:none;font-size:20px}
+.login-card-mini-logo img{width:100%;height:100%;object-fit:contain}
+.login-card-mini b{display:block;font-size:14px;color:#172033;letter-spacing:-.2px}
+.login-card-mini span{display:block;font-size:10px;color:#64748b;font-weight:700;margin-top:1px}
+.login-card-title{font-size:17px;font-weight:900;color:#172033}
+.login-card-sub{font-size:12.5px;color:#64748b;margin-top:2px}
+.login-card form{margin-top:14px}
+.login-card label{font-size:12px;font-weight:800;color:#475569;margin:12px 0 6px}
+.login-card input{height:44px;border-radius:12px;background:#f8fafc;border:1px solid #d7dee9;font-size:13.5px}
+.login-card input:focus{background:#fff;border-color:#2563eb;box-shadow:0 0 0 4px rgba(37,99,235,.10)}
+.login-card .password input{padding-right:64px}
+.login-card .toggle{top:5px;right:5px;height:34px;font-size:11px;font-weight:800;color:#2563eb}
+.login-card .wide{height:46px;border-radius:12px;margin-top:16px;font-size:13px;letter-spacing:.2px;
+  background:linear-gradient(135deg,#2563eb,#4f46e5);box-shadow:0 10px 24px rgba(37,99,235,.24)}
+.login-card .alert{font-size:12.5px;margin-top:10px}
+.login-forgot{display:block;text-align:center;margin-top:12px;font-size:12.5px;font-weight:800;color:#2563eb;text-decoration:none}
+.login-forgot:hover{text-decoration:underline}
+.school-name{display:inline-block;margin:2px auto 2px;padding:6px 16px;border-radius:999px;
+  background:linear-gradient(135deg,#2563eb,#4f46e5);color:#fff;font-size:13px;font-weight:900;letter-spacing:.2px}
+.school-city{font-size:11px;font-weight:800;color:#64748b;letter-spacing:1.2px;margin-top:5px}
+
+/* --- feature strip below the card --- */
+.login-features{position:relative;z-index:1;display:flex;flex-wrap:wrap;justify-content:center;
+  gap:10px;max-width:920px;width:100%;margin:0 auto}
+.login-feature{flex:1 1 calc(16.666% - 10px);min-width:96px;display:flex;flex-direction:column;align-items:center;gap:6px;padding:11px 6px;border:0;
+  background:rgba(15,23,42,.55);color:#fff;border-radius:14px;cursor:pointer;font-size:10.5px;font-weight:700;
+  text-align:center;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  transition:transform .18s ease,background .18s ease}
+.login-feature:hover{transform:translateY(-2px);background:rgba(30,64,175,.78)}
+.login-feature-icon{width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.16);display:grid;place-items:center;font-size:16px}
+
+/* --- footer bar --- */
+.login-footerbar{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:10px;
+  font-size:11.5px;color:#f8fafc;background:rgba(15,23,42,.42);padding:10px 16px;border-radius:14px;
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);max-width:1200px;width:100%;margin:0 auto}
+.login-quote{font-style:italic;opacity:.92;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.login-location{font-weight:800;opacity:.95;flex:none}
+
+/* --- responsive: tablet & small laptop --- */
+@media(max-width:900px){
+  .login-feature{flex-basis:calc(33.333% - 10px)}
+}
+/* --- responsive: mobile portrait --- */
+@media(max-width:640px){
+  .login{padding:16px 16px 18px;gap:12px}
+  .login-brand-sub{display:none}
+  .login-brand-title{font-size:16px}
+  .login-brand-logo{width:44px;height:44px;font-size:22px}
+  .login-city-badge{width:38px;height:38px;font-size:18px}
+  .login-card{padding:22px 20px 18px;border-radius:20px}
+  .login-footerbar{flex-direction:column;align-items:flex-start;gap:4px}
+  .login-quote{white-space:normal}
+}
+/* --- responsive: short / landscape phones — prioritize the form --- */
+@media(max-height:520px) and (orientation:landscape){
+  .login{padding:10px 18px;gap:8px}
+  .login-brand-sub,.login-brand-ver,.login-features,.login-footerbar{display:none}
+  .login-card{padding:16px 22px 14px}
+  .login-card-mini{margin-bottom:8px;padding-bottom:8px}
+  .login-card form{margin-top:6px}
+  .login-card label{margin:8px 0 5px}
+  .login-card input{height:38px}
+  .login-card .wide{height:40px;margin-top:12px}
+}
+/* --- responsive: large desktop / tablet-monitor --- */
+@media(min-width:1100px){
+  .login{padding:32px clamp(24px,6vw,64px)}
+}
 
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<meta name="app-version" content="V10-BOGOR-PORTAL-2026-09-08">
+<meta name="app-version" content="V11-BOGOR-PORTAL-2026-09-08">
 
-<!-- GURU+ SD V9 • AUTO ORIENTATION -->
+<!-- GURU+ SD V11 • AUTO ORIENTATION -->
 <script>
 (function(){
   function setOrientation(){
@@ -249,21 +316,55 @@ body.v10-login{overflow:hidden!important}
 </script>
 
 </head>
-<body class="v10-login"><!-- GURU+ SD V10 • FINAL LOGIN DESIGN -->
+<body class="v10-login"><!-- GURU+ SD V11 • LOGIN DESIGN -->
 
 <section id="loginScreen" class="login">
-  <div class="card login-card">
-    <div class="logo"><img src="logo-sekolah.png" alt="Logo sekolah"></div>
-    <div class="center" style="margin-top:16px">
-      <h1>🚀 GURU+ SD</h1><div class="school-name">SDN Muarasari 1</div><div class="school-city">KOTA BOGOR</div><div class="badge" style="margin-top:10px">TA 2026/2027 • V10 FINAL</div>
+  <div class="login-topbar">
+    <div class="login-brand">
+      <div class="login-brand-logo"><img src="logo-sekolah.png" alt="Logo sekolah" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'🚀'}))"></div>
+      <div class="login-brand-text">
+        <div class="login-brand-title">GURU<b>+</b> SD</div>
+        <div class="login-brand-sub">Administrasi &amp; Pembelajaran Guru Sekolah Dasar</div>
+        <div class="login-brand-ver">TA 2026/2027 • V11</div>
+      </div>
     </div>
-    <form id="loginForm">
-      <label>Username</label><input id="loginUser" autocomplete="username" required placeholder="Masukkan username">
-      <label>Password</label>
-      <div class="password"><input id="loginPass" type="password" autocomplete="current-password" required placeholder="Masukkan password"><button class="toggle" type="button" id="showPass">Lihat</button></div>
-      <button class="btn primary wide" type="submit">MASUK KE SISTEM <span aria-hidden="true">→</span></button>
-      <div id="loginError" class="alert">Username atau password salah.</div>
-    </form>
+    <div class="login-city-badge" title="Kota Bogor" aria-hidden="true">🏛️</div>
+  </div>
+
+  <div class="login-mid">
+    <div class="card login-card">
+      <div class="login-card-mini">
+        <div class="login-card-mini-logo"><img src="logo-sekolah.png" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'🚀'}))"></div>
+        <div>
+          <b>GURU+ SD</b>
+          <span>SDN Muarasari 1 • Kota Bogor</span>
+        </div>
+      </div>
+      <div class="login-card-title">Login ke Akun Anda</div>
+      <div class="login-card-sub">Masuk untuk mengakses seluruh fitur aplikasi</div>
+      <form id="loginForm">
+        <label>Username</label><input id="loginUser" autocomplete="username" required placeholder="Masukkan username">
+        <label>Password</label>
+        <div class="password"><input id="loginPass" type="password" autocomplete="current-password" required placeholder="Masukkan password"><button class="toggle" type="button" id="showPass">Lihat</button></div>
+        <button class="btn primary wide" type="submit">MASUK <span aria-hidden="true">→</span></button>
+        <div id="loginError" class="alert" role="alert">Username atau password salah.</div>
+      </form>
+      <a href="#" class="login-forgot" id="forgotPass">Lupa Password?</a>
+    </div>
+  </div>
+
+  <nav class="login-features" aria-label="Ringkasan fitur aplikasi">
+    <button type="button" class="login-feature" data-focus="loginUser"><span class="login-feature-icon">👤</span>Administrasi Guru</button>
+    <button type="button" class="login-feature" data-focus="loginUser"><span class="login-feature-icon">📘</span>Perangkat Pembelajaran</button>
+    <button type="button" class="login-feature" data-focus="loginUser"><span class="login-feature-icon">📝</span>Penilaian</button>
+    <button type="button" class="login-feature" data-focus="loginUser"><span class="login-feature-icon">🤖</span>AI Generator</button>
+    <button type="button" class="login-feature" data-focus="loginUser"><span class="login-feature-icon">📄</span>LKPD</button>
+    <button type="button" class="login-feature" data-focus="loginUser"><span class="login-feature-icon">👥</span>Data Siswa</button>
+  </nav>
+
+  <div class="login-footerbar">
+    <span class="login-quote">"Bersama Teknologi, Mewujudkan Pendidikan yang Lebih Baik"</span>
+    <span class="login-location">📍 Kota Bogor</span>
   </div>
 </section>
 <div id="welcomeOverlay" class="welcome-overlay" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle">
@@ -278,7 +379,7 @@ body.v10-login{overflow:hidden!important}
 
 <section id="app" class="app">
 <header class="top">
-  <div style="display:flex;gap:10px;align-items:center"><button id="menuBtn" class="btn secondary menu-mobile">☰</button><div class="brand" style="display:flex;align-items:center;gap:9px"><img class="brand-logo" src="logo-sekolah.png" alt="Logo sekolah"> 🚀 GURU+ SD V10</div></div>
+  <div style="display:flex;gap:10px;align-items:center"><button id="menuBtn" class="btn secondary menu-mobile">☰</button><div class="brand" style="display:flex;align-items:center;gap:9px"><img class="brand-logo" src="logo-sekolah.png" alt="Logo sekolah"> 🚀 GURU+ SD V11</div></div>
   <div class="top-right"><div class="teacher-profile"><div class="teacher-avatar" id="teacherAvatar">👨‍🏫</div><div class="teacher-info"><div class="teacher-name" id="userLabel">Guru</div><div class="teacher-role" id="userRoleLabel">Guru Kelas</div></div></div><button id="logoutBtn" class="btn danger">Logout</button></div>
 </header>
 <div class="layout">
@@ -301,7 +402,7 @@ body.v10-login{overflow:hidden!important}
   <section id="dashboard" class="page active">
     <div class="v10-hero">
       <div class="v10-kicker">Portal Administrasi Guru • Kota Bogor</div>
-      <h2>Selamat datang di GURU+ SD V10 👋</h2>
+      <h2>Selamat datang di GURU+ SD V11 👋</h2>
       <p>Satu portal untuk data siswa, penilaian, perangkat pembelajaran, AI Generate, LKPD, dan laporan guru. Dirancang dengan pola layanan terintegrasi seperti portal publik modern.</p>
       <div class="v10-pills"><span class="v10-pill">🏫 SDN Muarasari 1</span><span class="v10-pill">📍 Kota Bogor</span><span class="v10-pill">📅 2026/2027</span><span class="v10-pill">⚡ Cloudflare + D1</span></div>
     </div>
@@ -438,7 +539,7 @@ body.v10-login{overflow:hidden!important}
 (function(){
 'use strict';
 const KEY='guru_plus_sd_v10_2026_2027';
-const APP_VERSION='V10 FINAL • Portal Administrasi Guru • AI Terkunci Referensi Buku';
+const APP_VERSION='V11 • Portal Administrasi Guru • AI Terkunci Referensi Buku';
 const API_BASE='https://adm-sd.adm-sd.workers.dev/api';
 const LOGIN_API=API_BASE+'/login';
 const MAPEL=['Bahasa Indonesia','Pendidikan Pancasila','Matematika','IPAS','PJOK','Seni Rupa','Seni Musik','Seni Tari','Seni Teater','Bahasa Inggris','Pendidikan Agama dan Budi Pekerti'];
@@ -970,6 +1071,8 @@ id('loginForm').onsubmit=async e=>{
   try{const t=await remoteLogin(u,p);await finishLogin(t)}catch(err){id('loginError').textContent=err.message||'Login gagal. Pastikan Worker dapat diakses.';id('loginError').style.display='block'}finally{btn.disabled=false;btn.textContent='MASUK KE SISTEM'}
 };
 id('showPass').onclick=()=>{id('loginPass').type=id('loginPass').type==='password'?'text':'password';id('showPass').textContent=id('loginPass').type==='password'?'Lihat':'Sembunyi'}
+document.querySelectorAll('.login-feature').forEach(b=>b.onclick=()=>{const t=id(b.dataset.focus);if(t)t.focus()});
+id('forgotPass')?.addEventListener('click',e=>{e.preventDefault();alert('Hubungi administrator sekolah untuk mengatur ulang password Anda.')});
 id('logoutBtn').onclick=()=>{currentTeacher=null;localStorage.removeItem('siLogin');localStorage.removeItem('siAuthToken');document.body.classList.remove('v10-logged-in');document.body.classList.add('v10-login');id('app').style.display='none';id('loginScreen').style.display='grid';id('loginPass').value='';window.scrollTo(0,0);document.documentElement.scrollTop=0;document.body.scrollTop=0}
 id('menuBtn').onclick=()=>id('sidebar').classList.toggle('open')
 const photoPicker=document.createElement('input');photoPicker.type='file';photoPicker.accept='image/*';photoPicker.style.display='none';document.body.appendChild(photoPicker);

@@ -69,6 +69,20 @@ function subjectAllowed(user, requestedMapel) {
   return !!own && !!requested && own === requested;
 }
 
+
+function extractRequestedMapel(body, url) {
+  if (body && typeof body === "object") {
+    for (const k of ["mapel","mata_pelajaran","mataPelajaran","subject"]) {
+      if (body[k] != null && String(body[k]).trim()) return body[k];
+    }
+  }
+  for (const k of ["mapel","mata_pelajaran","mataPelajaran","subject"]) {
+    const v = url.searchParams.get(k);
+    if (v != null && String(v).trim()) return v;
+  }
+  return "";
+}
+
 function rombelVariants(value) {
   const r = cleanRombel(value);
   const map = {
@@ -165,6 +179,19 @@ export default {
 
       const user = getUser(request);
       if (!user) return json({ ok: false, message: "Belum login." }, 401);
+
+
+      // GURU MAPEL: all rombel for students/attendance, own subject for all other menus.
+      if (user.role === "guru_mapel" && url.pathname !== "/api/siswa" && url.pathname !== "/api/absensi") {
+        let body = null;
+        if (!["GET","HEAD"].includes(request.method)) {
+          try { body = await request.clone().json(); } catch {}
+        }
+        const requestedMapel = extractRequestedMapel(body, url) || user.mapel || "";
+        if (!subjectAllowed(user, requestedMapel)) {
+          return json({ ok:false, message:`Akses ditolak. Akun Guru Mapel hanya dapat mengakses mapel ${normalizeMapel(user.mapel)}.` },403);
+        }
+      }
 
       // DATA GURU MAPEL - UPDATE
       if (url.pathname.startsWith("/api/guru/") && request.method === "PUT") {

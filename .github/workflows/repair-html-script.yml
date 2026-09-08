@@ -31,6 +31,75 @@ jobs:
                   s=s[:pos]+tag+'\n'+s[pos:]
           p.write_text(s,encoding='utf-8')
           PY
+      - name: Add Guru Mapel edit backend
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('src/index.js'); s=p.read_text(encoding='utf-8')
+          marker='      // DATA SISWA - GET\n'
+          block=r'''      // DATA GURU MAPEL - UPDATE
+      if (url.pathname.startsWith("/api/guru/") && request.method === "PUT") {
+        if (user.role !== "admin") return json({ ok:false, message:"Hanya administrator yang dapat mengubah data guru." },403);
+        const gid = url.pathname.split("/").pop();
+        if (!/^\d+$/.test(gid)) return json({ ok:false, message:"ID guru tidak valid." },400);
+        const existing = await env.DB.prepare("SELECT * FROM users WHERE id=?").bind(Number(gid)).first();
+        if (!existing) return json({ ok:false, message:"Data guru tidak ditemukan." },404);
+        if (existing.role !== "guru_mapel") return json({ ok:false, message:"Hanya akun Guru Mapel yang dapat diedit dari menu ini." },400);
+        const body = await request.json();
+        const nama = String(body.nama ?? existing.nama ?? "").trim();
+        const username = String(body.username ?? existing.username ?? "").trim();
+        const password = String(body.password ?? "");
+        const mapel = normalizeMapel(body.mapel ?? existing.mapel ?? "");
+        const rombel = cleanRombel(body.rombel ?? existing.rombel ?? existing.kelas ?? "ALL") || "ALL";
+        if (!nama || !username || !mapel) return json({ ok:false, message:"Nama, username, dan mapel wajib diisi." },400);
+        if (!["Pendidikan Agama dan Budi Pekerti","PJOK","Bahasa Inggris"].includes(mapel)) return json({ ok:false, message:"Mata pelajaran Guru Mapel tidak valid." },400);
+        const dup = await env.DB.prepare("SELECT id FROM users WHERE username=? AND id<>?").bind(username,Number(gid)).first();
+        if (dup) return json({ ok:false, message:"Username sudah digunakan guru lain." },409);
+        const c = await columns(env,"users");
+        const sets=["nama=?","username=?","mapel=?","role=?"]; const vals=[nama,username,mapel,"guru_mapel"];
+        if(c.has("rombel")){sets.push("rombel=?");vals.push(rombel);} else {sets.push("kelas=?");vals.push(rombel);}
+        if(password) { sets.push("password=?"); vals.push(password); }
+        vals.push(Number(gid));
+        await env.DB.prepare(`UPDATE users SET ${sets.join(",")} WHERE id=?`).bind(...vals).run();
+        const r = await env.DB.prepare("SELECT id,username,nama,role,kelas,rombel,mapel FROM users WHERE id=?").bind(Number(gid)).first();
+        return json({ ok:true, data:r, message:"Data Guru Mapel berhasil diperbarui." });
+      }
+
+'''
+          if 'DATA GURU MAPEL - UPDATE' not in s:
+              if marker not in s: raise SystemExit('guru insertion marker missing')
+              s=s.replace(marker,block+marker,1)
+              p.write_text(s,encoding='utf-8')
+          PY
+      - name: Add Guru Mapel edit controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('guru-mapel-ui.js'); s=p.read_text(encoding='utf-8')
+          s=s.replace('id="gmPassword" type="password" placeholder="Password"','id="gmPassword" type="password" placeholder="Password (kosong = tetap)"')
+          s=s.replace('<button class="btn primary" id="gmSave">💾 Buat Akun Guru Mapel</button><button class="btn secondary" id="gmReset">Reset</button>','<button class="btn primary" id="gmSave">💾 Buat Akun Guru Mapel</button><button class="btn secondary" id="gmCancel" style="display:none">Batal Edit</button><button class="btn secondary" id="gmReset">Reset</button>')
+          s=s.replace('<th>Rombel</th></tr></thead>','<th>Rombel</th><th>Aksi</th></tr></thead>')
+          s=s.replace('colspan="5"','colspan="6"')
+          old='tb.innerHTML=rows.map(x=>`<tr><td><b>${esc(x.username)}</b></td><td>${esc(x.nama)}</td><td><span class="badge">${x.role===\'guru_mapel\'?\'Guru Mapel\':x.role===\'admin\'?\'Administrator\':\'Guru Kelas\'}</span></td><td>${esc(x.mapel||\'-\')}</td><td>${esc(normR(x.rombel||x.kelas)||\'Semua\')}</td></tr>`).join(\'\')||\'<tr><td colspan="5" class="muted">Belum ada akun.</td></tr>\''
+          new='tb.innerHTML=rows.map(x=>`<tr><td><b>${esc(x.username)}</b></td><td>${esc(x.nama)}</td><td><span class="badge">${x.role===\'guru_mapel\'?\'Guru Mapel\':x.role===\'admin\'?\'Administrator\':\'Guru Kelas\'}</span></td><td>${esc(x.mapel||\'-\')}</td><td>${esc(normR(x.rombel||x.kelas)||\'Semua\')}</td><td><button class="btn secondary gmEdit" data-id="${esc(x.id)}" data-username="${esc(x.username)}" data-nama="${esc(x.nama)}" data-mapel="${esc(x.mapel||\'\')}" data-rombel="${esc(normR(x.rombel||x.kelas)||\'ALL\')}">✏️ Edit</button></td></tr>`).join(\'\')||\'<tr><td colspan="6" class="muted">Belum ada akun.</td></tr>\''
+          if old not in s: raise SystemExit('guru table pattern missing')
+          s=s.replace(old,new,1)
+          s=s.replace('document.getElementById(\'gmReset\')?.addEventListener(\'click\',()=>[\'gmNama\',\'gmUsername\',\'gmPassword\'].forEach(x=>{const e=document.getElementById(x);if(e)e.value=\'\'}));','document.getElementById(\'gmReset\')?.addEventListener(\'click\',resetForm);document.getElementById(\'gmCancel\')?.addEventListener(\'click\',resetForm);')
+          oldsave='async function save(){const nama=document.getElementById(\'gmNama\')?.value.trim(),username=document.getElementById(\'gmUsername\')?.value.trim(),password=document.getElementById(\'gmPassword\')?.value||\'\',mapel=document.getElementById(\'gmMapel\')?.value||\'\',rombel=document.getElementById(\'gmRombel\')?.value||\'ALL\';if(!nama||!username||!password||!mapel)return msg(\'Nama, username, password, dan mapel wajib diisi.\');try{await api(\'/guru\',{method:\'POST\',body:JSON.stringify({nama,username,password,mapel,rombel,role:\'guru_mapel\'})});msg(\'✓ Akun Guru Mapel berhasil dibuat.\',true);[\'gmNama\',\'gmUsername\',\'gmPassword\'].forEach(x=>{const e=document.getElementById(x);if(e)e.value=\'\'});await load()}catch(e){msg(e.message||\'Gagal membuat akun.\')}}'
+          newsave='function resetForm(){[\'gmNama\',\'gmUsername\',\'gmPassword\'].forEach(x=>{const e=document.getElementById(x);if(e)e.value=\'\'});const id=document.getElementById(\'gmEditId\');if(id)id.value=\'\';const b=document.getElementById(\'gmSave\');if(b)b.textContent=\'💾 Buat Akun Guru Mapel\';const c=document.getElementById(\'gmCancel\');if(c)c.style.display=\'none\'}\n  function startEdit(x){let id=document.getElementById(\'gmEditId\');if(!id){id=document.createElement(\'input\');id.type=\'hidden\';id.id=\'gmEditId\';document.getElementById(\'gmPanel\')?.appendChild(id)}id.value=x.id;document.getElementById(\'gmNama\').value=x.nama||\'\';document.getElementById(\'gmUsername\').value=x.username||\'\';document.getElementById(\'gmPassword\').value=\'\';document.getElementById(\'gmMapel\').value=x.mapel||\'\';document.getElementById(\'gmRombel\').value=x.rombel||\'ALL\';document.getElementById(\'gmSave\').textContent=\'💾 Simpan Perubahan\';document.getElementById(\'gmCancel\').style.display=\'inline-block\'}\n  async function save(){const nama=document.getElementById(\'gmNama\')?.value.trim(),username=document.getElementById(\'gmUsername\')?.value.trim(),password=document.getElementById(\'gmPassword\')?.value||\'\',mapel=document.getElementById(\'gmMapel\')?.value||\'\',rombel=document.getElementById(\'gmRombel\')?.value||\'ALL\',editId=document.getElementById(\'gmEditId\')?.value||\'\';if(!nama||!username||!mapel||(!editId&&!password))return msg(editId?\'Nama, username, dan mapel wajib diisi.\':\'Nama, username, password, dan mapel wajib diisi.\');try{const body={nama,username,mapel,rombel,role:\'guru_mapel\'};if(password)body.password=password;const p=editId?await api(\'/guru/\'+encodeURIComponent(editId),{method:\'PUT\',body:JSON.stringify(body)}):await api(\'/guru\',{method:\'POST\',body:JSON.stringify({...body,password})});msg(editId?\'✓ Data Guru Mapel berhasil diperbarui.\':\'✓ Akun Guru Mapel berhasil dibuat.\',true);resetForm();await load()}catch(e){msg(e.message||\'Gagal menyimpan data.\')}}'
+          if oldsave not in s: raise SystemExit('save function pattern missing')
+          s=s.replace(oldsave,newsave,1)
+          s=s.replace('function load(){', 'function load(){')
+          s=s.replace('tb.innerHTML=rows.map(x=>', 'tb.innerHTML=rows.map(x=>',1)
+          needle='tb.innerHTML=rows.map(x=>`<tr><td><b>${esc(x.username)}</b></td>'
+          # bind edit buttons immediately after table render by augmenting load's tail
+          s=s.replace("catch(e){tb.innerHTML=`<tr><td colspan=\"6\" class=\"danger-text\">${esc(e.message)}</td></tr>`}}", "catch(e){tb.innerHTML=`<tr><td colspan=\"6\" class=\"danger-text\">${esc(e.message)}</td></tr>`}document.querySelectorAll('.gmEdit').forEach(b=>b.addEventListener('click',()=>startEdit(b.dataset)))}")
+          p.write_text(s,encoding='utf-8')
+          PY
       - name: Validate
         shell: bash
         run: |
@@ -48,13 +117,13 @@ jobs:
           node --check src/index.js
           node --check assets/absensi.js
           node --check guru-mapel-ui.js
-      - name: Commit patched index
+      - name: Commit patched files
         shell: bash
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add index.html
-          if git diff --cached --quiet; then echo 'No index patch needed'; exit 0; fi
-          git commit -m 'fix: load attendance and Guru Mapel modules [skip ci]'
+          git add index.html src/index.js guru-mapel-ui.js
+          if git diff --cached --quiet; then echo 'No patch needed'; exit 0; fi
+          git commit -m 'feat: add Guru Mapel edit controls [skip ci]'
           git push

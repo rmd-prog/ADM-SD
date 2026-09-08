@@ -1,0 +1,41 @@
+name: Apply Guru Mapel UI and account API
+on:
+  push:
+    paths:
+      - '.github/guru-mapel-ui-trigger.txt'
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch Worker and frontend
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          w=Path('src/index.js')
+          s=w.read_text(encoding='utf-8')
+          marker='''      // NILAI\n      if (url.pathname === "/api/nilai" && request.method === "GET") {'''
+          endpoint='''      // CREATE GURU MAPEL — administrator only\n      if (url.pathname === "/api/guru" && request.method === "POST") {\n        if (user.role !== "admin") return json({ ok:false, message:"Khusus administrator." }, 403);\n        const body = await request.json();\n        const nama = String(body.nama || "").trim();\n        const username = String(body.username || "").trim();\n        const password = String(body.password || "");\n        const role = String(body.role || "guru_mapel").trim();\n        const rombel = cleanRombel(body.rombel || body.kelas || "");\n        const mapel = normalizeMapel(body.mapel || "");\n        if (!nama || !username || !password || !rombel || !mapel) return json({ok:false,message:"Nama, username, password, mapel, dan rombel wajib diisi."},400);\n        if (role !== "guru_mapel") return json({ok:false,message:"Endpoint ini khusus akun Guru Mapel."},400);\n        if (!["Pendidikan Agama dan Budi Pekerti","PJOK","Bahasa Inggris"].includes(mapel)) return json({ok:false,message:"Mata pelajaran Guru Mapel tidak valid."},400);\n        const c = await columns(env, "users");\n        if (!c.has("mapel")) { try { await env.DB.prepare("ALTER TABLE users ADD COLUMN mapel TEXT").run(); } catch {} }\n        const exists = await env.DB.prepare("SELECT id FROM users WHERE username = ?").bind(username).first();\n        if (exists) return json({ok:false,message:"Username sudah digunakan."},409);\n        const fields=[]; const binds=[];\n        const add=(name,value)=>{if(c.has(name)){fields.push(name);binds.push(value)}};\n        add("username",username); add("password",password); add("nama",nama); add("role",role);\n        add("kelas",rombel); add("rombel",rombel); add("mapel",mapel);\n        if (!fields.length) return json({ok:false,message:"Struktur tabel users tidak sesuai."},500);\n        const marks=fields.map(()=>"?").join(",");\n        await env.DB.prepare(`INSERT INTO users (${fields.join(",")}) VALUES (${marks})`).bind(...binds).run();\n        const created=await env.DB.prepare(`SELECT id, username, nama, role, kelas, rombel, mapel FROM users WHERE username = ?`).bind(username).first();\n        return json({ok:true,message:"Akun Guru Mapel berhasil dibuat.",data:created},201);\n      }\n\n'''
+          if endpoint not in s:
+              if marker not in s: raise SystemExit('Worker marker not found')
+              s=s.replace(marker,endpoint+marker,1)
+          w.write_text(s,encoding='utf-8')
+
+          p=Path('index.html')
+          h=p.read_text(encoding='utf-8')
+          if 'src="guru-mapel-ui.js"' not in h:
+              if '<script src="guru-mapel-ui.js"></script>' not in h:
+                  h=h.replace('</body>','<script src="guru-mapel-ui.js"></script>\n</body>',1)
+              else:
+                  pass
+          p.write_text(h,encoding='utf-8')
+          PY
+          node --check src/index.js
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/index.js index.html guru-mapel-ui.js .github/guru-mapel-ui-trigger.txt
+          git commit -m 'feat: add Guru Mapel account management' [skip ci]
+          git push origin main

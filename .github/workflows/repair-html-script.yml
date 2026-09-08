@@ -25,7 +25,7 @@ jobs:
           marker="id('loginForm').onsubmit=async e=>{"
           if 'window.__ADM_LOGIN=async(username,password)' not in s and marker in s:
               s=s.replace(marker,"window.__ADM_LOGIN=async(username,password)=>{const t=await remoteLogin(username,password);await finishLogin(t);return t};"+marker,1)
-          for tag in ('<script src="assets/absensi.js"></script>','<script src="guru-mapel-ui.js"></script>','<script src="assets/guru-mapel-access.js"></script>'):
+          for tag in ('<script src="assets/absensi.js"></script>','<script src="guru-mapel-ui.js"></script>','<script src="assets/guru-mapel-access.js"></script>','<script src="assets/role-menu.js"></script>'):
               if tag not in s:
                   pos=s.rfind('</body>')
                   if pos<0: raise SystemExit('body marker missing')
@@ -49,56 +49,9 @@ jobs:
           set -euo pipefail
           python - <<'PY'
           from pathlib import Path
-          import re
           access = Path('assets/guru-mapel-access.js')
           access.parent.mkdir(parents=True, exist_ok=True)
-          access.write_text(r'''/* ADM-SD — Guru Mapel subject access guard */
-          (function(){
-            'use strict';
-            const SUBJECTS=['Pendidikan Agama dan Budi Pekerti','PJOK','Bahasa Inggris'];
-            const API='https://adm-sd.adm-sd.workers.dev/api';
-            const normalize=v=>String(v??'').trim().toLowerCase().replace(/\s+/g,' ');
-            const normalizeSubject=v=>{
-              const s=normalize(v);
-              if(['agama','pai','pendidikan agama','pendidikan agama dan budi pekerti'].includes(s))return 'Pendidikan Agama dan Budi Pekerti';
-              if(['pjok','pendidikan jasmani','pendidikan jasmani olahraga dan kesehatan'].includes(s))return 'PJOK';
-              if(['inggris','bahasa inggris','english'].includes(s))return 'Bahasa Inggris';
-              return String(v??'').trim();
-            };
-            const teacher=()=>{
-              try{const x=JSON.parse(localStorage.getItem('siLogin')||'null');if(x)return x.user||x}catch{}
-              return null;
-            };
-            const own=()=>{const t=teacher();return t&&String(t.role||'').toLowerCase()==='guru_mapel'?normalizeSubject(t.mapel||''):''};
-            const isStudentOrAttendance=path=>path==='/api/siswa'||path==='/api/absensi';
-            const subjectKeys=['mapel','mata_pelajaran','mataPelajaran','subject'];
-            const getSubject=o=>{if(!o||typeof o!=='object')return '';for(const k of subjectKeys)if(o[k]!=null&&String(o[k]).trim())return normalizeSubject(o[k]);return ''};
-            const stampBody=(body,subject)=>{if(!body||!subject)return body;const out=typeof body==='object'&&!Array.isArray(body)?{...body}:body;if(out&&typeof out==='object'&&!Array.isArray(out)&&!getSubject(out))out.mapel=subject;return out};
-            const filterValue=(v,subject)=>{if(Array.isArray(v))return v.map(x=>filterValue(x,subject)).filter(x=>{const s=getSubject(x);return !s||s===subject});if(v&&typeof v==='object'){const o={};for(const [k,val] of Object.entries(v))o[k]=filterValue(val,subject);return o}return v};
-            const originalFetch=window.fetch.bind(window);
-            window.fetch=async function(input,init){
-              const subject=own();if(!subject)return originalFetch(input,init);
-              let url=typeof input==='string'?input:(input&&input.url)||'';let u;try{u=new URL(url,location.href)}catch{return originalFetch(input,init)}
-              if(!u.pathname.startsWith('/api/')&&!u.href.startsWith(API))return originalFetch(input,init);
-              const path=u.pathname.startsWith('/api/')?u.pathname:u.pathname.replace(new URL(API).pathname,'/api');
-              const opts=Object.assign({},init||{});const method=String(opts.method||((input&&input.method)||'GET')).toUpperCase();
-              if(!isStudentOrAttendance(path)){
-                if(method==='GET'){
-                  if(!u.searchParams.has('mapel')&&!u.searchParams.has('mata_pelajaran')&&!u.searchParams.has('mataPelajaran')&&!u.searchParams.has('subject'))u.searchParams.set('mapel',subject);
-                  url=u.toString();if(typeof input==='string')input=url;else input=new Request(url,input);
-                }else if(opts.body){
-                  try{const b=JSON.parse(opts.body);opts.body=JSON.stringify(stampBody(b,subject))}catch{}
-                }
-              }
-              const res=await originalFetch(input,opts);if(isStudentOrAttendance(path)||!subject)return res;
-              const ct=res.headers.get('content-type')||'';if(!ct.includes('application/json'))return res;
-              try{const data=await res.clone().json();const filtered=filterValue(data,subject);return new Response(JSON.stringify(filtered),{status:res.status,statusText:res.statusText,headers:res.headers})}catch{return res}
-            };
-            function lockSubjectSelects(){const subject=own();if(!subject)return;document.querySelectorAll('select').forEach(sel=>{const opts=[...sel.options];opts.forEach(o=>{const s=normalizeSubject(o.value||o.textContent||'');if(SUBJECTS.some(x=>normalize(x)===normalize(s))&&normalize(s)!==normalize(subject)){o.hidden=true;o.disabled=true}});const good=opts.find(o=>!o.disabled&&normalizeSubject(o.value||o.textContent||'')===subject);if(good)sel.value=good.value})}
-            const obs=new MutationObserver(lockSubjectSelects);if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{lockSubjectSelects();obs.observe(document.body,{childList:true,subtree:true})},{once:true});else{lockSubjectSelects();obs.observe(document.body,{childList:true,subtree:true})}
-          })();
-          ''',encoding='utf-8')
-
+          if not access.exists(): raise SystemExit('guru-mapel-access.js missing')
           p=Path('src/index.js'); s=p.read_text(encoding='utf-8')
           helper='''\nfunction extractRequestedMapel(body, url) {\n  if (body && typeof body === "object") {\n    for (const k of ["mapel","mata_pelajaran","mataPelajaran","subject"]) {\n      if (body[k] != null && String(body[k]).trim()) return body[k];\n    }\n  }\n  for (const k of ["mapel","mata_pelajaran","mataPelajaran","subject"]) {\n    const v = url.searchParams.get(k);\n    if (v != null && String(v).trim()) return v;\n  }\n  return "";\n}\n'''
           if 'function extractRequestedMapel(body, url)' not in s:
@@ -123,9 +76,8 @@ jobs:
           s=Path('index.html').read_text(encoding='utf-8')
           scripts=re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>',s,re.S|re.I)
           Path('/tmp/index-inline.js').write_text('\n'.join(scripts),encoding='utf-8')
-          assert '<script src="assets/absensi.js"></script>' in s
-          assert '<script src="guru-mapel-ui.js"></script>' in s
-          assert '<script src="assets/guru-mapel-access.js"></script>' in s
+          for tag in ('<script src="assets/absensi.js"></script>','<script src="guru-mapel-ui.js"></script>','<script src="assets/guru-mapel-access.js"></script>','<script src="assets/role-menu.js"></script>'):
+              assert tag in s, tag
           b=Path('src/index.js').read_text(encoding='utf-8')
           assert 'function extractRequestedMapel(body, url)' in b
           assert 'GURU MAPEL: all rombel for students/attendance' in b
@@ -135,6 +87,7 @@ jobs:
           node --check assets/absensi.js
           node --check guru-mapel-ui.js
           node --check assets/guru-mapel-access.js
+          node --check assets/role-menu.js
 
       - name: Commit patched files
         shell: bash
@@ -142,7 +95,7 @@ jobs:
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add index.html src/index.js guru-mapel-ui.js assets/guru-mapel-access.js
+          git add index.html src/index.js guru-mapel-ui.js assets/guru-mapel-access.js assets/role-menu.js
           if git diff --cached --quiet; then echo 'No patch needed'; exit 0; fi
-          git commit -m 'feat: restrict Guru Mapel by subject [skip ci]'
+          git commit -m 'feat: separate admin and teacher navigation [skip ci]'
           git push

@@ -1,0 +1,75 @@
+name: Finalize Guru Mapel restrictions
+on:
+  push:
+    paths:
+      - '.github/guru-mapel-final-trigger.txt'
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch frontend and Worker restrictions
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          p=Path('index.html'); s=p.read_text(encoding='utf-8')
+          reps=[]
+          reps.append(("function isGuruKelas(){return !!currentTeacher && currentTeacher.role==='guru'}\nfunction allowedClass(){return isGuruKelas()?normalizeRombel(currentTeacher.rombel||currentTeacher.kelas||''):''}","function isGuruKelas(){return !!currentTeacher && currentTeacher.role==='guru'}\nfunction isGuruMapel(){return !!currentTeacher && currentTeacher.role==='guru_mapel'}\nfunction allowedClass(){return (isGuruKelas()||isGuruMapel())?normalizeRombel(currentTeacher.rombel||currentTeacher.kelas||''):''}\nfunction allowedMapel(){return isGuruMapel()?String(currentTeacher.mapel||''):''}"))
+          reps.append(("function syncRoleMenu(){const admin=!isGuruKelas();document.querySelectorAll('.admin-only').forEach(b=>b.style.display=admin?'':'none');document.querySelectorAll('.menu-group.admin-only').forEach(b=>b.style.display=admin?'block':'none')}","function syncRoleMenu(){const admin=!isGuruKelas()&&!isGuruMapel();document.querySelectorAll('.admin-only').forEach(b=>b.style.display=admin?'':'none');document.querySelectorAll('.menu-group.admin-only').forEach(b=>b.style.display=admin?'block':'none')}") )
+          reps.append(("if(isGuruKelas()&&['teachers','importScores','backup'].includes(p))p='dashboard';","if((isGuruKelas()||isGuruMapel())&&['teachers','importScores','backup'].includes(p))p='dashboard';"))
+          old="""function normalizeLoginResponse(payload, username){
+  const raw=payload&&typeof payload==='object'?(payload.user||payload.data||payload):{};
+  const roleRaw=raw.role||raw.peran||raw.user_role||raw.type||'';
+  const role=String(roleRaw).toLowerCase().includes('admin')?'admin':'guru';
+  const kelas=normalizeRombel(raw.rombel??raw.kelas??raw.class??raw.class_id??raw.kelas_id??raw.assigned_class??'');
+  return {username:String(raw.username??raw.user??username),name:String(raw.name??raw.nama??raw.full_name??raw.nama_guru??username),role,kelas,rombel:kelas,token:payload?.token||payload?.access_token||raw.token||raw.access_token||''};
+}"""
+          new="""function normalizeLoginResponse(payload, username){
+  const raw=payload&&typeof payload==='object'?(payload.user||payload.data||payload):{};
+  const roleRaw=String(raw.role||raw.peran||raw.user_role||raw.type||'').toLowerCase();
+  const role=roleRaw.includes('admin')?'admin':(roleRaw.includes('guru_mapel')||roleRaw.includes('guru mapel')?'guru_mapel':'guru');
+  const kelas=normalizeRombel(raw.rombel??raw.kelas??raw.class??raw.class_id??raw.kelas_id??raw.assigned_class??'');
+  return {username:String(raw.username??raw.user??username),name:String(raw.name??raw.nama??raw.full_name??raw.nama_guru??username),role,kelas,rombel:kelas,mapel:String(raw.mapel||''),token:payload?.token||payload?.access_token||raw.token||raw.access_token||''};
+}"""
+          reps.append((old,new))
+          old="""function fillMapels(){
+['rpmMapel','scoreMapel','cpMapel','tpMapel','atpMapel','protaMapel','prosemMapel'].forEach(k=>id(k).innerHTML=MAPEL.map(x=>'<option>'+esc(x)+'</option>').join(''));
+['sClass','scoreKelas','rpmKelas','cpKelas','tpKelas','atpKelas','protaKelas','prosemKelas','tClass'].forEach(k=>id(k).innerHTML=ROMBELS.map(x=>'<option value=\"'+x+'\">'+x+'</option>').join(''));
+updateBab(); loadDocFields();
+}"""
+          new="""function fillMapels(){
+const maps=isGuruMapel()?[allowedMapel()]:MAPEL;
+['rpmMapel','scoreMapel','cpMapel','tpMapel','atpMapel','protaMapel','prosemMapel','aiMapel'].forEach(k=>{const e=id(k);if(e)e.innerHTML=maps.filter(Boolean).map(x=>'<option value=\"'+esc(x)+'\">'+esc(x)+'</option>').join('')});
+['sClass','scoreKelas','rpmKelas','cpKelas','tpKelas','atpKelas','protaKelas','prosemKelas','tClass'].forEach(k=>{const e=id(k);if(e)e.innerHTML=ROMBELS.map(x=>'<option value=\"'+x+'\">'+x+'</option>').join('')});
+applyClassLock();updateBab();loadDocFields();
+}"""
+          reps.append((old,new))
+          reps.append(("const rombel=t.role==='guru'?normalizeRombel(t.rombel||t.kelas):'';","const rombel=(t.role==='guru'||t.role==='guru_mapel')?normalizeRombel(t.rombel||t.kelas):'';"))
+          reps.append(("const np=await apiGet('/nilai',{rombel:k,semester:1});","const np=await apiGet('/nilai',{rombel:k,semester:1,mapel:t.role==='guru_mapel'?t.mapel:''});"))
+          reps.append(("const pp=await apiGet('/perangkat',{rombel:k});","const pp=await apiGet('/perangkat',{rombel:k,mapel:t.role==='guru_mapel'?t.mapel:''});"))
+          reps.append(("showPage(t.role==='guru'?'students':'dashboard');","showPage((t.role==='guru'||t.role==='guru_mapel')?'students':'dashboard');"))
+          for a,b in reps:
+              if a not in s: print('WARN frontend marker missing:',a[:80])
+              else: s=s.replace(a,b,1)
+          p.write_text(s,encoding='utf-8')
+
+          w=Path('src/index.js'); s=w.read_text(encoding='utf-8')
+          a='''        const jenis = url.searchParams.get("jenis") || "";\n        const mapel = url.searchParams.get("mapel") || "";\n        if (user.role !== "admin" && requested && requested !== own) {'''
+          b='''        const jenis = url.searchParams.get("jenis") || "";\n        const mapel = url.searchParams.get("mapel") || "";\n        if (!subjectAllowed(user, mapel)) return json({ok:false,message:"Akses mata pelajaran ditolak."},403);\n        if (user.role !== "admin" && requested && requested !== own) {'''
+          if a in s:s=s.replace(a,b,1)
+          else: print('WARN perangkat marker missing')
+          a='''        const mapel = url.searchParams.get("mapel") || "";\n        if (user.role !== "admin" && requested && requested !== own) {\n          return json({ ok: false, message: "Akses rombel ditolak." }, 403);\n        }\n        const c = await columns(env, "rpm");'''
+          b='''        const mapel = url.searchParams.get("mapel") || "";\n        if (!subjectAllowed(user, mapel)) return json({ok:false,message:"Akses mata pelajaran ditolak."},403);\n        if (user.role !== "admin" && requested && requested !== own) {\n          return json({ ok: false, message: "Akses rombel ditolak." }, 403);\n        }\n        const c = await columns(env, "rpm");'''
+          if a in s:s=s.replace(a,b,1)
+          else: print('WARN rpm marker missing')
+          w.write_text(s,encoding='utf-8')
+          PY
+          node --check src/index.js
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html src/index.js .github/guru-mapel-final-trigger.txt
+          git commit -m 'fix: enforce Guru Mapel role and subject restrictions [skip ci]'
+          git push origin main

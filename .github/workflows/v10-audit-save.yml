@@ -1,0 +1,29 @@
+name: V10 Audit Save Hooks
+on:
+  push:
+    paths:
+      - '.github/v10-audit-save.trigger'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Locate document save/load hooks
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('index.html').read_text(encoding='utf-8')
+          keys=['/api/perangkat','/api/rpm','save','Simpan','syncRemoteData','localStorage','perangkat','rpm']
+          for k in keys:
+              print(f'=== {k} ===')
+              start=0; n=0
+              while True:
+                  i=s.find(k,start)
+                  if i<0 or n>=20: break
+                  print(s[max(0,i-220):i+420].replace('\\n',' ')[:700])
+                  print('---')
+                  start=i+len(k); n+=1
+          PY

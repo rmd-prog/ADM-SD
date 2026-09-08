@@ -26,7 +26,7 @@ jobs:
           s = p.read_text(encoding='utf-8')
 
           marker = "id('loginForm').onsubmit=async e=>{"
-          bridge = "window.__ADM_LOGIN=async(username,password)=>{const t=await remoteLogin(username,password);await finishLogin(t);return t};\\n" + marker
+          bridge = "window.__ADM_LOGIN=async(username,password)=>{const t=await remoteLogin(username,password);await finishLogin(t);return t};" + marker
           if 'window.__ADM_LOGIN=async(username,password)' not in s:
               if marker not in s:
                   raise SystemExit('main login handler marker not found')

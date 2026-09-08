@@ -1,0 +1,79 @@
+name: Emergency Login Patch
+on:
+  push:
+    paths:
+      - '.github/emergency-login-trigger.txt'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch login
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          old="""async function remoteLogin(username,password){
+  let res;
+  try{
+    res=await fetch(LOGIN_API,{
+      method:'POST',
+      mode:'cors',
+      cache:'no-store',
+      headers:{'Content-Type':'application/json','Accept':'application/json'},
+      body:JSON.stringify({username:String(username),password:String(password)})
+    });
+  }catch(e){
+    throw new Error('Worker tidak dapat dihubungi. Periksa internet atau alamat Worker.');
+  }"""
+          new="""async function remoteLogin(username,password){
+  let res;
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),15000);
+  try{
+    res=await fetch(LOGIN_API,{
+      method:'POST',mode:'cors',cache:'no-store',
+      headers:{'Content-Type':'application/json','Accept':'application/json'},
+      body:JSON.stringify({username:String(username),password:String(password)}),signal:controller.signal
+    });
+  }catch(e){
+    if(e&&e.name==='AbortError')throw new Error('Server login tidak merespons dalam 15 detik. Worker/D1 sedang bermasalah atau belum aktif.');
+    throw new Error('Worker tidak dapat dihubungi. Periksa internet atau alamat Worker.');
+  }finally{clearTimeout(timer)}"""
+          if old in s:
+            s=s.replace(old,new,1)
+          old2="""  updateTeacherProfile(t);
+  id('loginScreen').style.display='none';id('app').style.display='block';window.scrollTo({top:0,left:0,behavior:'auto'});document.documentElement.scrollTop=0;document.body.scrollTop=0;id('loginError').style.display='none';
+  applyClassLock();syncRoleMenu();initAIGenerator();renderBookBasisStatus();renderStats();renderStudents();renderScores();renderReport();showPage((t.role==='guru'||t.role==='guru_mapel')?'students':'dashboard');
+  // Sinkronisasi D1 berjalan di belakang layar agar login tidak tertahan.
+  syncRemoteData(t).catch(err=>console.warn('Sinkronisasi D1 gagal:',err));
+  setTimeout(()=>showWelcome(t),220);"""
+          new2="""  updateTeacherProfile(t);
+  id('loginScreen').style.display='none';id('app').style.display='block';
+  window.scrollTo(0,0);document.documentElement.scrollTop=0;document.body.scrollTop=0;id('loginError').style.display='none';
+  try{applyClassLock()}catch(e){console.warn('Login init class lock:',e)}
+  try{syncRoleMenu()}catch(e){console.warn('Login init role menu:',e)}
+  try{initAIGenerator()}catch(e){console.warn('Login init AI:',e)}
+  try{renderBookBasisStatus()}catch(e){console.warn('Login init book basis:',e)}
+  try{renderStats()}catch(e){console.warn('Login init stats:',e)}
+  try{renderStudents()}catch(e){console.warn('Login init students:',e)}
+  try{renderScores()}catch(e){console.warn('Login init scores:',e)}
+  try{renderReport()}catch(e){console.warn('Login init report:',e)}
+  try{showPage((t.role==='guru'||t.role==='guru_mapel')?'students':'dashboard')}catch(e){console.warn('Login init page:',e)}
+  syncRemoteData(t).catch(err=>console.warn('Sinkronisasi D1 gagal:',err));
+  setTimeout(()=>showWelcome(t),220);"""
+          if old2 in s:
+            s=s.replace(old2,new2,1)
+          p.write_text(s)
+          PY
+          git diff --check
+      - name: Commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git diff --cached --quiet || git commit -m 'fix: emergency login hardening [skip ci]'
+          git push origin main

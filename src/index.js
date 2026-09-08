@@ -169,7 +169,7 @@ export default {
       // DATA SISWA - GET
       if (url.pathname === "/api/siswa" && request.method === "GET") {
         const { requested, own } = classFilter(url.searchParams.get("rombel") || url.searchParams.get("kelas"), user);
-        if (user.role !== "admin" && requested && requested !== own) {
+        if (user.role !== "admin" && requested && !canAccessRombel(user, requested)) {
           return json({ ok: false, message: "Akses rombel ditolak." }, 403);
         }
         const c = await columns(env, "siswa");
@@ -322,7 +322,7 @@ export default {
         if (!allowed.includes(jenis)) return json({ ok:false, message:"Jenis AI Guru tidak valid." }, 400);
         const requested = cleanRombel(body.rombel || body.kelas || "");
         const own = cleanRombel(user.rombel || user.kelas || "");
-        if (user.role !== "admin" && requested && requested !== own) return json({ ok:false, message:"Akses rombel ditolak." }, 403);
+        if (user.role !== "admin" && requested && !canAccessRombel(user, requested)) return json({ ok:false, message:"Akses rombel ditolak." }, 403);
         const openaiKey = typeof env.OPENAI_API_KEY === "string" ? env.OPENAI_API_KEY.trim() : "";
         if (!openaiKey) return json({ok:false,code:"OPENAI_KEY_NOT_BOUND",message:"Worker aktif tidak menerima secret OPENAI_API_KEY. Pastikan secret dipasang pada Worker/environment yang sedang dideploy, lalu Deploy ulang Worker."},503);
 
@@ -480,7 +480,7 @@ export default {
         if (!subjectAllowed(user, mapel)) {
           return json({ ok:false, message:"Akses mata pelajaran ditolak." }, 403);
         }
-        if (user.role !== "admin" && requested && requested !== own) {
+        if (user.role !== "admin" && requested && !canAccessRombel(user, requested)) {
           return json({ ok: false, message: "Akses rombel ditolak." }, 403);
         }
         const c = await columns(env, "nilai");
@@ -509,7 +509,7 @@ export default {
         const jenis = url.searchParams.get("jenis") || "";
         const mapel = url.searchParams.get("mapel") || "";
         if (!subjectAllowed(user, mapel)) return json({ok:false,message:"Akses mata pelajaran ditolak."},403);
-        if (user.role !== "admin" && requested && requested !== own) {
+        if (user.role !== "admin" && requested && !canAccessRombel(user, requested)) {
           return json({ ok: false, message: "Akses rombel ditolak." }, 403);
         }
         const c = await columns(env, "perangkat");
@@ -540,7 +540,7 @@ export default {
         const { requested, own } = classFilter(url.searchParams.get("rombel") || url.searchParams.get("kelas"), user);
         const mapel = url.searchParams.get("mapel") || "";
         if (!subjectAllowed(user, mapel)) return json({ok:false,message:"Akses mata pelajaran ditolak."},403);
-        if (user.role !== "admin" && requested && requested !== own) {
+        if (user.role !== "admin" && requested && !canAccessRombel(user, requested)) {
           return json({ ok: false, message: "Akses rombel ditolak." }, 403);
         }
         const c = await columns(env, "rpm");

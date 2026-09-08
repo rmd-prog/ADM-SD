@@ -5,25 +5,35 @@ on:
       - '.github/v10-audit-save.trigger'
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 jobs:
   audit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Locate document save/load hooks
+      - name: Repair Worker document persistence
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          s=Path('index.html').read_text(encoding='utf-8')
-          keys=['/api/perangkat','/api/rpm','save','Simpan','syncRemoteData','localStorage','perangkat','rpm']
-          for k in keys:
-              print(f'=== {k} ===')
-              start=0; n=0
-              while True:
-                  i=s.find(k,start)
-                  if i<0 or n>=20: break
-                  print(s[max(0,i-220):i+420].replace('\\n',' ')[:700])
-                  print('---')
-                  start=i+len(k); n+=1
+          p=Path('src/index.js')
+          s=p.read_text(encoding='utf-8')
+          if 'const DOCUMENT_TYPES = ["cp","tp","atp","prota","prosem"];' in s:
+              print('ALREADY_PATCHED')
+              raise SystemExit(0)
+          anchor='      // AI DIAGNOSTIC — tidak pernah mengembalikan isi secret'
+          if anchor not in s:
+              raise SystemExit('ANCHOR_NOT_FOUND')
+          block='''      // PERANGKAT PEMBELAJARAN - GET/POST (D1 persistence)\n      const DOCUMENT_TYPES = ["cp","tp","atp","prota","prosem"];\n      if (url.pathname === "/api/perangkat" && request.method === "GET") {\n        const requested = cleanRombel(url.searchParams.get("rombel") || url.searchParams.get("kelas") || "");\n        const own = cleanRombel(user.rombel || user.kelas || "");\n        if (user.role !== "admin" && requested && requested !== own) return json({ok:false,message:"Akses rombel ditolak."},403);\n        const c = await columns(env,"perangkat");\n        const field = c.has("rombel") ? "COALESCE(NULLIF(TRIM(rombel), ''), TRIM(kelas))" : "TRIM(kelas)";\n        let r;\n        if (requested || user.role !== "admin") { const rw=rombelWhere(field,requested||own); r=await env.DB.prepare(`SELECT * FROM perangkat WHERE ${rw.sql} ORDER BY id DESC`).bind(...rw.binds).all(); }\n        else r=await env.DB.prepare("SELECT * FROM perangkat ORDER BY id DESC").all();\n        return json({ok:true,data:r.results});\n      }\n      if (url.pathname === "/api/perangkat" && request.method === "POST") {\n        const body=await request.json(); const jenis=String(body.jenis||"").toLowerCase().trim();\n        if(!DOCUMENT_TYPES.includes(jenis)) return json({ok:false,message:"Jenis perangkat tidak valid."},400);\n        const kelas=cleanRombel(body.rombel||body.kelas||user.rombel||user.kelas||""); const own=cleanRombel(user.rombel||user.kelas||"");\n        if(!kelas) return json({ok:false,message:"Rombel wajib diisi."},400);\n        if(user.role!=="admin"&&kelas!==own) return json({ok:false,message:"Akses rombel ditolak."},403);\n        const mapel=String(body.mapel||"").trim(); const judul=String(body.judul||jenis.toUpperCase()).trim();\n        const isi=String(body.isi??body.teks??body.text??body.konten??body.content??""); if(!isi.trim()) return json({ok:false,message:"Isi perangkat kosong."},400);\n        const c=await columns(env,"perangkat"); const cols=[]; const vals=[]; const add=(n,v)=>{if(c.has(n)){cols.push(n);vals.push(v)}};\n        add("jenis",jenis);add("mapel",mapel);add("kelas",kelas);add("rombel",kelas);add("judul",judul);add("isi",isi);add("teks",isi);add("content",isi);add("konten",isi);add("tahun",String(body.tahun||"2026/2027"));\n        if(!cols.length)return json({ok:false,message:"Struktur tabel perangkat tidak dikenali."},500);\n        const r=await env.DB.prepare(`INSERT INTO perangkat (${cols.join(",")}) VALUES (${cols.map(()=>"?").join(",")}) RETURNING *`).bind(...vals).first();\n        return json({ok:true,data:r});\n      }\n\n      // RPM - GET/POST (D1 persistence)\n      if (url.pathname === "/api/rpm" && request.method === "GET") {\n        const requested=cleanRombel(url.searchParams.get("rombel")||url.searchParams.get("kelas")||""); const own=cleanRombel(user.rombel||user.kelas||"");\n        if(user.role!=="admin"&&requested&&requested!==own)return json({ok:false,message:"Akses rombel ditolak."},403);\n        const c=await columns(env,"rpm"); const field=c.has("rombel")?"COALESCE(NULLIF(TRIM(rombel), ''), TRIM(kelas))":"TRIM(kelas)"; let r;\n        if(requested||user.role!=="admin"){const rw=rombelWhere(field,requested||own);r=await env.DB.prepare(`SELECT * FROM rpm WHERE ${rw.sql} ORDER BY id DESC`).bind(...rw.binds).all();}\n        else r=await env.DB.prepare("SELECT * FROM rpm ORDER BY id DESC").all();\n        return json({ok:true,data:r.results});\n      }\n      if (url.pathname === "/api/rpm" && request.method === "POST") {\n        const body=await request.json(); const kelas=cleanRombel(body.rombel||body.kelas||user.rombel||user.kelas||""); const own=cleanRombel(user.rombel||user.kelas||"");\n        if(!kelas)return json({ok:false,message:"Rombel wajib diisi."},400); if(user.role!=="admin"&&kelas!==own)return json({ok:false,message:"Akses rombel ditolak."},403);\n        const mapel=String(body.mapel||"").trim(); const bab=String(body.bab||body.unit||body.materi||"").trim(); const judul=String(body.judul||("RPM • "+mapel)).trim(); const isi=String(body.isi??body.teks??body.text??body.konten??body.content??"");\n        if(!isi.trim())return json({ok:false,message:"Isi RPM kosong."},400); const c=await columns(env,"rpm"); const cols=[];const vals=[];const add=(n,v)=>{if(c.has(n)){cols.push(n);vals.push(v)}};\n        add("mapel",mapel);add("kelas",kelas);add("rombel",kelas);add("bab",bab);add("unit",bab);add("judul",judul);add("isi",isi);add("teks",isi);add("content",isi);add("konten",isi);add("tahun",String(body.tahun||"2026/2027"));add("semester",Number(body.semester||1));\n        if(!cols.length)return json({ok:false,message:"Struktur tabel RPM tidak dikenali."},500); const r=await env.DB.prepare(`INSERT INTO rpm (${cols.join(",")}) VALUES (${cols.map(()=>"?").join(",")}) RETURNING *`).bind(...vals).first();\n        return json({ok:true,data:r});\n      }\n\n'''
+          p.write_text(s.replace(anchor,block+anchor,1),encoding='utf-8')
+          print('PATCHED_WORKER')
           PY
+      - name: Validate Worker
+        run: node --check src/index.js
+      - name: Commit Worker fix
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/index.js
+          if git diff --cached --quiet; then echo 'NO_CHANGE'; exit 0; fi
+          git commit -m 'fix: add D1 persistence routes for perangkat and rpm'
+          git push

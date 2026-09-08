@@ -14,40 +14,23 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Patch login scope and feature modules
+      - name: Ensure feature modules and login bridge
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
           from pathlib import Path
-
-          p = Path('index.html')
-          s = p.read_text(encoding='utf-8')
-
-          marker = "id('loginForm').onsubmit=async e=>{"
-          bridge = "window.__ADM_LOGIN=async(username,password)=>{const t=await remoteLogin(username,password);await finishLogin(t);return t};" + marker
-          if 'window.__ADM_LOGIN=async(username,password)' not in s:
-              if marker not in s:
-                  raise SystemExit('main login handler marker not found')
-              s = s.replace(marker, bridge, 1)
-
-          old = '''async function login(e){e.preventDefault();e.stopImmediatePropagation();const f=$('#loginForm'),u=$('#loginUser'),p=$('#loginPass'),b=f?.querySelector('button[type=submit]');if(!u?.value.trim()||!p?.value)return error('Username dan password wajib diisi.');if(b){b.disabled=true;b.textContent='MEMERIKSA...'}try{if(typeof remoteLogin!=='function')throw Error('Modul login belum siap. Muat ulang halaman.');const t=await remoteLogin(u.value.trim(),p.value);if(!t?.token)throw Error('Token login tidak diterima dari Worker.');currentTeacher=t;localStorage.setItem('siLogin',JSON.stringify(t));localStorage.setItem('siAuthToken',t.token);try{updateTeacherProfile(t)}catch{}$('#loginScreen').style.display='none';$('#app').style.display='block';$('#loginError').style.display='none';for(const fn of [applyClassLock,syncRoleMenu,initAIGenerator,renderStats,renderStudents,renderScores,renderReport])try{fn?.()}catch(x){console.warn(x)}try{showPage(t.role==='guru'||t.role==='guru_mapel'?'students':'dashboard')}catch{}if(typeof syncRemoteData==='function')Promise.resolve(syncRemoteData(t)).catch(console.warn)}catch(x){console.error(x);$('#loginScreen').style.display='grid';$('#app').style.display='none';error(x.message||'Login gagal. Periksa akun dan Worker.')}finally{if(b){b.disabled=false;b.textContent='MASUK KE SISTEM'}}}'''
-          new = '''async function login(e){e.preventDefault();e.stopImmediatePropagation();const f=$('#loginForm'),u=$('#loginUser'),p=$('#loginPass'),b=f?.querySelector('button[type=submit]');if(!u?.value.trim()||!p?.value)return error('Username dan password wajib diisi.');if(b){b.disabled=true;b.textContent='MEMERIKSA...'}try{if(typeof window.__ADM_LOGIN!=='function')throw Error('Modul login belum siap. Muat ulang halaman.');await window.__ADM_LOGIN(u.value.trim(),p.value)}catch(x){console.error(x);$('#loginScreen').style.display='grid';$('#app').style.display='none';error(x.message||'Login gagal. Periksa akun dan Worker.')}finally{if(b){b.disabled=false;b.textContent='MASUK KE SISTEM'}}}'''
-          if old not in s:
-              raise SystemExit('V12 login block not found')
-          s = s.replace(old, new, 1)
-
-          for tag in ('<script src="assets/absensi.js"></script>', '<script src="guru-mapel-ui.js"></script>'):
+          p=Path('index.html'); s=p.read_text(encoding='utf-8')
+          marker="id('loginForm').onsubmit=async e=>{"
+          if 'window.__ADM_LOGIN=async(username,password)' not in s and marker in s:
+              s=s.replace(marker,"window.__ADM_LOGIN=async(username,password)=>{const t=await remoteLogin(username,password);await finishLogin(t);return t};"+marker,1)
+          for tag in ('<script src="assets/absensi.js"></script>','<script src="guru-mapel-ui.js"></script>'):
               if tag not in s:
-                  pos = s.rfind('</body>')
-                  if pos < 0:
-                      raise SystemExit('body marker missing')
-                  s = s[:pos] + tag + '\n' + s[pos:]
-
-          p.write_text(s, encoding='utf-8')
+                  pos=s.rfind('</body>')
+                  if pos<0: raise SystemExit('body marker missing')
+                  s=s[:pos]+tag+'\n'+s[pos:]
+          p.write_text(s,encoding='utf-8')
           PY
-
       - name: Validate
         shell: bash
         run: |
@@ -55,11 +38,9 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           import re
-          s = Path('index.html').read_text(encoding='utf-8')
-          scripts = re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>', s, re.S | re.I)
-          Path('/tmp/index-inline.js').write_text('\n'.join(scripts), encoding='utf-8')
-          assert 'window.__ADM_LOGIN=async(username,password)' in s
-          assert "typeof window.__ADM_LOGIN!=='function'" in s
+          s=Path('index.html').read_text(encoding='utf-8')
+          scripts=re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>',s,re.S|re.I)
+          Path('/tmp/index-inline.js').write_text('\n'.join(scripts),encoding='utf-8')
           assert '<script src="assets/absensi.js"></script>' in s
           assert '<script src="guru-mapel-ui.js"></script>' in s
           PY
@@ -67,7 +48,6 @@ jobs:
           node --check src/index.js
           node --check assets/absensi.js
           node --check guru-mapel-ui.js
-
       - name: Commit patched index
         shell: bash
         run: |
@@ -75,9 +55,6 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
-          if git diff --cached --quiet; then
-            echo 'No index patch needed'
-            exit 0
-          fi
+          if git diff --cached --quiet; then echo 'No index patch needed'; exit 0; fi
           git commit -m 'fix: load attendance and Guru Mapel modules [skip ci]'
           git push

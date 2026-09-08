@@ -1,1 +1,1 @@
-2026-09-08 login hardening
+2026-09-08 23:07 login fail-safe patch

@@ -1,0 +1,42 @@
+name: Fix HTML script termination
+on:
+  push:
+    paths:
+      - '.github/fix-script-close-trigger.txt'
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fix premature script close
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          old='<script src="guru-mapel-ui.js"></script>'
+          new='<script src="guru-mapel-ui.js"><\\/script>'
+          if old not in s:
+              raise SystemExit('Target script string not found')
+          s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf-8')
+          print('Fixed premature </script> inside exportHtml JavaScript string')
+          PY
+      - name: Validate
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('index.html').read_text(encoding='utf-8')
+          assert '<script src="guru-mapel-ui.js"><\\/script>' in s
+          assert s.rstrip().endswith('</html>')
+          print('HTML patch validated')
+          PY
+      - name: Commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git diff --cached --quiet || git commit -m 'fix: prevent exportHtml script tag from truncating index.js [skip ci]'
+          git push origin main

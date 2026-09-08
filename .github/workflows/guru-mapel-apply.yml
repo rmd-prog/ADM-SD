@@ -1,0 +1,75 @@
+name: Apply Guru Mapel access
+
+on:
+  push:
+    paths:
+      - '.github/guru-mapel-trigger.txt'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch Worker for Guru Mapel
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          p=Path('src/index.js')
+          s=p.read_text(encoding='utf-8')
+
+          marker='function rombelVariants(value) {'
+          helper='''function normalizeMapel(value) {\n  const raw = String(value ?? "").trim().toLowerCase().replace(/\\s+/g, " ");\n  if (["agama", "pai", "pendidikan agama", "pendidikan agama dan budi pekerti"].includes(raw)) return "Pendidikan Agama dan Budi Pekerti";\n  if (["pjok", "pendidikan jasmani", "pendidikan jasmani olahraga dan kesehatan"].includes(raw)) return "PJOK";\n  if (["inggris", "bahasa inggris", "english"].includes(raw)) return "Bahasa Inggris";\n  return String(value ?? "").trim();\n}\n\nfunction subjectAllowed(user, requestedMapel) {\n  if (!user || user.role === "admin") return true;\n  if (user.role !== "guru_mapel") return true;\n  const own = normalizeMapel(user.mapel);\n  const requested = normalizeMapel(requestedMapel);\n  return !!own && !!requested && own === requested;\n}\n\n'''
+          if 'function normalizeMapel(value)' not in s:
+              s=s.replace(marker,helper+marker,1)
+
+          old='''  return btoa(JSON.stringify({\n    id: user.id, username: user.username, nama: user.nama,\n    role: user.role, kelas: user.kelas, rombel: user.rombel\n  }));'''
+          new='''  return btoa(JSON.stringify({\n    id: user.id, username: user.username, nama: user.nama,\n    role: user.role, kelas: user.kelas, rombel: user.rombel, mapel: user.mapel || ""\n  }));'''
+          if old in s:
+              s=s.replace(old,new,1)
+
+          old='''        const c = await columns(env, "users");\n        const rombelExpr = c.has("rombel")\n          ? "COALESCE(NULLIF(TRIM(rombel), ''), TRIM(kelas)) AS rombel"\n          : "TRIM(kelas) AS rombel";\n        const user = await env.DB.prepare(\n          `SELECT id, username, password, nama, role, kelas, ${rombelExpr}\n           FROM users WHERE username = ?`\n        ).bind(username).first();'''
+          new='''        let c = await columns(env, "users");\n        if (!c.has("mapel")) {\n          try { await env.DB.prepare("ALTER TABLE users ADD COLUMN mapel TEXT").run(); } catch {}\n          c = await columns(env, "users");\n        }\n        const rombelExpr = c.has("rombel")\n          ? "COALESCE(NULLIF(TRIM(rombel), ''), TRIM(kelas)) AS rombel"\n          : "TRIM(kelas) AS rombel";\n        const mapelExpr = c.has("mapel") ? "TRIM(COALESCE(mapel, '')) AS mapel" : "'' AS mapel";\n        const user = await env.DB.prepare(\n          `SELECT id, username, password, nama, role, kelas, ${rombelExpr}, ${mapelExpr}\n           FROM users WHERE username = ?`\n        ).bind(username).first();'''
+          if old in s:
+              s=s.replace(old,new,1)
+
+          old='''        const safeUser = {\n          id: user.id, username: user.username, nama: user.nama,\n          role: user.role, kelas: cleanRombel(user.rombel || user.kelas),\n          rombel: cleanRombel(user.rombel || user.kelas)\n        };'''
+          new='''        const safeUser = {\n          id: user.id, username: user.username, nama: user.nama,\n          role: user.role, kelas: cleanRombel(user.rombel || user.kelas),\n          rombel: cleanRombel(user.rombel || user.kelas),\n          mapel: normalizeMapel(user.mapel || "")\n        };'''
+          if old in s:
+              s=s.replace(old,new,1)
+
+          old='''        const classInfo = normalizeClass(body.rombel ?? body.kelas ?? (user.role === "guru" ? user.rombel : ""));'''
+          new='''        const classInfo = normalizeClass(body.rombel ?? body.kelas ?? ((user.role === "guru" || user.role === "guru_mapel") ? user.rombel : ""));'''
+          if old in s:
+              s=s.replace(old,new,1)
+
+          old='''        const mapel = url.searchParams.get("mapel") || "";\n        const semester = Number(url.searchParams.get("semester") || 1);\n        if (user.role !== "admin" && requested && requested !== own) {'''
+          new='''        const mapel = url.searchParams.get("mapel") || "";\n        const semester = Number(url.searchParams.get("semester") || 1);\n        if (!subjectAllowed(user, mapel)) {\n          return json({ ok:false, message:"Akses mata pelajaran ditolak." }, 403);\n        }\n        if (user.role !== "admin" && requested && requested !== own) {'''
+          if old in s:
+              s=s.replace(old,new,1)
+
+          old='''        const mapel = String(body.mapel || "").trim();\n        const context = String(body.context || "").trim().slice(0,10000);'''
+          new='''        const mapel = String(body.mapel || "").trim();\n        if (!subjectAllowed(user, mapel)) {\n          return json({ ok:false, message:"Akses mata pelajaran ditolak." }, 403);\n        }\n        const context = String(body.context || "").trim().slice(0,10000);'''
+          if old in s:
+              s=s.replace(old,new,1)
+
+          # Make /api/guru expose mapel without changing old behavior.
+          old='''        const rombelExpr = c.has("rombel")\n          ? "COALESCE(NULLIF(TRIM(rombel), ''), TRIM(kelas)) AS rombel"\n          : "TRIM(kelas) AS rombel";\n        const result = await env.DB.prepare(\n          `SELECT id, username, nama, role, kelas, ${rombelExpr}\n           FROM users ORDER BY role, rombel, nama`\n        ).all();'''
+          new='''        const rombelExpr = c.has("rombel")\n          ? "COALESCE(NULLIF(TRIM(rombel), ''), TRIM(kelas)) AS rombel"\n          : "TRIM(kelas) AS rombel";\n        const mapelExpr = c.has("mapel") ? "TRIM(COALESCE(mapel, '')) AS mapel" : "'' AS mapel";\n        const result = await env.DB.prepare(\n          `SELECT id, username, nama, role, kelas, ${rombelExpr}, ${mapelExpr}\n           FROM users ORDER BY role, rombel, nama`\n        ).all();'''
+          if old in s:
+              s=s.replace(old,new,1)
+
+          if s.count('function normalizeMapel(value)') != 1:
+              raise SystemExit('normalizeMapel patch count invalid')
+          p.write_text(s,encoding='utf-8')
+          PY
+
+          node --check src/index.js
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/index.js .github/guru-mapel-trigger.txt
+          git commit -m 'feat: support Guru Mapel login and subject access [skip ci]'
+          git push origin main

@@ -1,0 +1,59 @@
+name: Penilaian SUPER V14
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch index
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+          p=Path('index.html'); s=p.read_text(encoding='utf-8')
+          if 'id="analysis"' not in s:
+              pat=r'(\n  <section id="report" class="page">.*?</section>)(\n\s*<section id="teachers")'
+              add=r'''\1
+
+  <section id="analysis" class="page"><div class="doc-hero"><div class="doc-title-row"><div><div class="doc-kicker">PENILAIAN SUPER</div><div class="doc-title">📈 Analisis Hasil Penilaian</div><div class="doc-sub">Ketuntasan, rata-rata, dan BAB yang perlu mendapat perhatian.</div></div><div class="doc-actions"><button class="btn secondary" type="button" onclick="window.print()">🖨 Cetak</button></div></div></div><div class="card panel"><div class="doc-controls"><select id="analysisMapel"></select><select id="analysisKelas"></select></div><div id="analysisCards" class="grid" style="margin-top:14px"></div><div class="tablewrap" style="margin-top:14px"><table class="table"><thead><tr><th>BAB/Unit</th><th>Nilai</th><th>Rata-rata</th><th>Tuntas</th><th>Belum</th></tr></thead><tbody id="analysisTable"></tbody></table></div><div id="analysisNote" class="doc-note"></div></div></section>
+
+  <section id="remedial" class="page"><div class="doc-hero"><div class="doc-title-row"><div><div class="doc-kicker">PENILAIAN SUPER</div><div class="doc-title">🔄 Remedial</div><div class="doc-sub">Siswa di bawah batas ketuntasan untuk tindak lanjut.</div></div></div></div><div class="card panel"><div class="doc-controls"><select id="remedialMapel"></select><select id="remedialKelas"></select></div><select id="remedialBab" style="margin-top:10px"></select><div class="tablewrap" style="margin-top:12px"><table class="table"><thead><tr><th>No</th><th>Nama Siswa</th><th>Nilai</th><th>Tindak Lanjut</th></tr></thead><tbody id="remedialTable"></tbody></table></div><div id="remedialEmpty" class="doc-note"></div></div></section>
+
+  <section id="enrichment" class="page"><div class="doc-hero"><div class="doc-title-row"><div><div class="doc-kicker">PENILAIAN SUPER</div><div class="doc-title">🚀 Pengayaan</div><div class="doc-sub">Siswa tuntas untuk tantangan belajar lanjutan.</div></div></div></div><div class="card panel"><div class="doc-controls"><select id="enrichMapel"></select><select id="enrichKelas"></select></div><select id="enrichBab" style="margin-top:10px"></select><div class="tablewrap" style="margin-top:12px"><table class="table"><thead><tr><th>No</th><th>Nama Siswa</th><th>Nilai</th><th>Ide Pengayaan</th></tr></thead><tbody id="enrichTable"></tbody></table></div><div id="enrichEmpty" class="doc-note"></div></div></section>'''
+              s,n=re.subn(pat,add+r'\2',s,count=1,flags=re.S)
+              if n!=1: raise SystemExit('section insertion failed')
+          if 'PENILAIAN SUPER V14' not in s:
+              marker='/* ADM-SD SAFE LOGIN V12 */'
+              code=r'''/* ===== PENILAIAN SUPER V14 ===== */
+(function(){
+ const E=s=>document.getElementById(s);
+ const students=k=>db.students.filter(s=>normalizeRombel(s.rombel||s.kelas)===normalizeRombel(k));
+ const vals=(nis,m,k)=>Object.entries(db.scores).filter(([key,v])=>{const a=key.split('|');return a[0]===String(nis)&&a[1]===m&&normalizeRombel(a[2])===normalizeRombel(k)&&Number.isFinite(Number(v.nilai))}).map(x=>Number(x[1].nilai));
+ const setup=()=>{const base=E('scoreMapel')?.innerHTML||'';['reportMapel','analysisMapel','remedialMapel','enrichMapel'].forEach(x=>{if(E(x))E(x).innerHTML=base});['reportKelas','analysisKelas','remedialKelas','enrichKelas'].forEach(x=>{if(E(x))E(x).innerHTML=ROMBELS.map(r=>'<option value="'+esc(r)+'">Rombel '+esc(r)+'</option>').join('')});if(isGuruKelas())['reportKelas','analysisKelas','remedialKelas','enrichKelas'].forEach(x=>{if(E(x))E(x).value=allowedClass()});['remedialBab','enrichBab'].forEach(x=>{if(E(x))E(x).innerHTML=E('scoreBab')?.innerHTML||''})};
+ window.renderScores=function(){const k=isGuruKelas()?allowedClass():E('scoreKelas').value;E('scoreKelas').value=k;const ss=students(k),m=E('scoreMapel').value,b=E('scoreBab').value;E('scoreTable').innerHTML=ss.map((s,i)=>{const key=s.nis+'|'+m+'|'+k+'|'+b,v=db.scores[key]||{};return '<tr><td>'+(i+1)+'</td><td><b>'+esc(s.name)+'</b><div class="muted" style="font-size:12px">NIS '+esc(s.nis||'-')+'</div></td><td><input class="scoreInput" data-key="'+esc(key)+'" type="number" min="0" max="100" value="'+esc(v.nilai??'')+'" inputmode="numeric"></td><td><input class="noteInput" data-key="'+esc(key)+'" value="'+esc(v.catatan||'')+'" placeholder="Catatan"></td></tr>'}).join('')||'<tr><td colspan="4" class="muted">Belum ada siswa di kelas ini.</td></tr>'};
+ window.renderReport=function(){const m=E('reportMapel')?.value||E('scoreMapel')?.value||'',k=isGuruKelas()?allowedClass():(E('reportKelas')?.value||ROMBELS[0]);if(E('reportKelas'))E('reportKelas').value=k;const ss=students(k),rows=ss.map(s=>{const a=vals(s.nis,m,k),avg=a.length?Math.round(a.reduce((x,y)=>x+y,0)/a.length):0;return{s,avg,count:a.length}}),t=rows.filter(x=>x.count&&x.avg>=75).length,n=rows.filter(x=>x.count&&x.avg<75).length;if(E('reportSummary'))E('reportSummary').innerHTML='<span class="badge">👥 '+rows.length+' siswa</span><span class="badge">✅ Tuntas '+t+'</span><span class="badge">🔄 Perlu tindak lanjut '+n+'</span>';if(E('reportTable'))E('reportTable').innerHTML=rows.map((x,i)=>'<tr><td>'+(i+1)+'</td><td><b>'+esc(x.s.name)+'</b></td><td>'+x.count+' nilai</td><td><b>'+x.avg+'</b></td><td>'+(x.count?(x.avg>=75?'<span class="badge">Tuntas</span>':'<span class="badge">Perlu tindak lanjut</span>'):'<span class="muted">Belum dinilai</span>')+'</td></tr>').join('')||'<tr><td colspan="5" class="muted">Belum ada data.</td></tr>';if(E('reportStudent'))E('reportStudent').innerHTML='<option value="">Pilih siswa</option>'+rows.map(x=>'<option value="'+esc(x.s.nis)+'">'+esc(x.s.name)+'</option>').join('')};
+ const detail=()=>{const nis=E('reportStudent')?.value;if(!nis){if(E('reportResult'))E('reportResult').innerHTML='';return}const s=db.students.find(x=>String(x.nis)===String(nis)),a=Object.entries(db.scores).filter(([k,v])=>k.startsWith(nis+'|')&&Number.isFinite(Number(v.nilai))).map(x=>Number(x[1].nilai)),avg=a.length?Math.round(a.reduce((x,y)=>x+y,0)/a.length):0;E('reportResult').innerHTML='<div class="doc-box"><h4>'+esc(s?.name||'Siswa')+'</h4><p>Jumlah nilai: <b>'+a.length+'</b> · Rata-rata: <b>'+avg+'</b> · Status: <b>'+(a.length?(avg>=75?'Tuntas':'Perlu tindak lanjut'):'Belum dinilai')+'</b></p></div>'};
+ window.renderAnalysis=function(){const m=E('analysisMapel')?.value||'',k=isGuruKelas()?allowedClass():(E('analysisKelas')?.value||ROMBELS[0]);if(E('analysisKelas'))E('analysisKelas').value=k;const map=new Map();Object.entries(db.scores).forEach(([key,v])=>{const a=key.split('|'),n=Number(v.nilai);if(a[1]===m&&normalizeRombel(a[2])===normalizeRombel(k)&&Number.isFinite(n)){if(!map.has(a[3]))map.set(a[3],[]);map.get(a[3]).push(n)}});const all=[...map.values()].flat(),avg=all.length?Math.round(all.reduce((x,y)=>x+y,0)/all.length):0,pass=all.filter(n=>n>=75).length;if(E('analysisCards'))E('analysisCards').innerHTML='<div class="stat card"><span>Rata-rata</span><b>'+avg+'</b></div><div class="stat card"><span>Nilai tersimpan</span><b>'+all.length+'</b></div><div class="stat card"><span>Tuntas</span><b>'+pass+'</b></div><div class="stat card"><span>Belum</span><b>'+Math.max(0,all.length-pass)+'</b></div>';if(E('analysisTable'))E('analysisTable').innerHTML=[...map.entries()].map(([b,a])=>{const av=Math.round(a.reduce((x,y)=>x+y,0)/a.length),p=a.filter(n=>n>=75).length;return '<tr><td>'+esc(b)+'</td><td>'+a.length+'</td><td><b>'+av+'</b></td><td>'+p+'</td><td>'+Math.max(0,a.length-p)+'</td></tr>'}).join('')||'<tr><td colspan="5" class="muted">Belum ada nilai untuk dianalisis.</td></tr>';if(E('analysisNote'))E('analysisNote').textContent=all.length?'Batas ketuntasan tampilan: 75.':'Masukkan dan simpan nilai terlebih dahulu.'};
+ const follow=kind=>{const mp=kind==='remedial'?'remedial':'enrich',m=E(mp+'Mapel')?.value||'',k=isGuruKelas()?allowedClass():(E(mp+'Kelas')?.value||ROMBELS[0]),b=E(kind==='remedial'?'remedialBab':'enrichBab')?.value||'',ss=students(k).map(s=>({s,n:Number((db.scores[s.nis+'|'+m+'|'+k+'|'+b]||{}).nilai)})).filter(x=>Number.isFinite(x.n)&&(kind==='remedial'?x.n<75:x.n>=75)),tb=E(kind==='remedial'?'remedialTable':'enrichTable');tb.innerHTML=ss.map((x,i)=>'<tr><td>'+(i+1)+'</td><td><b>'+esc(x.s.name)+'</b></td><td><b>'+x.n+'</b></td><td>'+(kind==='remedial'?'Penguatan materi, latihan terarah, bimbingan, lalu asesmen ulang.':'Tantangan lanjutan, proyek mini, eksplorasi, atau soal HOTS sesuai materi.')+'</td></tr>').join('')||'<tr><td colspan="4" class="muted">Tidak ada siswa pada kategori ini.</td></tr>';if(E(kind==='remedial'?'remedialEmpty':'enrichEmpty'))E(kind==='remedial'?'remedialEmpty':'enrichEmpty').textContent=ss.length?(kind==='remedial'?ss.length+' siswa perlu remedial.':ss.length+' siswa dapat mengikuti pengayaan.'):'Belum ada siswa yang memenuhi kriteria.'};
+ const bind=()=>{setup();['reportMapel','reportKelas'].forEach(x=>{if(E(x))E(x).onchange=renderReport});if(E('reportStudent'))E('reportStudent').onchange=detail;['analysisMapel','analysisKelas'].forEach(x=>{if(E(x))E(x).onchange=renderAnalysis});['remedialMapel','remedialKelas','remedialBab'].forEach(x=>{if(E(x))E(x).onchange=()=>follow('remedial')});['enrichMapel','enrichKelas','enrichBab'].forEach(x=>{if(E(x))E(x).onchange=()=>follow('enrich')});renderReport();renderAnalysis();follow('remedial');follow('enrich')};
+ setTimeout(bind,0);
+})();
+
+'''
+              if marker not in s: raise SystemExit('login marker not found')
+              s=s.replace(marker,code+marker,1)
+          p.write_text(s,encoding='utf-8')
+      - name: Commit patch
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add index.html
+          git diff --cached --quiet && echo 'No changes' || (git commit -m 'Tambah alur Penilaian SUPER V14' && git push)
+          rm -f .github/workflows/penilaian-v14.yml
+          git add .github/workflows/penilaian-v14.yml
+          git diff --cached --quiet || (git commit -m 'Remove one-time Penilaian V14 workflow' && git push)

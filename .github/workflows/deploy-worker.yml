@@ -11,6 +11,9 @@ on:
 permissions:
   contents: read
 
+env:
+  CLOUDFLARE_ACCOUNT_ID: 1059f6c3f94755e9562d95cfd16ff6d1
+
 jobs:
   deploy:
     runs-on: ubuntu-latest

@@ -17,12 +17,18 @@ function fromB64url(s) {
   return out;
 }
 function b64urlText(text) { return b64urlBytes(encoder.encode(text)); }
+function corsHeaders() {
+  return {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-ADM-Token',
+    'Access-Control-Max-Age': '86400'
+  };
+}
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), { status, headers: {
     'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-ADM-Token'
+    ...corsHeaders()
   }});
 }
 
@@ -64,7 +70,7 @@ function legacyToken(user) {
 
 export default {
   async fetch(request, env, ctx) {
-    if (request.method === 'OPTIONS') return app.fetch(request, env, ctx);
+    if (request.method === 'OPTIONS') return new Response(null, {status:204, headers:corsHeaders()});
     const url = new URL(request.url);
 
     if (url.pathname === '/api/login' && request.method === 'POST') {

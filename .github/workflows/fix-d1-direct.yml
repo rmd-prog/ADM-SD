@@ -27,8 +27,7 @@ jobs:
           from pathlib import Path
           p=Path('index.html')
           s=p.read_text(encoding='utf-8')
-          old="""async function refreshStudentsFromD1(){let t=currentTeacher;if(!t||!String(t.token||'').trim()){try{const saved=JSON.parse(localStorage.getItem('siLogin')||'null');const tok=String(saved?.token||saved?.access_token||'').trim();if(saved&&tok){t={...saved,token:tok};currentTeacher=t;localStorage.setItem('siAuthToken',tok)}}catch(e){}}if(!t)throw new Error('Belum login. Silakan login ulang.');const token=String(t.token||localStorage.getItem('siAuthToken')||'').trim();if(!token)throw new Error('Belum login. Silakan login ulang.');const rombel=t.role==='guru'?normalizeRombel(t.rombel||t.kelas):'';const sp=await apiGet('/siswa',rombel?{rombel}:{});if(Array.isArray(sp.data))db.students=sp.data.map(normalizeStudentRow).filter(s=>s.name);save();renderStats();renderStudents();renderReport();renderScores()}"""
-          new="""async function refreshStudentsFromD1(){
+          old="""async function refreshStudentsFromD1(){
             let t=currentTeacher;
             let token='';
             try{token=String(t?.token||'').trim()}catch(e){}
@@ -40,6 +39,24 @@ jobs:
             const rombel=t?.role==='guru'?normalizeRombel(t.rombel||t.kelas):'';
             const qs=rombel?'?'+new URLSearchParams({rombel}).toString():'';
             const res=await fetch(API_BASE+'/siswa'+qs,{method:'GET',mode:'cors',headers:{'Accept':'application/json','Authorization':'Bearer '+token}});
+            let sp={};try{sp=await res.json()}catch(e){}
+            if(!res.ok||sp.ok===false)throw new Error(sp.message||('Gagal sinkron D1 (HTTP '+res.status+').'));
+            if(Array.isArray(sp.data))db.students=sp.data.map(normalizeStudentRow).filter(s=>s.name);
+            save();renderStats();renderStudents();renderReport();renderScores()
+          }"""
+          new="""async function refreshStudentsFromD1(){
+            let t=currentTeacher;
+            let token='';
+            try{token=String(t?.token||'').trim()}catch(e){}
+            if(!token){try{token=String(localStorage.getItem('siAuthToken')||'').trim()}catch(e){}}
+            if(!token){try{token=String(sessionStorage.getItem('siAuthToken')||'').trim()}catch(e){}}
+            if(!token){try{const saved=JSON.parse(localStorage.getItem('siLogin')||'null');const u=saved?.user||saved;token=String(saved?.token||saved?.access_token||u?.token||u?.access_token||'').trim();if(u&&token){t={...u,token};currentTeacher=t;localStorage.setItem('siAuthToken',token)}}catch(e){}}
+            if(!token)throw new Error('Sesi login tidak ditemukan. Silakan login ulang.');
+            if(!t){try{const saved=JSON.parse(localStorage.getItem('siLogin')||'null');const u=saved?.user||saved;if(u)t={...u,token}}catch(e){}}
+            const rombel=t?.role==='guru'?normalizeRombel(t.rombel||t.kelas):'';
+            const qs=rombel?'?'+new URLSearchParams({rombel}).toString():'';
+            const auth='Bearer '+token;
+            const res=await fetch(API_BASE+'/siswa'+qs,{method:'GET',mode:'cors',cache:'no-store',headers:{'Accept':'application/json','Authorization':auth,'X-ADM-Token':token}});
             let sp={};try{sp=await res.json()}catch(e){}
             if(!res.ok||sp.ok===false)throw new Error(sp.message||('Gagal sinkron D1 (HTTP '+res.status+').'));
             if(Array.isArray(sp.data))db.students=sp.data.map(normalizeStudentRow).filter(s=>s.name);
@@ -60,7 +77,8 @@ jobs:
           import re
           s=Path('index.html').read_text(encoding='utf-8')
           assert s.count("async function refreshStudentsFromD1()") == 1
-          assert "Authorization':'Bearer '+token" in s
+          assert "X-ADM-Token":token in s
+          assert "cache:'no-store'" in s
           scripts=re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>',s,re.S|re.I)
           Path('/tmp/index-inline.js').write_text('\n'.join(scripts),encoding='utf-8')
           PY
@@ -74,5 +92,5 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
           if git diff --cached --quiet; then echo 'No D1 patch needed'; exit 0; fi
-          git commit -m 'fix: make Sinkron D1 use explicit JWT request [skip ci]'
+          git commit -m 'fix: make Sinkron D1 resilient to Authorization stripping [skip ci]'
           git push origin main

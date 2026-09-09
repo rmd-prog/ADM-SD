@@ -10,5 +10,10 @@ function optimizeAI(init){if(!init||!init.body)return init;try{const body=JSON.p
   if(typeof body.existing==='string')body.existing=body.existing.slice(0,3000);
   return {...init,body:JSON.stringify(body)};
 }catch{return init}}
-function loading(){if(window.__ADM_V7_FETCH__)return;window.__ADM_V7_FETCH__=true;const f=window.fetch.bind(window);window.fetch=async function(input,init){const url=typeof input==='string'?input:input?.url||'';const ai=/\/api\/ai\//i.test(url);const next=ai?optimizeAI(init):init;if(ai&&window.ADMLoading?.show)try{window.ADMLoading.show('AI Guru sedang bekerja','Mengoptimalkan konteks agar generate lebih hemat token…')}catch{}try{const r=await f(input,next);if(ai&&window.ADMLoading?.hide)try{window.ADMLoading.hide()}catch{}return r}catch(e){if(ai&&window.ADMLoading?.hide)try{window.ADMLoading.hide()}catch{}throw e}}}
+function loading(){if(window.__ADM_V7_FETCH__)return;window.__ADM_V7_FETCH__=true;const f=window.fetch.bind(window);window.fetch=async function(input,init){const url=typeof input==='string'?input:input?.url||'';const ai=/\/api\/ai\//i.test(url);const next=ai?optimizeAI(init):init;if(!ai)return f(input,next);
+  if(window.__ADM_AI_REQUEST_ACTIVE__) {try{window.ADMUI?.toast?.('AI sedang memproses. Tunggu hasil sebelumnya selesai.','info')}catch{}return new Response(JSON.stringify({ok:false,message:'AI sedang memproses permintaan sebelumnya.'}),{status:429,headers:{'Content-Type':'application/json'}})}
+  window.__ADM_AI_REQUEST_ACTIVE__=true;
+  if(window.ADMLoading?.show)try{window.ADMLoading.show('AI Guru sedang bekerja','Mengoptimalkan konteks agar generate lebih hemat token…')}catch{}
+  try{const r=await f(input,next);return r}catch(e){throw e}finally{window.__ADM_AI_REQUEST_ACTIVE__=false;if(window.ADMLoading?.hide)try{window.ADMLoading.hide()}catch{}}
+}}
 function boot(){css();tools();status();backTop();loading()}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();[800,1800,3500].forEach(ms=>setTimeout(boot,ms));})();

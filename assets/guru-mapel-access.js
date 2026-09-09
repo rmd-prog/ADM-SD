@@ -59,5 +59,15 @@
     s.onerror=()=>console.warn('[ADM] Index menu finishing gagal dimuat.');
     document.body.appendChild(s);
   }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',load,{once:true});else load();
+  function loadV2(){
+    if(document.querySelector('script[data-adm-index-finishing-v2]'))return;
+    const s=document.createElement('script');
+    s.src='assets/index-menu-finishing-v2.js';
+    s.async=false;
+    s.dataset.admIndexFinishingV2='1';
+    s.onload=()=>console.info('[ADM] Index menu finishing V2 aktif.');
+    s.onerror=()=>console.warn('[ADM] Index menu finishing V2 gagal dimuat.');
+    document.body.appendChild(s);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{load();setTimeout(loadV2,250)},{once:true});else{load();setTimeout(loadV2,250)}
 })();

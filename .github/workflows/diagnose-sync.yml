@@ -1,0 +1,25 @@
+name: Diagnose student sync
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/diagnose-sync.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect sync auth guard
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('index.html').read_text(encoding='utf-8')
+          for term in ['Belum login','currentTeacher','siAuthToken','/api/siswa','fetch(']:
+              print('\n===',term,'===')
+              for m in list(re.finditer(re.escape(term),s,re.I))[:30]:
+                  a=max(0,m.start()-500); b=min(len(s),m.end()+900)
+                  print(s[a:b].replace('\n',' ')[:1500])
+          PY

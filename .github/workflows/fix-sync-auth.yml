@@ -41,7 +41,7 @@ jobs:
                       found=True
                   continue
               out.append(line)
-          s='\n'.join(out)+('\\n' if s.endswith('\\n') else '')
+          s='\n'.join(out)+'\n'
           if not found:
               if marker not in s:
                   raise SystemExit('currentTeacher marker not found')
@@ -55,7 +55,7 @@ jobs:
               line=line.replace("localStorage.getItem('siAuthToken')||''",'getAuthToken()')
               line=line.replace("sessionStorage.getItem('siAuthToken')||''",'getAuthToken()')
               out.append(line)
-          s='\n'.join(out)+('\\n' if s.endswith('\\n') else '')
+          s='\n'.join(out)+'\n'
           p.write_text(s,encoding='utf-8')
           PY
 
@@ -68,6 +68,7 @@ jobs:
           import re
           s=Path('index.html').read_text(encoding='utf-8')
           assert s.count('function getAuthToken(){')==1
+          assert "localStorage.setItem('siAuthToken',t.token);try{" not in s
           scripts=re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>',s,re.S|re.I)
           Path('/tmp/index-inline.js').write_text('\n'.join(scripts),encoding='utf-8')
           PY

@@ -24,8 +24,23 @@ function installAuthTokenBridge(){
   window.__ADM_AUTH_TOKEN_BRIDGE=true;
   window.fetch=async function(input,init){
     const reqUrl=typeof input==='string'?input:(input?.url||'');
-    const isLogin=/\/api\/login(?:\?|$)/i.test(String(reqUrl));
-    let response=await nativeFetch.apply(this,arguments);
+    const url=String(reqUrl);
+    const isLogin=/\/api\/login(?:\?|$)/i.test(url);
+    const isWorkerApi=/https:\/\/adm-sd\.adm-sd\.workers\.dev\/api\//i.test(url)||/(^|\/)api\//i.test(url);
+    let nextInit=init;
+    if(!isLogin&&isWorkerApi){
+      const token=getToken();
+      if(token){
+        try{
+          const headers=new Headers(input?.headers||undefined);
+          if(init?.headers){new Headers(init.headers).forEach((v,k)=>headers.set(k,v))}
+          if(!headers.get('Authorization'))headers.set('Authorization','Bearer '+token);
+          if(!headers.get('X-ADM-Token'))headers.set('X-ADM-Token',token);
+          nextInit={...(init||{}),headers};
+        }catch{}
+      }
+    }
+    let response=await nativeFetch.call(this,input,nextInit);
     try{
       if(isLogin&&response){
         const clone=response.clone();
@@ -34,7 +49,7 @@ function installAuthTokenBridge(){
         if(token)persistLoginToken(token,data?.user||data);
       }
       if(response&&response.ok){
-        const h=(init&&init.headers)||{};
+        const h=(nextInit&&nextInit.headers)||{};
         const auth=(h instanceof Headers)?h.get('Authorization'):(h?.Authorization||h?.authorization||'');
         const token=String(auth||'').replace(/^Bearer\s+/i,'').trim();
         if(token)persistLoginToken(token);

@@ -18,7 +18,7 @@ jobs:
         with:
           ref: main
 
-      - name: Patch auth bridge
+      - name: Patch auth and exact D1 sync handler
         shell: bash
         run: |
           set -euo pipefail
@@ -52,6 +52,13 @@ jobs:
               line=line.replace("sessionStorage.getItem('siAuthToken')||''",'getAuthToken()')
               out.append(line)
           s='\n'.join(out)+('\\n' if s.endswith('\\n') else '')
+          old="""async function refreshStudentsFromD1(){const t=currentTeacher||JSON.parse(localStorage.getItem('siLogin')||'null');if(!t)return;const rombel=t.role==='guru'?normalizeRombel(t.rombel||t.kelas):'';const sp=await apiGet('/siswa',rombel?{rombel}:{});if(Array.isArray(sp.data))db.students=sp.data.map(normalizeStudentRow).filter(s=>s.name);save();renderStats();renderStudents();renderReport();renderScores()}"""
+          new="""async function refreshStudentsFromD1(){let t=currentTeacher;if(!t||!String(t.token||'').trim()){try{const saved=JSON.parse(localStorage.getItem('siLogin')||'null');const tok=String(saved?.token||saved?.access_token||'').trim();if(saved&&tok){t={...saved,token:tok};currentTeacher=t;localStorage.setItem('siAuthToken',tok)}}catch(e){}}if(!t)throw new Error('Belum login. Silakan login ulang.');const token=String(t.token||localStorage.getItem('siAuthToken')||'').trim();if(!token)throw new Error('Belum login. Silakan login ulang.');const rombel=t.role==='guru'?normalizeRombel(t.rombel||t.kelas):'';const sp=await apiGet('/siswa',rombel?{rombel}:{});if(Array.isArray(sp.data))db.students=sp.data.map(normalizeStudentRow).filter(s=>s.name);save();renderStats();renderStudents();renderReport();renderScores()}"""
+          count=s.count(old)
+          if count==1:
+              s=s.replace(old,new,1)
+          elif 'async function refreshStudentsFromD1(){let t=currentTeacher;' not in s:
+              raise SystemExit(f'refreshStudentsFromD1 target count={count}')
           p.write_text(s,encoding='utf-8')
           PY
 
@@ -64,6 +71,8 @@ jobs:
           import re
           s=Path('index.html').read_text(encoding='utf-8')
           assert s.count('function getAuthToken(){')==1
+          assert s.count('async function refreshStudentsFromD1(){')==1
+          assert 'let t=currentTeacher;if(!t||!String(t.token||' in s
           assert "localStorage.setItem('siAuthToken',t.token);try" not in s
           scripts=re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>',s,re.S|re.I)
           Path('/tmp/index-inline.js').write_text('\n'.join(scripts),encoding='utf-8')
@@ -77,6 +86,6 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
-          if git diff --cached --quiet; then echo 'Auth bridge already patched'; exit 0; fi
+          if git diff --cached --quiet; then echo 'Auth/D1 bridge already patched'; exit 0; fi
           git commit -m 'fix: make D1 sync reuse active JWT [skip ci]'
           git push origin main

@@ -5,10 +5,15 @@ function base(){return String(window.API_BASE||'https://adm-sd.adm-sd.workers.de
 const STAT=['Hadir','Sakit','Izin','Alpa'];
 const ROMBELS=['IA','IB','IIA','IIB','IIIA','IIIB','IVA','IVB','V','VI'];
 const esc=s=>String(s??'').replace(/[&<>\"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
-function token(){return localStorage.getItem('siAuthToken')||localStorage.getItem('token')||localStorage.getItem('authToken')||localStorage.getItem('access_token')||''}
+function token(){
+  try{const t=String(localStorage.getItem('siAuthToken')||'').trim();if(t)return t}catch{}
+  try{const x=JSON.parse(localStorage.getItem('siLogin')||'null');const t=String(x?.token||x?.access_token||x?.user?.token||x?.user?.access_token||'').trim();if(t)return t}catch{}
+  try{const t=String(window.currentTeacher?.token||window.currentTeacher?.access_token||window.currentUser?.token||window.currentUser?.access_token||'').trim();if(t)return t}catch{}
+  return ''
+}
 function teacher(){try{return window.currentTeacher||window.currentUser||JSON.parse(localStorage.getItem('siLogin')||'null')||{}}catch{return {}}}
 function appVisible(){const app=document.querySelector('.app');return !!app&&getComputedStyle(app).display!=='none'}
-async function api(path,opt={}){const h={'Content-Type':'application/json',...(opt.headers||{})};const t=token();if(t)h.Authorization='Bearer '+t;const r=await fetch(base()+'/absensi'+path,{...opt,headers:h});const j=await r.json().catch(()=>({ok:false,message:'Respons server tidak valid.'}));if(!r.ok||j.ok===false)throw new Error(j.message||'Gagal memproses absensi.');return j}
+async function api(path,opt={}){const h={'Content-Type':'application/json',...(opt.headers||{})};const t=token();if(!t)throw new Error('Sesi login tidak ditemukan. Silakan login ulang.');h.Authorization='Bearer '+t;h['X-ADM-Token']=t;const r=await fetch(base()+'/absensi'+path,{...opt,headers:h});const j=await r.json().catch(()=>({ok:false,message:'Respons server tidak valid.'}));if(!r.ok||j.ok===false)throw new Error(j.message||'Gagal memproses absensi.');return j}
 function today(){const d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10)}
 function addUI(){if(!appVisible())return false;const side=document.querySelector('.side'),main=document.querySelector('.main');if(!side||!main)return false;if(!document.getElementById('absensi')){const p=document.createElement('section');p.id='absensi';p.className='page';main.appendChild(p)}if(!document.getElementById('navAbsensi')){const b=document.createElement('button');b.id='navAbsensi';b.className='navbtn';b.innerHTML='📋 Absensi';b.onclick=open;side.appendChild(b)}return true}
 function open(){if(!appVisible())return;document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));const p=document.getElementById('absensi');if(p)p.classList.add('active');document.querySelectorAll('.navbtn').forEach(x=>x.classList.remove('active'));const n=document.getElementById('navAbsensi');if(n)n.classList.add('active');load()}

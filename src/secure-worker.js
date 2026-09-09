@@ -22,15 +22,13 @@ function json(data, status = 200) {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-ADM-Token'
   }});
 }
 
 async function keyFor(env) {
   let secret = String(env.ADM_TOKEN_SECRET || '').trim();
   if (secret.length < 32) {
-    // Server-only fallback: derive the signing key from the current D1 user roster.
-    // No password or derived key is ever sent to the client.
     const r = await env.DB.prepare('SELECT id,username,password,role FROM users ORDER BY id').all();
     const roster = (r.results || []).map(x => `${x.id}|${x.username}|${x.password}|${x.role}`).join('||');
     if (!roster) throw new Error('No users available for token key derivation');
@@ -80,7 +78,11 @@ export default {
       } catch { return upstream; }
     }
 
-    const raw = request.headers.get('Authorization')?.replace(/^Bearer\s+/i, '').trim();
+    // Accept Authorization as the primary channel and X-ADM-Token as a
+    // same-origin-safe fallback for environments that strip Authorization.
+    const raw = (request.headers.get('Authorization')?.replace(/^Bearer\s+/i, '').trim())
+      || request.headers.get('X-ADM-Token')?.trim()
+      || '';
     if (!raw) return json({ok:false, message:'Belum login.'}, 401);
     const user = await verifyToken(raw, env);
     if (!user) return json({ok:false, message:'Sesi login tidak valid atau sudah kedaluwarsa. Silakan login kembali.'}, 401);

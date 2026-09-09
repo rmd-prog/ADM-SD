@@ -406,7 +406,7 @@ export default {
 
       // AI GURU TERPUSAT — perangkat, bahan ajar, asesmen, dan administrasi guru
       if (url.pathname === "/api/ai/generate" && request.method === "POST") {
-        const user = getUser(request);
+        const user = await getUser(request, env);
         if (!user) return json({ ok:false, message:"Sesi login tidak valid." }, 401);
         const body = await request.json();
         const jenis = String(body.jenis || "").toLowerCase().trim();

@@ -67,10 +67,12 @@ async function legacyToken(user, env) {
   const secret = String(env.JWT_SECRET || '').trim();
   if (!secret) throw new Error('JWT_SECRET is not configured');
   const now = Math.floor(Date.now() / 1000);
+  const isGuruMapel = String(user.role || '').trim().toLowerCase() === 'guru_mapel';
+  const assignedRombel = isGuruMapel ? 'ALL' : (user.rombel || user.kelas || '');
   const safe = {
     id:user.id, username:user.username, nama:user.nama || user.name || '', role:user.role,
-    kelas:user.kelas, rombel:user.rombel, mapel:user.mapel || '',
-    activeRombel:user.activeRombel || user.rombel || user.kelas || '',
+    kelas:assignedRombel, rombel:assignedRombel, mapel:user.mapel || '',
+    activeRombel:isGuruMapel ? 'ALL' : (user.activeRombel || assignedRombel),
     iat:now, exp:now + 8 * 60 * 60
   };
   const b64 = (value) => b64urlBytes(encoder.encode(JSON.stringify(value)));

@@ -29,7 +29,11 @@
   }
   function getToken(){const s=getSession();return String(s?.token||s?.user?.token||'').replace(/^Bearer\s+/i,'')}
   function rewriteBody(text,r){
-    try{const o=JSON.parse(text);if(!o||typeof o!=='object')return text;for(const k of ['rombel','kelas','class','class_id','kelas_id'])if(k in o)o[k]=r;return JSON.stringify(o)}catch{return text}
+    try{
+      const o=JSON.parse(text);if(!o||typeof o!=='object'||Array.isArray(o))return text;
+      o.rombel=r;o.kelas=r;
+      return JSON.stringify(o);
+    }catch{return text}
   }
   function installFetch(){
     if(window.__ADM_MULTI_ROMBEL_FETCH)return;
@@ -44,14 +48,16 @@
         if(!/\/api\//.test(url.pathname))return native(input,init);
         const token=getToken();
         if(token){const h=new Headers(req.headers);h.set('Authorization','Bearer '+token);req=new Request(req,{headers:h});}
-        if(url.searchParams.has('rombel'))url.searchParams.set('rombel',r);
-        if(url.searchParams.has('kelas'))url.searchParams.set('kelas',r);
+        if(url.pathname.endsWith('/api/siswa')||url.pathname.endsWith('/api/absensi')||url.searchParams.has('rombel')||url.searchParams.has('kelas')){
+          url.searchParams.set('rombel',r);url.searchParams.set('kelas',r);
+        }
         const ct=req.headers.get('content-type')||'';
         if(ct.includes('application/json')&&!['GET','HEAD'].includes(req.method)){
           const txt=await req.clone().text();
           const body=rewriteBody(txt,r);
           req=new Request(req,{body});
         }
+        if(url.toString()!==req.url)req=new Request(url.toString(),req);
         return native(req);
       }catch{return native(input,init)}
     };

@@ -43,3 +43,21 @@
   function lockSubjectSelects(){const subject=own();if(!subject)return;document.querySelectorAll('select').forEach(sel=>{const opts=[...sel.options];opts.forEach(o=>{const s=normalizeSubject(o.value||o.textContent||'');if(SUBJECTS.some(x=>normalize(x)===normalize(s))&&normalize(s)!==normalize(subject)){o.hidden=true;o.disabled=true}});const good=opts.find(o=>!o.disabled&&normalizeSubject(o.value||o.textContent||'')===subject);if(good)sel.value=good.value})}
   const obs=new MutationObserver(lockSubjectSelects);if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{lockSubjectSelects();obs.observe(document.body,{childList:true,subtree:true})},{once:true});else{lockSubjectSelects();obs.observe(document.body,{childList:true,subtree:true})}
 })();
+
+/* ADM-SD — Index menu finishing pack loader. Additive only; does not touch auth/D1/rombel/absensi. */
+(function(){
+  'use strict';
+  if(window.__ADM_INDEX_FINISHING_LOADER__)return;
+  window.__ADM_INDEX_FINISHING_LOADER__=true;
+  function load(){
+    if(document.querySelector('script[data-adm-index-finishing]'))return;
+    const s=document.createElement('script');
+    s.src='assets/index-menu-finishing.js';
+    s.async=false;
+    s.dataset.admIndexFinishing='1';
+    s.onload=()=>console.info('[ADM] Index menu finishing aktif.');
+    s.onerror=()=>console.warn('[ADM] Index menu finishing gagal dimuat.');
+    document.body.appendChild(s);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',load,{once:true});else load();
+})();

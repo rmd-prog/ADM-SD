@@ -1,4 +1,4 @@
-/* ADM-SD — role menu + AI Brain V4.0 loader */
+/* ADM-SD — role menu + AI Brain V4.0.1 loader */
 (function(){
 'use strict';
 const getUser=()=>{try{const x=JSON.parse(localStorage.getItem('siLogin')||'null');return x?.user||x||null}catch{return null}};
@@ -18,8 +18,8 @@ function applyRoleMenu(){
  const cur=document.querySelector('.page.active');if(!admin&&cur&&norm(cur.id)==='teachers'){const d=document.querySelector('[data-page="dashboard"]');if(d)d.click()}
 }
 function loadScript(src,key){if(window[key])return;window[key]=true;const s=document.createElement('script');s.src=src;s.async=false;(document.head||document.documentElement).appendChild(s)}
-function boot(){applyRoleMenu();loadScript('assets/multi-rombel.js?v=1','__ADM_MULTI_ROMBEL_LOADED');loadScript('assets/ai-brain-v40.js?v=40','__ADM_AI_V40_LOADED');window.__ADM_APPLY_ROLE_MENU=applyRoleMenu}
+function boot(){applyRoleMenu();loadScript('assets/multi-rombel.js?v=1','__ADM_MULTI_ROMBEL_LOADED');loadScript('assets/ai-brain-v40.js?v=401','__ADM_AI_V40_LOADED');window.__ADM_APPLY_ROLE_MENU=applyRoleMenu}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
-const obs=new MutationObserver(()=>{if(!window.__ADM_AI_V40_LOADED)loadScript('assets/ai-brain-v40.js?v=40','__ADM_AI_V40_LOADED')});
+const obs=new MutationObserver(()=>{if(!window.__ADM_AI_V40_LOADED)loadScript('assets/ai-brain-v40.js?v=401','__ADM_AI_V40_LOADED')});
 if(document.body)obs.observe(document.body,{childList:true,subtree:true});
 })();

@@ -53,6 +53,12 @@ export default {async fetch(request,env,ctx){
   const url=new URL(request.url);
   if(url.pathname==='/api/login'&&request.method==='POST'){try{const body=await request.clone().json();if(String(body.username||'').trim()===TARGET){const result=await annisaLogin(request,env);if(result)return result;}}catch{}}
   const hardened=await hardenAnnisaRequest(request,env);
-  if(url.pathname==='/api/ai/generate'&&request.method==='POST'){const strictRequest=await strictAiRequest(hardened);return baseWorker.fetch(strictRequest,env,ctx)}
+  if(url.pathname==='/api/ai/generate'&&request.method==='POST'){
+    let body={};try{body=await hardened.clone().json()}catch{}
+    const jenis=String(body?.jenis||'').toLowerCase().trim();
+    const assessment=['soal_sumatif','soal_formatif','kisi_kisi','rubrik','kunci_jawaban','pedoman_skor'].includes(jenis);
+    const aiRequest=assessment?hardened:await strictAiRequest(hardened);
+    return baseWorker.fetch(aiRequest,env,ctx);
+  }
   return baseWorker.fetch(hardened,env,ctx);
 }};

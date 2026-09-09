@@ -1,0 +1,146 @@
+name: Apply JWT Authentication
+
+on:
+  push:
+    paths:
+      - '.github/workflows/apply-jwt-auth.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Patch Worker auth
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('src/index.js')
+          s = p.read_text(encoding='utf-8')
+
+          old = '''function getUser(request) {
+  const token = request.headers.get("Authorization")?.replace("Bearer ", "");
+  if (!token) return null;
+  try { return JSON.parse(atob(token)); } catch { return null; }
+}
+
+function createToken(user) {
+  return btoa(JSON.stringify({
+    id: user.id, username: user.username, nama: user.nama,
+    role: user.role, kelas: user.kelas, rombel: user.rombel, mapel: user.mapel || ""
+  }));
+}'''
+
+          new = '''const JWT_ALG = "HS256";
+const JWT_TYP = "JWT";
+const JWT_TTL_SECONDS = 60 * 60 * 8;
+
+function base64urlEncode(input) {
+  const bytes = input instanceof Uint8Array ? input : new TextEncoder().encode(String(input));
+  let binary = "";
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+  }
+  return btoa(binary).replace(/\\+/g, "-").replace(/\\//g, "_").replace(/=+$/g, "");
+}
+
+function base64urlDecode(str) {
+  const pad = str.length % 4 ? "=".repeat(4 - (str.length % 4)) : "";
+  const binary = atob(str.replace(/-/g, "+").replace(/_/g, "/") + pad);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
+async function jwtKey(secret) {
+  return crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign", "verify"]
+  );
+}
+
+async function getUser(request, env) {
+  const auth = request.headers.get("Authorization") || "";
+  const token = auth.startsWith("Bearer ") ? auth.slice(7).trim() : "";
+  if (!token || !env.JWT_SECRET) return null;
+  const parts = token.split(".");
+  if (parts.length !== 3) return null;
+  try {
+    const [h, p, s] = parts;
+    const header = JSON.parse(new TextDecoder().decode(base64urlDecode(h)));
+    const payload = JSON.parse(new TextDecoder().decode(base64urlDecode(p)));
+    if (header.alg !== JWT_ALG || header.typ !== JWT_TYP) return null;
+    const now = Math.floor(Date.now() / 1000);
+    const exp = Number(payload.exp);
+    if (!Number.isFinite(exp) || exp <= now) return null;
+    const ok = await crypto.subtle.verify(
+      "HMAC",
+      await jwtKey(env.JWT_SECRET),
+      base64urlDecode(s),
+      new TextEncoder().encode(`${h}.${p}`)
+    );
+    return ok ? payload : null;
+  } catch {
+    return null;
+  }
+}
+
+async function createToken(user, secret) {
+  const now = Math.floor(Date.now() / 1000);
+  const header = base64urlEncode(JSON.stringify({ alg: JWT_ALG, typ: JWT_TYP }));
+  const payload = base64urlEncode(JSON.stringify({
+    id: user.id,
+    username: user.username,
+    nama: user.nama,
+    role: user.role,
+    kelas: user.kelas,
+    rombel: user.rombel,
+    mapel: user.mapel || "",
+    iat: now,
+    exp: now + JWT_TTL_SECONDS
+  }));
+  const data = `${header}.${payload}`;
+  const signature = await crypto.subtle.sign(
+    "HMAC",
+    await jwtKey(secret),
+    new TextEncoder().encode(data)
+  );
+  return `${data}.${base64urlEncode(new Uint8Array(signature))}`;
+}'''
+
+          if old not in s:
+              raise SystemExit('Expected auth block not found; refusing unsafe patch')
+          s = s.replace(old, new, 1)
+
+          old_login = 'return json({ ok: true, token: createToken(safeUser), user: safeUser });'
+          new_login = 'if (!env.JWT_SECRET) return json({ ok: false, message: "JWT_SECRET belum dikonfigurasi di Worker." }, 500);\n        return json({ ok: true, token: await createToken(safeUser, env.JWT_SECRET), user: safeUser });'
+          if old_login not in s:
+              raise SystemExit('Expected login token call not found; refusing unsafe patch')
+          s = s.replace(old_login, new_login, 1)
+
+          old_user = 'const user = getUser(request);'
+          new_user = 'const user = await getUser(request, env);'
+          if old_user not in s:
+              raise SystemExit('Expected getUser call not found; refusing unsafe patch')
+          s = s.replace(old_user, new_user, 1)
+
+          p.write_text(s, encoding='utf-8')
+
+      - name: Verify syntax and commit
+        run: |
+          node --check src/index.js
+          grep -n "JWT_ALG\|JWT_SECRET\|await getUser\|await createToken" src/index.js
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/index.js .github/workflows/apply-jwt-auth.yml
+          git rm .github/workflows/apply-jwt-auth.yml
+          git commit -m "feat: use signed expiring JWT auth"
+          git push

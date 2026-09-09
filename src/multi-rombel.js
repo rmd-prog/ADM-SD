@@ -9,36 +9,58 @@ function encodeToken(obj){return btoa(JSON.stringify(obj))}
 function responseJson(data,status=200){return new Response(JSON.stringify(data),{status,headers:jsonHeaders})}
 function makeSafeUser(row){
   const mapel=String(row.mapel||'').trim();
-  return {id:row.id,username:row.username,nama:row.nama,role:row.role,kelas:'IIA',rombel:'IIA',mapel,rombels:ROMBELS.slice(),activeRombel:'IIA'};
+  return {
+    id:row.id,
+    username:row.username,
+    nama:row.nama,
+    name:row.nama,
+    role:row.role,
+    kelas:'IIA',
+    rombel:'IIA',
+    mapel,
+    rombels:ROMBELS.slice(),
+    activeRombel:'IIA'
+  };
 }
 
 async function annisaLogin(request,env){
-  const body=await request.json();
+  let body={};
+  try{body=await request.clone().json()}catch{}
   const username=String(body.username||'').trim();
-  const password=String(body.password||'');
+  const password=String(body.password??'');
   if(username!==TARGET)return null;
-  // Prefer the row explicitly named Annisa Pratiwi; this resolves the legacy duplicate-username collision.
-  const rows=await env.DB.prepare('SELECT id,username,password,nama,role,kelas,rombel,mapel FROM users WHERE username=? ORDER BY CASE WHEN UPPER(nama) LIKE ? THEN 0 ELSE 1 END, id').bind(username,'%ANNISA PRATIWI%').all();
-  const row=(rows.results||[]).find(x=>String(x.password||'')===password);
+
+  // Cari semua baris dengan username yang sama, lalu cocokkan password.
+  // Ini sengaja mengatasi data lama yang pernah memiliki username Annisa ganda.
+  const rows=await env.DB.prepare(
+    'SELECT id,username,password,nama,role,kelas,rombel,mapel FROM users WHERE username=? ORDER BY id'
+  ).bind(username).all();
+  const list=rows.results||[];
+  const row=list.find(x=>String(x.password??'')===password)
+    ||list.find(x=>String(x.password??'').trim()===password.trim());
   if(!row)return responseJson({ok:false,message:'Username atau password salah.'},401);
+
   const user=makeSafeUser(row);
   const token=encodeToken(user);
-  return responseJson({ok:true,token,user},200);
+  return responseJson({ok:true,token,access_token:token,user},200);
 }
 
 export default {
   async fetch(request,env,ctx){
     if(request.method==='OPTIONS')return new Response(null,{headers:jsonHeaders});
     const url=new URL(request.url);
+
     if(url.pathname==='/api/login'&&request.method==='POST'){
       try{
         const clone=request.clone();
         const body=await clone.json();
         if(String(body.username||'').trim()===TARGET){
-          return await annisaLogin(request,env);
+          const result=await annisaLogin(request,env);
+          if(result)return result;
         }
       }catch{}
     }
+
     return baseWorker.fetch(request,env,ctx);
   }
 };

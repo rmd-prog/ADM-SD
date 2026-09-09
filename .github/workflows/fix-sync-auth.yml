@@ -28,22 +28,22 @@ jobs:
           p = Path('index.html')
           s = p.read_text(encoding='utf-8')
           marker = "let currentTeacher=null;"
-          helper = "let currentTeacher=null;\nfunction getAuthToken(){try{const t=localStorage.getItem('siAuthToken')||sessionStorage.getItem('siAuthToken')||'';if(t)return t}catch(e){}try{const x=JSON.parse(localStorage.getItem('siLogin')||'null');const t=String(x?.token||x?.user?.token||'').trim();if(t)return t}catch(e){}return String(currentTeacher?.token||'').trim()}"
+          helper = "let currentTeacher=null;\nfunction getAuthToken(){try{const t=localStorage.getItem('siAuthToken')||sessionStorage.getItem('siAuthToken')||'';if(t)return String(t).trim()}catch(e){}try{const x=JSON.parse(localStorage.getItem('siLogin')||'null');const t=String(x?.token||x?.user?.token||'').trim();if(t)return t}catch(e){}return String(currentTeacher?.token||'').trim()}"
           if marker not in s:
               raise SystemExit('currentTeacher marker not found')
-          if "function getAuthToken()" in s:
-              import re
-              s = re.sub(r"function getAuthToken\(\)\{.*?\}", helper.split('\n',1)[1], s, count=1)
-          else:
+          if "function getAuthToken()" not in s:
               s = s.replace(marker, helper, 1)
-          # Replace token reads while preserving the helper's own storage lookup.
-          placeholder = "__AUTH_HELPER_LOCALSTORAGE__"
-          s = s.replace("localStorage.getItem('siAuthToken')||sessionStorage.getItem('siAuthToken')||''", placeholder, 1)
-          s = s.replace("localStorage.getItem('siAuthToken')||''", "getAuthToken()")
-          s = s.replace("sessionStorage.getItem('siAuthToken')||''", "getAuthToken()")
-          s = s.replace(placeholder, "localStorage.getItem('siAuthToken')||sessionStorage.getItem('siAuthToken')||''", 1)
-          # Keep the JWT available in the in-memory teacher object whenever login stores it.
-          s = s.replace("localStorage.setItem('siAuthToken',t.token);", "localStorage.setItem('siAuthToken',t.token);try{if(currentTeacher)currentTeacher.token=t.token}catch(e){}")
+          # Preserve the helper's own storage reads, then normalize the rest of the app.
+          helper_start = s.find('function getAuthToken()')
+          helper_end = s.find('}', helper_start)
+          if helper_start < 0 or helper_end < 0:
+              raise SystemExit('auth helper not found')
+          head = s[:helper_start]
+          helper_text = s[helper_start:helper_end+1]
+          tail = s[helper_end+1:]
+          tail = tail.replace("localStorage.getItem('siAuthToken')||''", "getAuthToken()")
+          tail = tail.replace("sessionStorage.getItem('siAuthToken')||''", "getAuthToken()")
+          s = head + helper_text + tail
           p.write_text(s, encoding='utf-8')
           PY
 
@@ -56,7 +56,6 @@ jobs:
           import re
           s=Path('index.html').read_text(encoding='utf-8')
           assert 'function getAuthToken()' in s
-          assert "getAuthToken()" in s
           scripts=re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>',s,re.S|re.I)
           Path('/tmp/index-inline.js').write_text('\n'.join(scripts),encoding='utf-8')
           PY

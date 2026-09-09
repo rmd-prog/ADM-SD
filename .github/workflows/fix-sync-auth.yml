@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - main
+    paths:
+      - '.github/sync-auth-trigger.txt'
+      - '.github/workflows/fix-sync-auth.yml'
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -15,7 +19,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Patch frontend auth token fallback
+      - name: Patch frontend auth bridge
         shell: bash
         run: |
           set -euo pipefail
@@ -24,12 +28,22 @@ jobs:
           p = Path('index.html')
           s = p.read_text(encoding='utf-8')
           marker = "let currentTeacher=null;"
-          helper = "let currentTeacher=null;\nfunction getAuthToken(){try{const t=localStorage.getItem('siAuthToken')||'';if(t)return t}catch(e){}return String(currentTeacher?.token||'').trim()}"
-          if "function getAuthToken()" not in s:
-              if marker not in s:
-                  raise SystemExit('currentTeacher marker not found')
+          helper = "let currentTeacher=null;\nfunction getAuthToken(){try{const t=localStorage.getItem('siAuthToken')||sessionStorage.getItem('siAuthToken')||'';if(t)return t}catch(e){}try{const x=JSON.parse(localStorage.getItem('siLogin')||'null');const t=String(x?.token||x?.user?.token||'').trim();if(t)return t}catch(e){}return String(currentTeacher?.token||'').trim()}"
+          if marker not in s:
+              raise SystemExit('currentTeacher marker not found')
+          if "function getAuthToken()" in s:
+              import re
+              s = re.sub(r"function getAuthToken\(\)\{.*?\}", helper.split('\n',1)[1], s, count=1)
+          else:
               s = s.replace(marker, helper, 1)
+          # Replace token reads while preserving the helper's own storage lookup.
+          placeholder = "__AUTH_HELPER_LOCALSTORAGE__"
+          s = s.replace("localStorage.getItem('siAuthToken')||sessionStorage.getItem('siAuthToken')||''", placeholder, 1)
           s = s.replace("localStorage.getItem('siAuthToken')||''", "getAuthToken()")
+          s = s.replace("sessionStorage.getItem('siAuthToken')||''", "getAuthToken()")
+          s = s.replace(placeholder, "localStorage.getItem('siAuthToken')||sessionStorage.getItem('siAuthToken')||''", 1)
+          # Keep the JWT available in the in-memory teacher object whenever login stores it.
+          s = s.replace("localStorage.setItem('siAuthToken',t.token);", "localStorage.setItem('siAuthToken',t.token);try{if(currentTeacher)currentTeacher.token=t.token}catch(e){}")
           p.write_text(s, encoding='utf-8')
           PY
 
@@ -59,5 +73,5 @@ jobs:
             echo 'No sync auth patch needed'
             exit 0
           fi
-          git commit -m 'fix: preserve JWT for D1 sync requests [skip ci]'
+          git commit -m 'fix: robust JWT bridge for D1 sync [skip ci]'
           git push origin main

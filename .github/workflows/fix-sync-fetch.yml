@@ -1,0 +1,88 @@
+name: Force API auth bridge
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fix-sync-fetch.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Install API auth bridge
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          marker='<!-- ADM-SD API AUTH BRIDGE -->'
+          if marker not in s:
+              bridge='''<script>
+          /* ADM-SD API AUTH BRIDGE: always attach the active JWT to API requests. */
+          (function(){
+            if(window.__ADM_API_AUTH_BRIDGE)return;
+            window.__ADM_API_AUTH_BRIDGE=true;
+            function token(){
+              try{const t=String(localStorage.getItem('siAuthToken')||'').trim();if(t)return t}catch(e){}
+              try{const t=String(sessionStorage.getItem('siAuthToken')||'').trim();if(t)return t}catch(e){}
+              try{const x=JSON.parse(localStorage.getItem('siLogin')||'null');const t=String(x?.token||x?.user?.token||'').trim();if(t)return t}catch(e){}
+              try{const t=String(window.currentTeacher?.token||'').trim();if(t)return t}catch(e){}
+              return '';
+            }
+            const nativeFetch=window.fetch.bind(window);
+            window.fetch=async function(input,init){
+              try{
+                const req=input instanceof Request?input:new Request(input,init);
+                const url=new URL(req.url,location.href);
+                if(/\\/api\\//.test(url.pathname)){
+                  const t=token();
+                  if(t){const h=new Headers(req.headers);if(!h.has('Authorization'))h.set('Authorization','Bearer '+t);return nativeFetch(new Request(req,{headers:h}));}
+                }
+              }catch(e){}
+              return nativeFetch(input,init);
+            };
+          })();
+          </script>'''
+              if '</body>' in s:
+                  s=s.replace('</body>',marker+'\n'+bridge+'\n</body>',1)
+              else:
+                  s += '\n'+marker+'\n'+bridge+'\n'
+              p.write_text(s,encoding='utf-8')
+          PY
+
+      - name: Validate
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('index.html').read_text(encoding='utf-8')
+          assert s.count('ADM-SD API AUTH BRIDGE') == 1
+          scripts=re.findall(r'<script(?:\\s[^>]*)?>(.*?)</script>',s,re.S|re.I)
+          Path('/tmp/index-inline.js').write_text('\n'.join(scripts),encoding='utf-8')
+          PY
+          node --check /tmp/index-inline.js
+
+      - name: Commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'fix: force JWT on ADM-SD API requests [skip ci]'
+          git push origin main

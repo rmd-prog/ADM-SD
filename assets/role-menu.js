@@ -24,8 +24,6 @@
       }
       if(admin && (isTeacher||isSystem||isSibi)) el.style.display='';
     });
-
-    // If a restricted submenu item is hidden, hide an empty group too.
     document.querySelectorAll('.menu-group').forEach(group=>{
       if(admin){group.style.display='';return;}
       const visible=[...group.querySelectorAll('.navbtn')].some(x=>getComputedStyle(x).display!=='none');
@@ -33,17 +31,20 @@
       if(title.includes('sistem') || title.includes('referensi sibi')) group.style.display='none';
       else if(group.querySelector('.submenu') && !visible) group.style.display='none';
     });
-
-    // Safety: teachers must never land on a hidden admin page through stale navigation.
     const current=document.querySelector('.page.active');
     if(!admin && current && norm(current.id)==='teachers'){
       const dash=document.querySelector('[data-page="dashboard"]');
       if(dash) dash.click();
     }
   }
-
+  function loadMultiRombel(){
+    if(window.__ADM_MULTI_ROMBEL_LOADED)return;
+    window.__ADM_MULTI_ROMBEL_LOADED=true;
+    const s=document.createElement('script');s.src='assets/multi-rombel.js?v=1';s.async=false;document.head.appendChild(s);
+  }
   function boot(){
     applyRoleMenu();
+    loadMultiRombel();
     const obs=new MutationObserver(()=>applyRoleMenu());
     if(document.body) obs.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class','style','data-page']});
     window.__ADM_APPLY_ROLE_MENU=applyRoleMenu;

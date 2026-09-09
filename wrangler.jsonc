@@ -1,5 +1,5 @@
 {
   "name": "adm-sd",
-  "main": "src/index.js",
+  "main": "src/multi-rombel.js",
   "compatibility_date": "2026-09-06"
 }

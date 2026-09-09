@@ -121,6 +121,7 @@ function boot(){
   installAuthTokenBridge();
   applyRoleMenu();
   installD1SyncButtonFix();
+  loadScript('assets/ui-feedback.js?v=1','__ADM_UI_FEEDBACK_LOADED');
   loadScript('assets/loading-system.js?v=1','__ADM_LOADING_SYSTEM');
   loadScript('assets/multi-rombel.js?v=1','__ADM_MULTI_ROMBEL_LOADED');
   loadScript('assets/guru-mapel-access.js?v=2','__ADM_GURU_MAPEL_ACCESS_LOADED');

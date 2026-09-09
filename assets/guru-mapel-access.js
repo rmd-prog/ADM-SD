@@ -19,6 +19,6 @@
   if(window.__ADM_INDEX_FINISHING_LOADER__)return;
   window.__ADM_INDEX_FINISHING_LOADER__=true;
   function load(src,flag){if(document.querySelector('script['+flag+']'))return;const s=document.createElement('script');s.src=src;s.async=false;s.setAttribute(flag,'1');document.body.appendChild(s)}
-  function boot(){load('assets/index-menu-finishing.js','data-adm-index-finishing');setTimeout(()=>load('assets/index-menu-finishing-v2.js','data-adm-index-finishing-v2'),250);setTimeout(()=>load('assets/index-menu-finishing-v3.js','data-adm-index-finishing-v3'),450);setTimeout(()=>load('assets/index-menu-finishing-v4.js','data-adm-index-finishing-v4'),650);setTimeout(()=>load('assets/index-menu-finishing-v5.js','data-adm-index-finishing-v5'),850)}
+  function boot(){load('assets/index-menu-finishing.js','data-adm-index-finishing');setTimeout(()=>load('assets/index-menu-finishing-v2.js','data-adm-index-finishing-v2'),250);setTimeout(()=>load('assets/index-menu-finishing-v3.js','data-adm-index-finishing-v3'),450);setTimeout(()=>load('assets/index-menu-finishing-v4.js','data-adm-index-finishing-v4'),650);setTimeout(()=>load('assets/index-menu-finishing-v5.js','data-adm-index-finishing-v5'),850);setTimeout(()=>load('assets/index-menu-finishing-v6.js','data-adm-index-finishing-v6'),1050)}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();

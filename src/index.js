@@ -11,17 +11,54 @@ function json(data, status = 200) {
   });
 }
 
-function getUser(request) {
-  const token = request.headers.get("Authorization")?.replace("Bearer ", "");
-  if (!token) return null;
-  try { return JSON.parse(atob(token)); } catch { return null; }
+const JWT_ALG = "HS256";
+const JWT_TYP = "JWT";
+const JWT_TTL_SECONDS = 60 * 60 * 8;
+
+function base64urlEncode(input) {
+  const bytes = input instanceof Uint8Array ? input : new TextEncoder().encode(String(input));
+  let binary = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
 }
 
-function createToken(user) {
-  return btoa(JSON.stringify({
-    id: user.id, username: user.username, nama: user.nama,
-    role: user.role, kelas: user.kelas, rombel: user.rombel, mapel: user.mapel || ""
-  }));
+function base64urlDecode(str) {
+  const pad = str.length % 4 ? "=".repeat(4 - (str.length % 4)) : "";
+  const binary = atob(str.replace(/-/g, "+").replace(/_/g, "/") + pad);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
+async function jwtKey(secret) {
+  return crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign", "verify"]);
+}
+
+async function getUser(request, env) {
+  const auth = request.headers.get("Authorization") || "";
+  const token = auth.startsWith("Bearer ") ? auth.slice(7).trim() : "";
+  if (!token || !env.JWT_SECRET) return null;
+  const parts = token.split(".");
+  if (parts.length !== 3) return null;
+  try {
+    const [h, p, sig] = parts;
+    const header = JSON.parse(new TextDecoder().decode(base64urlDecode(h)));
+    const payload = JSON.parse(new TextDecoder().decode(base64urlDecode(p)));
+    if (header.alg !== JWT_ALG || header.typ !== JWT_TYP) return null;
+    const exp = Number(payload.exp);
+    if (!Number.isFinite(exp) || exp <= Math.floor(Date.now() / 1000)) return null;
+    const ok = await crypto.subtle.verify("HMAC", await jwtKey(env.JWT_SECRET), base64urlDecode(sig), new TextEncoder().encode(`${h}.${p}`));
+    return ok ? payload : null;
+  } catch { return null; }
+}
+
+async function createToken(user, secret) {
+  const now = Math.floor(Date.now() / 1000);
+  const h = base64urlEncode(JSON.stringify({ alg: JWT_ALG, typ: JWT_TYP }));
+  const p = base64urlEncode(JSON.stringify({ id:user.id, username:user.username, nama:user.nama, role:user.role, kelas:user.kelas, rombel:user.rombel, mapel:user.mapel || "", iat:now, exp:now + JWT_TTL_SECONDS }));
+  const data = `${h}.${p}`;
+  const sig = await crypto.subtle.sign("HMAC", await jwtKey(secret), new TextEncoder().encode(data));
+  return `${data}.${base64urlEncode(new Uint8Array(sig))}`;
 }
 
 async function columns(env, table) {
@@ -174,10 +211,11 @@ export default {
           rombel: cleanRombel(user.rombel || user.kelas),
           mapel: normalizeMapel(user.mapel || "")
         };
-        return json({ ok: true, token: createToken(safeUser), user: safeUser });
+        if (!env.JWT_SECRET) return json({ ok: false, message: "JWT_SECRET belum dikonfigurasi di Worker." }, 500);
+        return json({ ok: true, token: await createToken(safeUser, env.JWT_SECRET), user: safeUser });
       }
 
-      const user = getUser(request);
+      const user = await getUser(request, env);
       if (!user) return json({ ok: false, message: "Belum login." }, 401);
 
 

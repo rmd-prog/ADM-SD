@@ -18,51 +18,57 @@ jobs:
         with:
           ref: main
 
-      - name: Patch auth and exact D1 sync handler
+      - name: Patch shared auth transport
         shell: bash
         run: |
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
+          import re
           p=Path('index.html')
           s=p.read_text(encoding='utf-8')
-          marker='let currentTeacher=null;'
-          helper="function getAuthToken(){try{const t=String(localStorage.getItem('siAuthToken')||'').trim();if(t)return t}catch(e){}try{const t=String(sessionStorage.getItem('siAuthToken')||'').trim();if(t)return t}catch(e){}try{const x=JSON.parse(localStorage.getItem('siLogin')||'null');const t=String(x?.token||x?.user?.token||'').trim();if(t)return t}catch(e){}return String(currentTeacher?.token||'').trim()}"
-          lines=s.splitlines()
-          out=[]
-          found=False
-          for line in lines:
-              if line.startswith('function getAuthToken(){'):
-                  if not found:
-                      out.append(helper)
-                      found=True
-                  continue
-              out.append(line)
-          s='\n'.join(out)+('\\n' if s.endswith('\\n') else '')
-          if not found:
+          helper="function getAuthToken(){try{const t=String(localStorage.getItem('siAuthToken')||'').trim();if(t)return t}catch(e){}try{const t=String(sessionStorage.getItem('siAuthToken')||'').trim();if(t)return t}catch(e){}try{const x=JSON.parse(localStorage.getItem('siLogin')||'null');const t=String(x?.token||x?.access_token||x?.user?.token||x?.user?.access_token||'').trim();if(t)return t}catch(e){}return String(currentTeacher?.token||'').trim()}"
+          if 'function getAuthToken(){' in s:
+              s=re.sub(r'function getAuthToken\(\)\{.*?\}\nfunction currentUser',helper+'\nfunction currentUser',s,count=1,flags=re.S)
+          else:
+              marker='let currentTeacher=null;'
               if marker not in s: raise SystemExit('currentTeacher marker not found')
               s=s.replace(marker,marker+'\n'+helper,1)
-          lines=s.splitlines()
-          out=[]
-          for line in lines:
-              if line == helper:
-                  out.append(line)
-                  continue
-              line=line.replace("localStorage.getItem('siAuthToken')||''",'getAuthToken()')
-              line=line.replace("sessionStorage.getItem('siAuthToken')||''",'getAuthToken()')
-              out.append(line)
-          s='\n'.join(out)+('\\n' if s.endswith('\\n') else '')
-          old="""async function refreshStudentsFromD1(){const t=currentTeacher||JSON.parse(localStorage.getItem('siLogin')||'null');if(!t)return;const rombel=t.role==='guru'?normalizeRombel(t.rombel||t.kelas):'';const sp=await apiGet('/siswa',rombel?{rombel}:{});if(Array.isArray(sp.data))db.students=sp.data.map(normalizeStudentRow).filter(s=>s.name);save();renderStats();renderStudents();renderReport();renderScores()}"""
-          new="""async function refreshStudentsFromD1(){let t=currentTeacher;if(!t||!String(t.token||'').trim()){try{const saved=JSON.parse(localStorage.getItem('siLogin')||'null');const tok=String(saved?.token||saved?.access_token||'').trim();if(saved&&tok){t={...saved,token:tok};currentTeacher=t;localStorage.setItem('siAuthToken',tok)}}catch(e){}}if(!t)throw new Error('Belum login. Silakan login ulang.');const token=String(t.token||localStorage.getItem('siAuthToken')||'').trim();if(!token)throw new Error('Belum login. Silakan login ulang.');const rombel=t.role==='guru'?normalizeRombel(t.rombel||t.kelas):'';const sp=await apiGet('/siswa',rombel?{rombel}:{});if(Array.isArray(sp.data))db.students=sp.data.map(normalizeStudentRow).filter(s=>s.name);save();renderStats();renderStudents();renderReport();renderScores()}"""
-          count=s.count(old)
-          if count==1:
-              s=s.replace(old,new,1)
-          elif 'async function refreshStudentsFromD1(){let t=currentTeacher;' not in s:
-              raise SystemExit(f'refreshStudentsFromD1 target count={count}')
+          s=s.replace("const headers={'Accept':'application/json'}; if(token)headers.Authorization='Bearer '+token;","const headers={'Accept':'application/json'}; if(token){headers.Authorization='Bearer '+token;headers['X-ADM-Token']=token;}",1)
           p.write_text(s,encoding='utf-8')
           PY
 
-      - name: Validate frontend
+      - name: Patch exact D1 sync handler
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          pattern=r"async function refreshStudentsFromD1\(\)\{.*?\n  \}\n  id\('refreshStudents'\)\.onclick="
+          replacement="""async function refreshStudentsFromD1(){
+    const t=currentTeacher;
+    const token=getAuthToken();
+    if(!token)throw new Error('Belum login. Silakan login ulang.');
+    const rombel=(t?.role==='guru'||t?.role==='guru_mapel')?normalizeRombel(t.rombel||t.kelas):'';
+    const qs=rombel?'?'+new URLSearchParams({rombel}).toString():'';
+    const res=await fetch(API_BASE+'/siswa'+qs,{method:'GET',mode:'cors',cache:'no-store',headers:{'Accept':'application/json','Authorization':'Bearer '+token,'X-ADM-Token':token}});
+    let sp={};try{sp=await res.json()}catch(e){}
+    if(!res.ok||sp.ok===false)throw new Error(sp.message||('Gagal sinkron D1 (HTTP '+res.status+').'));
+    if(Array.isArray(sp.data))db.students=sp.data.map(normalizeStudentRow).filter(s=>s.name);
+    save();renderStats();renderStudents();renderReport();renderScores()
+  }
+  id('refreshStudents').onclick="""
+          s2,n=re.subn(pattern,replacement,s,count=1,flags=re.S)
+          if n!=1:
+              if 'async function refreshStudentsFromD1(){' not in s: raise SystemExit('refreshStudentsFromD1 function missing')
+              raise SystemExit('refreshStudentsFromD1 boundary not found')
+          p.write_text(s2,encoding='utf-8')
+          PY
+
+      - name: Validate
         shell: bash
         run: |
           set -euo pipefail
@@ -72,8 +78,7 @@ jobs:
           s=Path('index.html').read_text(encoding='utf-8')
           assert s.count('function getAuthToken(){')==1
           assert s.count('async function refreshStudentsFromD1(){')==1
-          assert 'let t=currentTeacher;if(!t||!String(t.token||' in s
-          assert "localStorage.setItem('siAuthToken',t.token);try" not in s
+          assert "headers['X-ADM-Token']=token" in s
           scripts=re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>',s,re.S|re.I)
           Path('/tmp/index-inline.js').write_text('\n'.join(scripts),encoding='utf-8')
           PY
@@ -87,5 +92,5 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
           if git diff --cached --quiet; then echo 'Auth/D1 bridge already patched'; exit 0; fi
-          git commit -m 'fix: make D1 sync reuse active JWT [skip ci]'
+          git commit -m 'fix: unify auth for students and attendance [skip ci]'
           git push origin main

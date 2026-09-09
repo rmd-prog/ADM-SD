@@ -49,13 +49,16 @@
         const ct=req.headers.get('content-type')||'';
         if(ct.includes('application/json')&&!['GET','HEAD'].includes(req.method)){
           const txt=await req.clone().text();
-          req=new Request(new Request(req,{body:rewriteBody(txt,r)}));
+          const body=rewriteBody(txt,r);
+          req=new Request(req,{body});
         }
         return native(req);
       }catch{return native(input,init)}
     };
   }
+  let renderScheduled=false;
   function render(){
+    renderScheduled=false;
     if(!isTarget())return;
     let box=document.getElementById('admMultiRombel');
     const host=document.querySelector('.top-right');
@@ -64,12 +67,30 @@
       box=document.createElement('div');box.id='admMultiRombel';box.style.cssText='display:flex;align-items:center;gap:6px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:999px;padding:4px 8px;font-size:12px;font-weight:800;box-shadow:0 3px 12px #2563eb18;';
       box.innerHTML='<span style="white-space:nowrap">📚 Kelas</span><select id="admMultiRombelSelect" style="width:auto;min-width:105px;padding:6px 24px 6px 8px;border-radius:999px;border:1px solid #93c5fd;background:#fff;font-size:12px;font-weight:800"></select>';
       host.insertBefore(box,host.firstChild);
-      box.querySelector('select').addEventListener('change',e=>{setSessionRombel(e.target.value);render();});
+      box.querySelector('select').addEventListener('change',e=>{setSessionRombel(e.target.value);updateSelect();});
     }
-    const sel=box.querySelector('select');sel.innerHTML=ROMBELS.map(x=>`<option value="${x}">${LABEL[x]}</option>`).join('');sel.value=active();
-    box.title='Pilih rombel aktif. Akses Bu Annisa dibatasi hanya Kelas 2A dan 2B.';
+    updateSelect();
   }
-  function boot(){installFetch();render();setTimeout(render,300);setTimeout(render,1000);setTimeout(render,2000);const obs=new MutationObserver(()=>render());if(document.body)obs.observe(document.body,{childList:true,subtree:true});}
+  function updateSelect(){
+    const sel=document.getElementById('admMultiRombelSelect');
+    if(!sel)return;
+    if(sel.options.length!==ROMBELS.length)sel.innerHTML=ROMBELS.map(x=>`<option value="${x}">${LABEL[x]}</option>`).join('');
+    sel.value=active();
+  }
+  function scheduleRender(){
+    if(renderScheduled)return;
+    renderScheduled=true;
+    requestAnimationFrame(render);
+  }
+  function boot(){
+    installFetch();
+    render();
+    setTimeout(render,800);
+    setTimeout(render,1800);
+    window.addEventListener('adm-login-ready',scheduleRender);
+    document.addEventListener('adm-rombel-change',scheduleRender);
+    window.__ADM_MULTI_ROMBEL_OBSERVER=null;
+  }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
   window.__ADM_MULTI_ROMBEL={active,set:setSessionRombel,rombels:ROMBELS.slice};
 })();

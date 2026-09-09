@@ -6,6 +6,43 @@ const getToken=()=>{
   try{const t=String(localStorage.getItem('siAuthToken')||'').trim();if(t)return t}catch{}
   try{const x=JSON.parse(localStorage.getItem('siLogin')||'null');return String(x?.token||x?.access_token||x?.user?.token||x?.user?.access_token||'').trim()}catch{return ''}
 };
+function persistLoginToken(token,user){
+  token=String(token||'').trim();
+  if(!token)return;
+  try{localStorage.setItem('siAuthToken',token)}catch{}
+  try{
+    const old=JSON.parse(localStorage.getItem('siLogin')||'null');
+    const u=user||old?.user||old||{};
+    const next=old&&typeof old==='object'&&!Array.isArray(old)?{...old,token,access_token:token,user:old.user?{...old.user,token,access_token:token}:old.user}:({...u,token,access_token:token});
+    localStorage.setItem('siLogin',JSON.stringify(next));
+  }catch{}
+}
+function installAuthTokenBridge(){
+  if(window.__ADM_AUTH_TOKEN_BRIDGE)return;
+  const nativeFetch=window.fetch;
+  if(typeof nativeFetch!=='function')return;
+  window.__ADM_AUTH_TOKEN_BRIDGE=true;
+  window.fetch=async function(input,init){
+    const reqUrl=typeof input==='string'?input:(input?.url||'');
+    const isLogin=/\/api\/login(?:\?|$)/i.test(String(reqUrl));
+    let response=await nativeFetch.apply(this,arguments);
+    try{
+      if(isLogin&&response){
+        const clone=response.clone();
+        const data=await clone.json().catch(()=>null);
+        const token=data?.token||data?.access_token||data?.user?.token||data?.user?.access_token||'';
+        if(token)persistLoginToken(token,data?.user||data);
+      }
+      if(response&&response.ok){
+        const h=(init&&init.headers)||{};
+        const auth=(h instanceof Headers)?h.get('Authorization'):(h?.Authorization||h?.authorization||'');
+        const token=String(auth||'').replace(/^Bearer\s+/i,'').trim();
+        if(token)persistLoginToken(token);
+      }
+    }catch{}
+    return response;
+  };
+}
 const isAdmin=()=>String(getUser()?.role||'').toLowerCase()==='admin';
 const norm=s=>String(s||'').trim().toLowerCase().replace(/\s+/g,' ');
 function applyRoleMenu(){
@@ -66,6 +103,7 @@ function installD1SyncButtonFix(){
   };
 }
 function boot(){
+  installAuthTokenBridge();
   applyRoleMenu();
   installD1SyncButtonFix();
   loadScript('assets/multi-rombel.js?v=1','__ADM_MULTI_ROMBEL_LOADED');

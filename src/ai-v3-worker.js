@@ -1,7 +1,13 @@
-/* ADM-SD AI Brain V3.1 wrapper over the current multi-rombel worker. */
+/* ADM-SD AI Brain V3.2 wrapper over the current multi-rombel worker. */
 import multiWorker from './multi-rombel.js';
 
 const VISUAL_TYPES = new Set(['fraction','shape','numberline','bar','clock','geometry']);
+const CORS = {
+  'Access-Control-Allow-Origin':'*',
+  'Access-Control-Allow-Methods':'GET,POST,PUT,DELETE,OPTIONS',
+  'Access-Control-Allow-Headers':'Content-Type, Authorization',
+  'Access-Control-Max-Age':'86400'
+};
 
 function esc(v='') { return String(v).replace(/[&<>\"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c])); }
 function attrs(src='') { const out={}; for (const m of String(src).matchAll(/([a-zA-Z]+)\s*=\s*\"([^\"]*)\"/g)) out[m[1]]=m[2]; return out; }
@@ -33,7 +39,7 @@ function visual(type,a) {
     labels.forEach((lb,i)=>{const x=55+i*75,h=120*(Math.max(0,vals[i]||0)/max),y=165-h;s+=`<rect x="${x}" y="${y}" width="48" height="${h}" fill="#bfdbfe" stroke="#1e3a8a"/><text x="${x+24}" y="185" text-anchor="middle" font-size="13">${esc(lb)}</text>`;});return svg(s,label);
   }
   if(type==='clock'){
-    const hour=Number(a.hour||3)%12,minute=Math.max(0,Math.min(59,Number(a.minute||0))),cx=260,cy=110,r=70,ha=(hour+minute/60)*Math.PI/6-Math.PI/2,ma=minute*Math.PI/30-Math.PI/2,hx=cx+35*Math.cos(ha),hy=cy+35*Math.sin(ha),mx=cx+52*Math.cos(ma),my=cy+52*Math.sin(ma);
+    const hour=Number(a.hour||3)%12,minute=Math.max(0,Math.min(59,Number(a.minute||0))),cx=260,cy=110,ha=(hour+minute/60)*Math.PI/6-Math.PI/2,ma=minute*Math.PI/30-Math.PI/2,hx=cx+35*Math.cos(ha),hy=cy+35*Math.sin(ha),mx=cx+52*Math.cos(ma),my=cy+52*Math.sin(ma);
     return svg(`<text x="260" y="25" text-anchor="middle" font-size="18" font-weight="700">${esc(label)}</text><circle cx="260" cy="110" r="70" fill="#fff" stroke="#1e3a8a" stroke-width="3"/><line x1="260" y1="110" x2="${hx}" y2="${hy}" stroke="#0f172a" stroke-width="6"/><line x1="260" y1="110" x2="${mx}" y2="${my}" stroke="#2563eb" stroke-width="4"/><circle cx="260" cy="110" r="5" fill="#0f172a"/>`,label);
   }
   if(type==='geometry')return svg(`<text x="260" y="25" text-anchor="middle" font-size="18" font-weight="700">${esc(label)}</text><polygon points="120,165 260,45 400,165" fill="#dbeafe" stroke="#1e3a8a" stroke-width="3"/><text x="260" y="190" text-anchor="middle" font-size="14">Segitiga</text>`,label);
@@ -43,57 +49,46 @@ function renderVisuals(text){ return String(text).replace(/\[\[GAMBAR\s+([^\]]+)
 
 function cleanReferenceLeak(text,jenis){
   let t=String(text||'');
-  // Remove source/book metadata regardless of document type. These are internal AI references, never user output.
   t=t.replace(/^\s*SUMBER\s+BUKU\s+TERKUNCI\s*:?.*$/gim,'');
   t=t.replace(/^\s*(Judul\s+buku|Sumber|Tahun\/Edisi|Daftar\s+BAB\/?UNIT\s+terverifikasi|Daftar\s+BAB\s+Terverifikasi)\s*:.*$/gim,'');
   t=t.replace(/^\s*Catatan\s*:\s*Bab\/subbab.*$/gim,'');
   t=t.replace(/^\s*.*struktur\s+BAB\s+dari\s+PDF\s+referensi.*$/gim,'');
   if(!['soal_sumatif','soal_formatif'].includes(jenis))t=t.replace(/^\s*(sumatif|formatif)\s+mata\s+pelajaran\s*[:\-]?.*$/gim,'');
-  if(['materi','ringkasan','bahan_ajar'].includes(jenis)){
-    t=t.replace(/^#{1,6}\s*(RPM|LKPD|MODUL AJAR|PROTA|PROSEM|ATP|TP|CP|KISI[- ]?KISI|RUBRIK|KUNCI JAWABAN|PEDOMAN PENSKORAN|DAFTAR BAB TER\/?VERIFIKASI|PETUNJUK BELAJAR|KEGIATAN \d+).*$/gim,'');
-  }
+  if(['materi','ringkasan','bahan_ajar'].includes(jenis))t=t.replace(/^#{1,6}\s*(RPM|LKPD|MODUL AJAR|PROTA|PROSEM|ATP|TP|CP|KISI[- ]?KISI|RUBRIK|KUNCI JAWABAN|PEDOMAN PENSKORAN|DAFTAR BAB TER\/?VERIFIKASI|PETUNJUK BELAJAR|KEGIATAN \d+).*$/gim,'');
   return t.replace(/\n{3,}/g,'\n\n').trim();
 }
-
 function addVisualFallback(text,jenis){
   if(!['soal_sumatif','soal_formatif'].includes(jenis)) return text;
-  // If the model already supplied controlled visual tokens, preserve them.
   if(/\[\[GAMBAR\s+[^\]]+\]\]/i.test(text)) return text;
-  const lines=String(text).split('\n');
-  const q=[];
+  const lines=String(text).split('\n'),q=[];
   for(let i=0;i<lines.length;i++) if(/^\s*(?:\d+\s*[.)]|(?:Soal\s+)?\d+\s*[-:])/i.test(lines[i])) q.push(i);
   if(!q.length) return text;
-  // Deterministic fallback: turn three suitable question slots into visual stimuli.
   const inserts=[['shape','shape="circle"','Perhatikan gambar berikut.'],['bar','labels="A|B|C|D" values="2|5|3|4"','Perhatikan diagram berikut.'],['numberline','min="0" max="10" point="6"','Perhatikan garis bilangan berikut.']];
-  const targets=q.slice(0,3).map((v,i)=>[v,inserts[i]]).reverse();
-  for(const [idx,[type,args,prefix]] of targets){ lines.splice(idx,0,`[[GAMBAR type="${type}" ${args} label="Stimulus visual"]]`,prefix); }
+  for(const [idx,[type,args,prefix]] of q.slice(0,3).map((v,i)=>[v,inserts[i]]).reverse()) lines.splice(idx,0,`[[GAMBAR type="${type}" ${args} label="Stimulus visual"]]`,prefix);
   return lines.join('\n');
 }
-
 function brainBody(body){
-  const jenis=String(body.jenis||'').toLowerCase().trim();
-  const isSoal=jenis==='soal_sumatif'||jenis==='soal_formatif';
-  const guard=`\n\n[AI BRAIN V3.1 — OUTPUT CONTRACT]\nTARGET: ${jenis}\nHANYA keluarkan dokumen target ini. DILARANG membawa dokumen/format lain, daftar BAB, metadata buku, identitas sumber, template contoh, atau lampiran lain yang tidak diminta. JANGAN pernah menampilkan SUMBER BUKU TERKUNCI, Judul buku, Sumber, Tahun/Edisi, Daftar BAB Terverifikasi, atau Catatan referensi internal. Frasa “Sumatif Mata Pelajaran/Fase/Kelas” hanya boleh digunakan untuk paket soal sumatif. Jangan mengubah Bab/Sub Bab/Kelas/Fase/Mapel yang dipilih guru. Periksa hasil sebelum menjawab dan hapus semua bagian yang bukan target.${isSoal?'\nWAJIB: paket soal harus mempunyai stimulus visual yang benar-benar dipakai pada beberapa soal. Emit 2–5 token visual terkontrol untuk 10–20 soal, proporsional bila jumlah berbeda. Gunakan [[GAMBAR type="fraction" n="3" d="4" label="Gambar pecahan"]], atau type="shape", "numberline", "bar", "clock", "geometry". Setelah token, tulis pertanyaan yang meminta siswa membaca/menafsirkan gambar tersebut. JANGAN gunakan URL gambar eksternal.':''}`;
-  return {...body,context:guard+'\nKONTEKS GURU:\n'+String(body.context||''),aiBrainVersion:'3.1',outputLock:true};
+  const jenis=String(body.jenis||'').toLowerCase().trim(),isSoal=jenis==='soal_sumatif'||jenis==='soal_formatif';
+  const guard=`\n\n[AI BRAIN V3.2 — OUTPUT CONTRACT]\nTARGET: ${jenis}\nHANYA keluarkan dokumen target ini. DILARANG membawa dokumen/format lain, daftar BAB, metadata buku, identitas sumber, template contoh, atau lampiran lain yang tidak diminta. JANGAN pernah menampilkan SUMBER BUKU TERKUNCI, Judul buku, Sumber, Tahun/Edisi, Daftar BAB Terverifikasi, atau Catatan referensi internal. Frasa “Sumatif Mata Pelajaran/Fase/Kelas” hanya boleh digunakan untuk paket soal sumatif. Jangan mengubah Bab/Sub Bab/Kelas/Fase/Mapel yang dipilih guru. Periksa hasil sebelum menjawab dan hapus semua bagian yang bukan target.${isSoal?'\nWAJIB: paket soal harus mempunyai stimulus visual yang benar-benar dipakai pada beberapa soal. Emit 2–5 token visual terkontrol untuk 10–20 soal, proporsional bila jumlah berbeda. Gunakan [[GAMBAR type="fraction" n="3" d="4" label="Gambar pecahan"]], atau type="shape", "numberline", "bar", "clock", "geometry". Setelah token, tulis pertanyaan yang meminta siswa membaca/menafsirkan gambar tersebut. JANGAN gunakan URL gambar eksternal.':''}`;
+  return {...body,context:guard+'\nKONTEKS GURU:\n'+String(body.context||''),aiBrainVersion:'3.2',outputLock:true};
 }
-
-export default {
-  async fetch(request,env,ctx){
-    if(request.method==='OPTIONS')return new Response(null,{headers:{'Access-Control-Allow-Origin':'*'}});
-    const url=new URL(request.url);
-    if(url.pathname!=='/api/ai/generate'||request.method!=='POST')return multiWorker.fetch(request,env,ctx);
-    let body={};try{body=await request.clone().json()}catch{return multiWorker.fetch(request,env,ctx)}
+export default { async fetch(request,env,ctx){
+  if(request.method==='OPTIONS') return new Response(null,{status:204,headers:CORS});
+  const url=new URL(request.url);
+  if(url.pathname!=='/api/ai/generate'||request.method!=='POST') return multiWorker.fetch(request,env,ctx);
+  let body={}; try{body=await request.clone().json();}catch{return multiWorker.fetch(request,env,ctx)}
+  let res;
+  try {
     const req=new Request(request,{body:JSON.stringify(brainBody(body))});
-    const res=await multiWorker.fetch(req,env,ctx);
-    let data={};try{data=await res.clone().json()}catch{return res}
-    if(data.ok&&typeof data.text==='string'){
-      const jenis=String(body.jenis||'').toLowerCase().trim();
-      let text=cleanReferenceLeak(data.text,jenis);
-      text=addVisualFallback(text,jenis);
-      data.text=renderVisuals(text);
-      data.aiBrain='V3.1';
-      data.visualSupport=jenis==='soal_sumatif'||jenis==='soal_formatif';
-    }
-    return new Response(JSON.stringify(data),{status:res.status,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+    res=await multiWorker.fetch(req,env,ctx);
+  } catch(e) {
+    return new Response(JSON.stringify({ok:false,message:'AI generate error: '+String(e?.message||e)}),{status:500,headers:{'Content-Type':'application/json',...CORS}});
   }
-};
+  let data={}; try{data=await res.clone().json();}catch{return new Response(await res.text(),{status:res.status,headers:{'Content-Type':'application/json',...CORS}})}
+  if(data.ok&&typeof data.text==='string'){
+    const jenis=String(body.jenis||'').toLowerCase().trim();
+    let text=cleanReferenceLeak(data.text,jenis); text=addVisualFallback(text,jenis);
+    data.text=renderVisuals(text); data.aiBrain='V3.2'; data.visualSupport=jenis==='soal_sumatif'||jenis==='soal_formatif';
+  }
+  return new Response(JSON.stringify(data),{status:res.status,headers:{'Content-Type':'application/json',...CORS}});
+}};

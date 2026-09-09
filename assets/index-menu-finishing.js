@@ -14,7 +14,34 @@
     console[type==='error'?'error':'log'](title,text);
   };
 
-  /* 1) AI Generator: stronger UX without changing its existing API contract. */
+  function findPrompt(root){
+    const ids=['aiPrompt','aiRequest','aiAdditional','aiAdditionalRequest','aiContext','aiMateri','aiInstruksi'];
+    for(const id of ids){const el=$(id);if(el&&root.contains(el))return el}
+    return root.querySelector('textarea[name*=prompt i],textarea[name*=request i],textarea[name*=instruksi i],textarea');
+  }
+
+  function enhancePrompt(root,type){
+    const prompt=findPrompt(root);if(!prompt||prompt.dataset.promptFinishing==='1')return;
+    prompt.dataset.promptFinishing='1';
+    const box=document.createElement('div');box.className='adm-prompt-tools';
+    box.innerHTML='<span>✨ Prompt siap</span><button type="button" data-p="lengkap">Lengkap</button><button type="button" data-p="ringkas">Ringkas</button><button type="button" data-p="visual">Visual</button><button type="button" data-p="asesmen">Asesmen</button>';
+    prompt.parentElement?.appendChild(box);
+    const templates={
+      lengkap:'Buat dokumen pembelajaran SD yang lengkap, sistematis, siap digunakan guru, sesuai kelas dan mata pelajaran yang dipilih. Gunakan bahasa Indonesia yang jelas, tujuan pembelajaran yang terukur, kegiatan runtut, serta format yang rapi untuk dicetak.',
+      ringkas:'Buat versi ringkas tetapi tetap lengkap secara substansi. Hindari pengulangan, gunakan poin dan tabel seperlunya, dan prioritaskan isi yang langsung dapat digunakan guru.',
+      visual:'Buat hasil yang menarik untuk siswa SD dengan struktur visual yang jelas. Sertakan tabel, ikon atau ilustrasi sederhana yang relevan bila mendukung pemahaman, tanpa membuat halaman terlalu padat.',
+      asesmen:'Lengkapi dengan asesmen yang sesuai: indikator, bentuk soal/tugas, kunci atau pedoman penskoran bila relevan, serta keterkaitan dengan tujuan pembelajaran.'
+    };
+    box.querySelectorAll('button').forEach(btn=>btn.onclick=()=>{
+      const add=templates[btn.dataset.p]||'';
+      const cur=String(prompt.value||'').trim();
+      prompt.value=cur?(cur+'\n\n'+add):add;
+      prompt.dispatchEvent(new Event('input',{bubbles:true}));
+      prompt.focus();
+    });
+    if(type)prompt.placeholder=prompt.placeholder||'Tambahkan konteks, materi, jumlah soal, gaya, atau kebutuhan khusus...';
+  }
+
   function enhanceAI(){
     const root=$('aiGenerate');
     if(!root||root.dataset.finishing==='1')return;
@@ -30,8 +57,8 @@
     $('admAiClear')?.addEventListener('click',()=>{
       if(result.querySelector('.ai-paper')&&!confirm('Bersihkan hasil AI saat ini?'))return;
       result.innerHTML='<div class="muted">Pilih kebutuhan → lengkapi konteks → tekan <b>Generate dengan AI</b>.</div>';
-      $('aiResultBadge').textContent='Siap membuat';
-      $('aiStatus').style.display='none';
+      if($('aiResultBadge'))$('aiResultBadge').textContent='Siap membuat';
+      if($('aiStatus'))$('aiStatus').style.display='none';
       localStorage.removeItem('admLastAIResult');
     });
 
@@ -45,8 +72,6 @@
     }
     size?.addEventListener('change',applyPaper);orientation?.addEventListener('change',applyPaper);
 
-    /* Save the latest generated text locally so refresh does not erase work. */
-    const originalHTML=result.innerHTML;
     const observer=new MutationObserver(()=>{
       const paper=result.querySelector('.ai-paper');
       if(!paper)return;
@@ -54,6 +79,7 @@
       const text=paper.innerText||'';
       if(text.length>80){
         try{localStorage.setItem('admLastAIResult',JSON.stringify({text,at:Date.now(),type:type.value,size:size?.value||'A4',orientation:orientation?.value||'portrait'}))}catch{}
+        if(window.ADMLoading?.hide)window.ADMLoading.hide();
       }
     });
     observer.observe(result,{childList:true,subtree:true});
@@ -69,15 +95,16 @@
           const paperSize=saved.size||'A4',ori=saved.orientation||'portrait';
           if(size)size.value=paperSize;if(orientation)orientation.value=ori;
           result.innerHTML='<div class="ai-print-note">↩ Hasil AI dipulihkan dari penyimpanan perangkat.</div><div class="markdown-clean"><pre style="white-space:pre-wrap">'+esc(saved.text)+'</pre></div>';
-          $('aiResultBadge').textContent='↩ Dipulihkan';
+          if($('aiResultBadge'))$('aiResultBadge').textContent='↩ Dipulihkan';
           toast('success','Hasil dipulihkan','Hasil AI terakhir tersedia kembali di halaman ini.');
         };
         restore.querySelector('button.secondary').onclick=()=>{localStorage.removeItem('admLastAIResult');restore.remove()};
       }
     }catch{}
+    enhancePrompt(root,type?.value||'');
+    type?.addEventListener('change',()=>enhancePrompt(root,type.value));
   }
 
-  /* 2) All document menus: print/PDF controls get a visible status instead of silent waiting. */
   function enhanceDocuments(){
     ['cp','tp','atp','prota','prosem','rpm'].forEach(t=>{
       const page=$(t);if(!page||page.dataset.finishDoc==='1')return;
@@ -89,7 +116,6 @@
     });
   }
 
-  /* 3) Dashboard quick-action feedback. */
   function enhanceDashboard(){
     const d=$('dashboard');if(!d||d.dataset.finishDash==='1')return;d.dataset.finishDash='1';
     const hero=d.querySelector('.v10-hero');if(hero){
@@ -97,14 +123,13 @@
     }
   }
 
-  /* 4) Global safe feedback for slow operations. */
   document.addEventListener('click',e=>{
     const b=e.target.closest('button');if(!b||b.disabled)return;
     const text=(b.textContent||'').trim().toLowerCase();
     if(/generate dengan ai/.test(text)&&window.ADMLoading?.process){
       const t=$('aiType')?.value||'generate';
       window.ADMLoading.process(t,{autoProgress:true});
-      setTimeout(()=>window.ADMLoading.hide(),14500);
+      setTimeout(()=>{if($('aiResult')?.querySelector('.ai-paper'))return;window.ADMLoading.hide()},30000);
     }
   },true);
 
@@ -114,11 +139,12 @@
       .adm-ai-finish-bar{display:flex;align-items:center;gap:10px;margin:12px 0 0;padding:11px 13px;border:1px solid #dbeafe;border-radius:14px;background:linear-gradient(135deg,#eff6ff,#faf5ff);color:#334155}
       .adm-ai-finish-dot{width:29px;height:29px;border-radius:9px;display:grid;place-items:center;background:#4f46e5;color:#fff;font-weight:900;box-shadow:0 6px 16px #4f46e530}
       .adm-ai-finish-bar div{min-width:0;flex:1}.adm-ai-finish-bar b{display:block;font-size:12px}.adm-ai-finish-bar small{display:block;color:#64748b;font-size:11px;margin-top:2px}
-      .adm-ai-finish-bar button,.adm-ai-restore button{border:1px solid #cbd5e1;background:#fff;border-radius:9px;padding:7px 9px;font-weight:800;font-size:11px;cursor:pointer}
+      .adm-ai-finish-bar button,.adm-ai-restore button,.adm-prompt-tools button{border:1px solid #cbd5e1;background:#fff;border-radius:9px;padding:7px 9px;font-weight:800;font-size:11px;cursor:pointer}
       .adm-ai-restore{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0;padding:10px 12px;border:1px solid #bbf7d0;background:#f0fdf4;border-radius:12px;color:#166534;font-size:11px}.adm-ai-restore span{color:#64748b}.adm-ai-restore button:first-of-type{background:#16a34a;color:#fff;border-color:#16a34a}.adm-ai-restore .secondary{background:#fff;color:#475569;border-color:#cbd5e1}
+      .adm-prompt-tools{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:7px}.adm-prompt-tools span{font-size:11px;font-weight:900;color:#475569;margin-right:2px}.adm-prompt-tools button{padding:6px 8px}.adm-prompt-tools button:hover{border-color:#93c5fd;background:#eff6ff}
       .adm-doc-hint{display:flex;align-items:center;gap:8px;margin-top:10px;padding:9px 11px;border-radius:11px;background:#f8fafc;border:1px dashed #cbd5e1;color:#64748b;font-size:11px}.adm-doc-hint span:first-child{width:21px;height:21px;border-radius:50%;display:grid;place-items:center;background:#dcfce7;color:#15803d;font-weight:900}.adm-doc-hint b{color:#334155}
       .adm-dash-ready{display:flex;align-items:center;gap:9px;position:relative;z-index:2;margin-top:14px;padding:9px 11px;width:max-content;max-width:100%;border-radius:999px;background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.18);font-size:11px}.adm-dash-ready span{opacity:.8}
-      @media(max-width:600px){.adm-ai-finish-bar{align-items:flex-start}.adm-ai-finish-bar button{margin-left:auto}.adm-dash-ready{width:100%;justify-content:center}.adm-ai-restore{align-items:flex-start}}
+      @media(max-width:600px){.adm-ai-finish-bar{align-items:flex-start}.adm-ai-finish-bar button{margin-left:auto}.adm-dash-ready{width:100%;justify-content:center}.adm-ai-restore{align-items:flex-start}.adm-prompt-tools{gap:5px}.adm-prompt-tools button{padding:6px 7px}}
     `;document.head.appendChild(s);
   }
 

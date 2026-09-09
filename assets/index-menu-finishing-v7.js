@@ -6,14 +6,21 @@ function tools(){const root=$('#aiGenerate');if(!root||root.dataset.v7)return;ro
 function status(){const root=$('#aiGenerate');if(!root||root.querySelector('.adm-v7-status'))return;const el=document.createElement('div');el.className='adm-v7-status';el.innerHTML='<span class="adm-v7-dot"></span><span><b>Workspace siap.</b> Pilih dokumen, isi konteks, lalu generate. Hasil dapat diedit dan dicetak.</span>';const hero=root.querySelector('.doc-hero');(hero?.parentNode||root).insertBefore(el,hero?.nextSibling||root.firstChild)}
 function backTop(){if($('#adm-v7-top'))return;const b=document.createElement('button');b.id='adm-v7-top';b.className='adm-v7-fab';b.type='button';b.textContent='⬆️ Ke atas';b.onclick=()=>scrollTo({top:0,behavior:'smooth'});document.body.appendChild(b)}
 function optimizeAI(init){if(!init||!init.body)return init;try{const body=JSON.parse(typeof init.body==='string'?init.body:'');if(!body||typeof body!=='object')return init;
+  const jenis=norm(body.jenis);const jumlah=Math.max(1,Math.min(100,Number(body.jumlahSoal||0)));
   if(typeof body.context==='string')body.context=body.context.replace(/(?:^|\n)KUNCI BUKU:[\s\S]*?(?=\n\n|$)/i,'').replace(/\n{3,}/g,'\n\n').trim().slice(0,6000);
   if(typeof body.existing==='string')body.existing=body.existing.slice(0,3000);
+  let max=4000;
+  if(jenis==='lkpd') max=jumlah>=30?7500:jumlah>=20?6500:5500;
+  else if(jenis==='soal_sumatif'||jenis==='soal_formatif') max=jumlah>=30?6500:jumlah>=20?5500:4500;
+  else if(jenis==='rpm'||jenis==='modul_ajar') max=5000;
+  else if(jenis==='prota'||jenis==='prosem'||jenis==='atp') max=4500;
+  body.max_output_tokens=Math.max(3500,Math.min(8000,max));
+  body.verbosity=jenis==='lkpd'||jenis==='soal_sumatif'||jenis==='soal_formatif'?'medium':'low';
   return {...init,body:JSON.stringify(body)};
 }catch{return init}}
 function loading(){if(window.__ADM_V7_FETCH__)return;window.__ADM_V7_FETCH__=true;const f=window.fetch.bind(window);window.fetch=async function(input,init){const url=typeof input==='string'?input:input?.url||'';const ai=/\/api\/ai\//i.test(url);const next=ai?optimizeAI(init):init;if(!ai)return f(input,next);
-  if(window.__ADM_AI_REQUEST_ACTIVE__) {try{window.ADMUI?.toast?.('AI sedang memproses. Tunggu hasil sebelumnya selesai.','info')}catch{}return new Response(JSON.stringify({ok:false,message:'AI sedang memproses permintaan sebelumnya.'}),{status:429,headers:{'Content-Type':'application/json'}})}
-  window.__ADM_AI_REQUEST_ACTIVE__=true;
-  if(window.ADMLoading?.show)try{window.ADMLoading.show('AI Guru sedang bekerja','Mengoptimalkan konteks agar generate lebih hemat token…')}catch{}
-  try{const r=await f(input,next);return r}catch(e){throw e}finally{window.__ADM_AI_REQUEST_ACTIVE__=false;if(window.ADMLoading?.hide)try{window.ADMLoading.hide()}catch{}}
+  if(window.__ADM_AI_REQUEST_ACTIVE__){try{window.ADMUI?.toast?.('AI sedang memproses. Tunggu hasil sebelumnya selesai.','info')}catch{}return new Response(JSON.stringify({ok:false,message:'AI sedang memproses permintaan sebelumnya.'}),{status:429,headers:{'Content-Type':'application/json'}})}
+  window.__ADM_AI_REQUEST_ACTIVE__=true;if(window.ADMLoading?.show)try{window.ADMLoading.show('AI Guru sedang bekerja','Mengoptimalkan konteks dan batas output agar lebih hemat token…')}catch{}
+  try{return await f(input,next)}finally{window.__ADM_AI_REQUEST_ACTIVE__=false;if(window.ADMLoading?.hide)try{window.ADMLoading.hide()}catch{}}
 }}
 function boot(){css();tools();status();backTop();loading()}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();[800,1800,3500].forEach(ms=>setTimeout(boot,ms));})();

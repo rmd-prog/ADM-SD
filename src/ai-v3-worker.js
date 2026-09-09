@@ -1,94 +1,22 @@
-/* ADM-SD AI Brain V3.2 wrapper over the current multi-rombel worker. */
+/* ADM-SD AI Brain V3.3 — visual renderer fix. */
 import multiWorker from './multi-rombel.js';
-
-const VISUAL_TYPES = new Set(['fraction','shape','numberline','bar','clock','geometry']);
-const CORS = {
-  'Access-Control-Allow-Origin':'*',
-  'Access-Control-Allow-Methods':'GET,POST,PUT,DELETE,OPTIONS',
-  'Access-Control-Allow-Headers':'Content-Type, Authorization',
-  'Access-Control-Max-Age':'86400'
-};
-
-function esc(v='') { return String(v).replace(/[&<>\"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c])); }
-function attrs(src='') { const out={}; for (const m of String(src).matchAll(/([a-zA-Z]+)\s*=\s*\"([^\"]*)\"/g)) out[m[1]]=m[2]; return out; }
-function svg(inner,label='Gambar stimulus') { return `<div class="ai-visual" style="margin:10px 0;text-align:center"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 210" width="100%" role="img" aria-label="${esc(label)}" style="max-width:520px;height:auto;border:1px solid #d9dee8;border-radius:12px;background:#fff">${inner}</svg></div>`; }
-function visual(type,a) {
-  const label=a.label||'Gambar stimulus';
-  if(type==='fraction'){
-    const n=Math.max(0,Math.min(20,Number(a.n||a.a||3))),d=Math.max(1,Math.min(20,Number(a.d||a.b||4))),x=150,y=55,w=220,h=100,p=w/d;
-    let s=`<text x="260" y="30" text-anchor="middle" font-size="18" font-weight="700">${esc(label)}</text>`;
-    for(let i=0;i<d;i++)s+=`<rect x="${x+i*p}" y="${y}" width="${p-1}" height="${h}" fill="${i<n?'#dbeafe':'#fff'}" stroke="#334155"/>`;
-    return svg(s+`<text x="260" y="185" text-anchor="middle" font-size="20">${n}/${d}</text>`,label);
-  }
-  if(type==='shape'){
-    const sh=String(a.shape||'triangle').toLowerCase();let p='';
-    if(sh==='circle')p='<circle cx="260" cy="110" r="70" fill="#dbeafe" stroke="#1e3a8a" stroke-width="3"/>';
-    else if(sh==='rectangle')p='<rect x="150" y="55" width="220" height="110" fill="#dbeafe" stroke="#1e3a8a" stroke-width="3"/>';
-    else if(sh==='square')p='<rect x="190" y="40" width="140" height="140" fill="#dbeafe" stroke="#1e3a8a" stroke-width="3"/>';
-    else p='<polygon points="260,35 155,175 365,175" fill="#dbeafe" stroke="#1e3a8a" stroke-width="3"/>';
-    return svg(`<text x="260" y="25" text-anchor="middle" font-size="18" font-weight="700">${esc(label)}</text>${p}`,label);
-  }
-  if(type==='numberline'){
-    const min=Number(a.min||0),max=Number(a.max||10),point=Number(a.point||0),lo=Math.min(min,max),hi=Math.max(min,max),span=Math.max(1,hi-lo);
-    let s=`<text x="260" y="30" text-anchor="middle" font-size="18" font-weight="700">${esc(label)}</text><line x1="50" y1="110" x2="470" y2="110" stroke="#334155" stroke-width="3"/>`;
-    for(let i=0;i<=span;i++){const v=lo+i,x=50+420*i/span;s+=`<line x1="${x}" y1="100" x2="${x}" y2="120" stroke="#334155"/><text x="${x}" y="145" text-anchor="middle" font-size="13">${v}</text>`;}
-    const px=50+420*((point-lo)/span);return svg(s+`<circle cx="${px}" cy="110" r="9" fill="#2563eb"/><text x="${px}" y="88" text-anchor="middle" font-size="14" font-weight="700">?</text>`,label);
-  }
-  if(type==='bar'){
-    const labels=String(a.labels||'A|B|C').split('|').slice(0,6),vals=String(a.values||'3|5|2').split('|').map(Number).slice(0,6),max=Math.max(1,...vals);let s=`<text x="260" y="25" text-anchor="middle" font-size="18" font-weight="700">${esc(label)}</text>`;
-    labels.forEach((lb,i)=>{const x=55+i*75,h=120*(Math.max(0,vals[i]||0)/max),y=165-h;s+=`<rect x="${x}" y="${y}" width="48" height="${h}" fill="#bfdbfe" stroke="#1e3a8a"/><text x="${x+24}" y="185" text-anchor="middle" font-size="13">${esc(lb)}</text>`;});return svg(s,label);
-  }
-  if(type==='clock'){
-    const hour=Number(a.hour||3)%12,minute=Math.max(0,Math.min(59,Number(a.minute||0))),cx=260,cy=110,ha=(hour+minute/60)*Math.PI/6-Math.PI/2,ma=minute*Math.PI/30-Math.PI/2,hx=cx+35*Math.cos(ha),hy=cy+35*Math.sin(ha),mx=cx+52*Math.cos(ma),my=cy+52*Math.sin(ma);
-    return svg(`<text x="260" y="25" text-anchor="middle" font-size="18" font-weight="700">${esc(label)}</text><circle cx="260" cy="110" r="70" fill="#fff" stroke="#1e3a8a" stroke-width="3"/><line x1="260" y1="110" x2="${hx}" y2="${hy}" stroke="#0f172a" stroke-width="6"/><line x1="260" y1="110" x2="${mx}" y2="${my}" stroke="#2563eb" stroke-width="4"/><circle cx="260" cy="110" r="5" fill="#0f172a"/>`,label);
-  }
-  if(type==='geometry')return svg(`<text x="260" y="25" text-anchor="middle" font-size="18" font-weight="700">${esc(label)}</text><polygon points="120,165 260,45 400,165" fill="#dbeafe" stroke="#1e3a8a" stroke-width="3"/><text x="260" y="190" text-anchor="middle" font-size="14">Segitiga</text>`,label);
-  return '';
-}
-function renderVisuals(text){ return String(text).replace(/\[\[GAMBAR\s+([^\]]+)\]\]/gi,(m,raw)=>{const a=attrs(raw),t=String(a.type||'').toLowerCase();return VISUAL_TYPES.has(t)?visual(t,a):'';}); }
-
-function cleanReferenceLeak(text,jenis){
-  let t=String(text||'');
-  t=t.replace(/^\s*SUMBER\s+BUKU\s+TERKUNCI\s*:?.*$/gim,'');
-  t=t.replace(/^\s*(Judul\s+buku|Sumber|Tahun\/Edisi|Daftar\s+BAB\/?UNIT\s+terverifikasi|Daftar\s+BAB\s+Terverifikasi)\s*:.*$/gim,'');
-  t=t.replace(/^\s*Catatan\s*:\s*Bab\/subbab.*$/gim,'');
-  t=t.replace(/^\s*.*struktur\s+BAB\s+dari\s+PDF\s+referensi.*$/gim,'');
-  if(!['soal_sumatif','soal_formatif'].includes(jenis))t=t.replace(/^\s*(sumatif|formatif)\s+mata\s+pelajaran\s*[:\-]?.*$/gim,'');
-  if(['materi','ringkasan','bahan_ajar'].includes(jenis))t=t.replace(/^#{1,6}\s*(RPM|LKPD|MODUL AJAR|PROTA|PROSEM|ATP|TP|CP|KISI[- ]?KISI|RUBRIK|KUNCI JAWABAN|PEDOMAN PENSKORAN|DAFTAR BAB TER\/?VERIFIKASI|PETUNJUK BELAJAR|KEGIATAN \d+).*$/gim,'');
-  return t.replace(/\n{3,}/g,'\n\n').trim();
-}
-function addVisualFallback(text,jenis){
-  if(!['soal_sumatif','soal_formatif'].includes(jenis)) return text;
-  if(/\[\[GAMBAR\s+[^\]]+\]\]/i.test(text)) return text;
-  const lines=String(text).split('\n'),q=[];
-  for(let i=0;i<lines.length;i++) if(/^\s*(?:\d+\s*[.)]|(?:Soal\s+)?\d+\s*[-:])/i.test(lines[i])) q.push(i);
-  if(!q.length) return text;
-  const inserts=[['shape','shape="circle"','Perhatikan gambar berikut.'],['bar','labels="A|B|C|D" values="2|5|3|4"','Perhatikan diagram berikut.'],['numberline','min="0" max="10" point="6"','Perhatikan garis bilangan berikut.']];
-  for(const [idx,[type,args,prefix]] of q.slice(0,3).map((v,i)=>[v,inserts[i]]).reverse()) lines.splice(idx,0,`[[GAMBAR type="${type}" ${args} label="Stimulus visual"]]`,prefix);
-  return lines.join('\n');
-}
-function brainBody(body){
-  const jenis=String(body.jenis||'').toLowerCase().trim(),isSoal=jenis==='soal_sumatif'||jenis==='soal_formatif';
-  const guard=`\n\n[AI BRAIN V3.2 — OUTPUT CONTRACT]\nTARGET: ${jenis}\nHANYA keluarkan dokumen target ini. DILARANG membawa dokumen/format lain, daftar BAB, metadata buku, identitas sumber, template contoh, atau lampiran lain yang tidak diminta. JANGAN pernah menampilkan SUMBER BUKU TERKUNCI, Judul buku, Sumber, Tahun/Edisi, Daftar BAB Terverifikasi, atau Catatan referensi internal. Frasa “Sumatif Mata Pelajaran/Fase/Kelas” hanya boleh digunakan untuk paket soal sumatif. Jangan mengubah Bab/Sub Bab/Kelas/Fase/Mapel yang dipilih guru. Periksa hasil sebelum menjawab dan hapus semua bagian yang bukan target.${isSoal?'\nWAJIB: paket soal harus mempunyai stimulus visual yang benar-benar dipakai pada beberapa soal. Emit 2–5 token visual terkontrol untuk 10–20 soal, proporsional bila jumlah berbeda. Gunakan [[GAMBAR type="fraction" n="3" d="4" label="Gambar pecahan"]], atau type="shape", "numberline", "bar", "clock", "geometry". Setelah token, tulis pertanyaan yang meminta siswa membaca/menafsirkan gambar tersebut. JANGAN gunakan URL gambar eksternal.':''}`;
-  return {...body,context:guard+'\nKONTEKS GURU:\n'+String(body.context||''),aiBrainVersion:'3.2',outputLock:true};
-}
-export default { async fetch(request,env,ctx){
-  if(request.method==='OPTIONS') return new Response(null,{status:204,headers:CORS});
-  const url=new URL(request.url);
-  if(url.pathname!=='/api/ai/generate'||request.method!=='POST') return multiWorker.fetch(request,env,ctx);
-  let body={}; try{body=await request.clone().json();}catch{return multiWorker.fetch(request,env,ctx)}
-  let res;
-  try {
-    const req=new Request(request,{body:JSON.stringify(brainBody(body))});
-    res=await multiWorker.fetch(req,env,ctx);
-  } catch(e) {
-    return new Response(JSON.stringify({ok:false,message:'AI generate error: '+String(e?.message||e)}),{status:500,headers:{'Content-Type':'application/json',...CORS}});
-  }
-  let data={}; try{data=await res.clone().json();}catch{return new Response(await res.text(),{status:res.status,headers:{'Content-Type':'application/json',...CORS}})}
-  if(data.ok&&typeof data.text==='string'){
-    const jenis=String(body.jenis||'').toLowerCase().trim();
-    let text=cleanReferenceLeak(data.text,jenis); text=addVisualFallback(text,jenis);
-    data.text=renderVisuals(text); data.aiBrain='V3.2'; data.visualSupport=jenis==='soal_sumatif'||jenis==='soal_formatif';
-  }
-  return new Response(JSON.stringify(data),{status:res.status,headers:{'Content-Type':'application/json',...CORS}});
-}};
+const VISUAL_TYPES=new Set(['fraction','shape','numberline','bar','clock','geometry']);
+const CORS={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Methods':'GET,POST,PUT,DELETE,OPTIONS','Access-Control-Allow-Headers':'Content-Type, Authorization','Access-Control-Max-Age':'86400'};
+function esc(v=''){return String(v).replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c]||c));}
+function attrs(src=''){const o={};for(const m of String(src).matchAll(/([a-zA-Z]+)\s*=\s*\"([^\"]*)\"/g))o[m[1]]=m[2];return o;}
+function svg(inner,label='Gambar stimulus'){return `<div class="ai-visual" style="margin:10px 0;text-align:center"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 210" width="100%" role="img" aria-label="${esc(label)}" style="max-width:520px;height:auto;border:1px solid #d9dee8;border-radius:12px;background:#fff">${inner}</svg></div>`;}
+function visual(type,a){const label=a.label||'Gambar stimulus';
+ if(type==='fraction'){const n=Math.max(0,Math.min(20,Number(a.n||a.a||3))),d=Math.max(1,Math.min(20,Number(a.d||a.b||4))),x=150,y=55,w=220,h=100,p=w/d;let s=`<text x="260" y="30" text-anchor="middle" font-size="18" font-weight="700">${esc(label)}</text>`;for(let i=0;i<d;i++)s+=`<rect x="${x+i*p}" y="${y}" width="${Math.max(1,p-1)}" height="${h}" fill="${i<n?'#dbeafe':'#fff'}" stroke="#334155"/>`;return svg(s+`<text x="260" y="185" text-anchor="middle" font-size="20">${n}/${d}</text>`,label);}
+ if(type==='shape'){const sh=String(a.shape||'triangle').toLowerCase();let p=sh==='circle'?'<circle cx="260" cy="110" r="70" fill="#dbeafe" stroke="#1e3a8a" stroke-width="3"/>':sh==='rectangle'?'<rect x="150" y="55" width="220" height="110" fill="#dbeafe" stroke="#1e3a8a" stroke-width="3"/>':sh==='square'?'<rect x="190" y="40" width="140" height="140" fill="#dbeafe" stroke="#1e3a8a" stroke-width="3"/>':'<polygon points="260,35 155,175 365,175" fill="#dbeafe" stroke="#1e3a8a" stroke-width="3"/>';return svg(`<text x="260" y="25" text-anchor="middle" font-size="18" font-weight="700">${esc(label)}</text>${p}`,label);}
+ if(type==='numberline'){const min=Number(a.min||0),max=Number(a.max||10),point=Number(a.point||0),lo=Math.min(min,max),hi=Math.max(min,max),span=Math.max(1,hi-lo);let s=`<text x="260" y="30" text-anchor="middle" font-size="18" font-weight="700">${esc(label)}</text><line x1="50" y1="110" x2="470" y2="110" stroke="#334155" stroke-width="3"/>`;for(let i=0;i<=span;i++){const v=lo+i,x=50+420*i/span;s+=`<line x1="${x}" y1="100" x2="${x}" y2="120" stroke="#334155"/><text x="${x}" y="145" text-anchor="middle" font-size="13">${v}</text>`;}const px=50+420*((point-lo)/span);return svg(s+`<circle cx="${px}" cy="110" r="9" fill="#2563eb"/><text x="${px}" y="88" text-anchor="middle" font-size="14" font-weight="700">?</text>`,label);}
+ if(type==='bar'){const labels=String(a.labels||'A|B|C').split('|').slice(0,6),vals=String(a.values||'3|5|2').split('|').map(Number).slice(0,6),max=Math.max(1,...vals);let s=`<text x="260" y="25" text-anchor="middle" font-size="18" font-weight="700">${esc(label)}</text>`;labels.forEach((lb,i)=>{const x=55+i*75,h=120*(Math.max(0,vals[i]||0)/max),y=165-h;s+=`<rect x="${x}" y="${y}" width="48" height="${h}" fill="#bfdbfe" stroke="#1e3a8a"/><text x="${x+24}" y="185" text-anchor="middle" font-size="13">${esc(lb)}</text>`;});return svg(s,label);}
+ if(type==='clock'){const hour=Number(a.hour||3)%12,minute=Math.max(0,Math.min(59,Number(a.minute||0))),cx=260,cy=110,ha=(hour+minute/60)*Math.PI/6-Math.PI/2,ma=minute*Math.PI/30-Math.PI/2,hx=cx+35*Math.cos(ha),hy=cy+35*Math.sin(ha),mx=cx+52*Math.cos(ma),my=cy+52*Math.sin(ma);return svg(`<text x="260" y="25" text-anchor="middle" font-size="18" font-weight="700">${esc(label)}</text><circle cx="260" cy="110" r="70" fill="#fff" stroke="#1e3a8a" stroke-width="3"/><line x1="260" y1="110" x2="${hx}" y2="${hy}" stroke="#0f172a" stroke-width="6"/><line x1="260" y1="110" x2="${mx}" y2="${my}" stroke="#2563eb" stroke-width="4"/><circle cx="260" cy="110" r="5" fill="#0f172a"/>`,label);}
+ if(type==='geometry')return svg(`<text x="260" y="25" text-anchor="middle" font-size="18" font-weight="700">${esc(label)}</text><polygon points="120,165 260,45 400,165" fill="#dbeafe" stroke="#1e3a8a" stroke-width="3"/><text x="260" y="190" text-anchor="middle" font-size="14">Segitiga</text>`,label);return '';}
+function renderVisuals(text){let t=String(text||'');
+ // Some frontend renderers escape HTML returned by the API. Decode ONLY our controlled visual wrapper before inserting it.
+ t=t.replace(/&lt;(div|svg|text|rect|circle|polygon|line)([^]*?)&gt;/gi,(m,tag,rest)=>`<${tag}${rest}>`).replace(/&lt;\/\s*(div|svg|text|rect|circle|polygon|line)\s*&gt;/gi,(m,tag)=>`</${tag}>`).replace(/&quot;/g,'\"').replace(/&#39;/g,"'");
+ t=t.replace(/\[\[GAMBAR\s+([^\]]+)\]\]/gi,(m,raw)=>{const a=attrs(raw),type=String(a.type||'').toLowerCase();return VISUAL_TYPES.has(type)?visual(type,a):'';});return t;}
+function cleanReferenceLeak(text,jenis){let t=String(text||'');t=t.replace(/^\s*SUMBER\s+BUKU\s+TERKUNCI\s*:?.*$/gim,'').replace(/^\s*(Judul\s+buku|Sumber|Tahun\/Edisi|Daftar\s+BAB\/?UNIT\s+terverifikasi|Daftar\s+BAB\s+Terverifikasi)\s*:.*$/gim,'').replace(/^\s*Catatan\s*:\s*Bab\/subbab.*$/gim,'').replace(/^\s*.*struktur\s+BAB\s+dari\s+PDF\s+referensi.*$/gim,'');if(!['soal_sumatif','soal_formatif'].includes(jenis))t=t.replace(/^\s*(sumatif|formatif)\s+mata\s+pelajaran\s*[:\-]?.*$/gim,'');if(['materi','ringkasan','bahan_ajar'].includes(jenis))t=t.replace(/^#{1,6}\s*(RPM|LKPD|MODUL AJAR|PROTA|PROSEM|ATP|TP|CP|KISI[- ]?KISI|RUBRIK|KUNCI JAWABAN|PEDOMAN PENSKORAN|DAFTAR BAB TER\/?VERIFIKASI|PETUNJUK BELAJAR|KEGIATAN \d+).*$/gim,'');return t.replace(/\n{3,}/g,'\n\n').trim();}
+function addVisualFallback(text,jenis){if(!['soal_sumatif','soal_formatif'].includes(jenis))return text;if(/\[\[GAMBAR\s+[^\]]+\]\]/i.test(text)||/<div[^>]+class=[\"']ai-visual/i.test(text)||/&lt;div[^>]+class=[\"']ai-visual/i.test(text))return text;const lines=String(text).split('\n'),q=[];for(let i=0;i<lines.length;i++)if(/^\s*(?:\d+\s*[.)]|(?:Soal\s+)?\d+\s*[-:])/i.test(lines[i]))q.push(i);if(!q.length)return text;const ins=[['shape','shape="circle"','Perhatikan gambar berikut.'],['bar','labels="Januari|Februari|Maret|April" values="240|180|120|80"','Perhatikan diagram berikut.'],['numberline','min="0" max="10" point="6"','Perhatikan garis bilangan berikut.']];for(const [idx,[type,args,prefix]] of q.slice(0,3).map((v,i)=>[v,ins[i]]).reverse())lines.splice(idx,0,`[[GAMBAR type="${type}" ${args} label="Stimulus visual"]]`,prefix);return lines.join('\n');}
+function brainBody(body){const jenis=String(body.jenis||'').toLowerCase().trim(),isSoal=jenis==='soal_sumatif'||jenis==='soal_formatif';const guard=`\n\n[AI BRAIN V3.3 — OUTPUT CONTRACT]\nTARGET: ${jenis}\nHANYA keluarkan dokumen target ini. DILARANG membawa dokumen/format lain, daftar BAB, metadata buku, identitas sumber, template contoh, atau lampiran lain yang tidak diminta. Jangan mengubah Bab/Sub Bab/Kelas/Fase/Mapel yang dipilih guru.${isSoal?'\nWAJIB gunakan 2–5 stimulus visual terkontrol untuk paket 10–20 soal. Visual harus benar-benar menjadi bahan pertanyaan. Jangan gunakan URL gambar eksternal.':''}`;return {...body,context:guard+'\nKONTEKS GURU:\n'+String(body.context||''),aiBrainVersion:'3.3',outputLock:true};}
+export default {async fetch(request,env,ctx){if(request.method==='OPTIONS')return new Response(null,{status:204,headers:CORS});const url=new URL(request.url);if(url.pathname!=='/api/ai/generate'||request.method!=='POST')return multiWorker.fetch(request,env,ctx);let body={};try{body=await request.clone().json();}catch{return multiWorker.fetch(request,env,ctx)}let res;try{const req=new Request(request,{body:JSON.stringify(brainBody(body))});res=await multiWorker.fetch(req,env,ctx);}catch(e){return new Response(JSON.stringify({ok:false,message:'AI generate error: '+String(e?.message||e)}),{status:500,headers:{'Content-Type':'application/json',...CORS}});}let data={};try{data=await res.clone().json();}catch{return new Response(await res.text(),{status:res.status,headers:{'Content-Type':'application/json',...CORS}})}if(data.ok&&typeof data.text==='string'){const jenis=String(body.jenis||'').toLowerCase().trim();let text=cleanReferenceLeak(data.text,jenis);text=addVisualFallback(text,jenis);data.text=renderVisuals(text);data.aiBrain='V3.3';data.visualSupport=jenis==='soal_sumatif'||jenis==='soal_formatif';}return new Response(JSON.stringify(data),{status:res.status,headers:{'Content-Type':'application/json',...CORS}});}};

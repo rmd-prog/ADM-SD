@@ -62,10 +62,24 @@ async function verifyToken(token, env) {
     return ok ? payload : null;
   } catch { return null; }
 }
-function legacyToken(user) {
-  const safe = {id:user.id, username:user.username, nama:user.nama || user.name || '', role:user.role,
-    kelas:user.kelas, rombel:user.rombel, mapel:user.mapel || '', activeRombel:user.activeRombel || user.rombel || user.kelas || ''};
-  return btoa(JSON.stringify(safe));
+
+async function legacyToken(user, env) {
+  const secret = String(env.JWT_SECRET || '').trim();
+  if (!secret) throw new Error('JWT_SECRET is not configured');
+  const now = Math.floor(Date.now() / 1000);
+  const safe = {
+    id:user.id, username:user.username, nama:user.nama || user.name || '', role:user.role,
+    kelas:user.kelas, rombel:user.rombel, mapel:user.mapel || '',
+    activeRombel:user.activeRombel || user.rombel || user.kelas || '',
+    iat:now, exp:now + 8 * 60 * 60
+  };
+  const b64 = (value) => b64urlBytes(encoder.encode(JSON.stringify(value)));
+  const h = b64({alg:'HS256',typ:'JWT'});
+  const p = b64(safe);
+  const data = h + '.' + p;
+  const key = await crypto.subtle.importKey('raw', encoder.encode(secret), {name:'HMAC',hash:'SHA-256'}, false, ['sign']);
+  const sig = await crypto.subtle.sign('HMAC', key, encoder.encode(data));
+  return data + '.' + b64urlBytes(new Uint8Array(sig));
 }
 
 export default {
@@ -84,8 +98,6 @@ export default {
       } catch { return upstream; }
     }
 
-    // Accept Authorization as the primary channel and X-ADM-Token as a
-    // same-origin-safe fallback for environments that strip Authorization.
     const raw = (request.headers.get('Authorization')?.replace(/^Bearer\s+/i, '').trim())
       || request.headers.get('X-ADM-Token')?.trim()
       || '';
@@ -94,7 +106,7 @@ export default {
     if (!user) return json({ok:false, message:'Sesi login tidak valid atau sudah kedaluwarsa. Silakan login kembali.'}, 401);
 
     const headers = new Headers(request.headers);
-    headers.set('Authorization', 'Bearer ' + legacyToken(user));
+    headers.set('Authorization', 'Bearer ' + await legacyToken(user, env));
     return app.fetch(new Request(request, {headers}), env, ctx);
   }
 };

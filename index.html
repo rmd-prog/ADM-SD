@@ -733,7 +733,7 @@ function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&l
 function id(x){return document.getElementById(x)}
 const pages=[['dashboard','Dashboard'],['students','Data Siswa'],['import','Import Data Siswa'],['cp','CP'],['tp','TP'],['atp','ATP'],['prota','Prota'],['prosem','Prosem'],['rpm','RPM — Rencana Pembelajaran Mendalam'],['scores','Penilaian Per BAB'],['report','Rapor'],['teachers','Database Guru'],['reference','Referensi SIBI'],['backup','Backup / Restore']];
 let currentTeacher=null;
-function getAuthToken(){try{const t=localStorage.getItem('siAuthToken')||sessionStorage.getItem('siAuthToken')||'';if(t)return String(t).trim()}catch(e){}try{const x=JSON.parse(localStorage.getItem('siLogin')||'null');const t=String(x?.token||x?.user?.token||'').trim();if(t)return t}catch(e){}return String(currentTeacher?.token||'').trim()}
+function getAuthToken(){try{const t=String(localStorage.getItem('siAuthToken')||'').trim();if(t)return t}catch(e){}try{const t=String(sessionStorage.getItem('siAuthToken')||'').trim();if(t)return t}catch(e){}try{const x=JSON.parse(localStorage.getItem('siLogin')||'null');const t=String(x?.token||x?.user?.token||'').trim();if(t)return t}catch(e){}return String(currentTeacher?.token||'').trim()}
 function currentUser(){try{return JSON.parse(localStorage.getItem('siLogin')||'null')}catch(e){return null}}
 function isGuruKelas(){return !!currentTeacher && currentTeacher.role==='guru'}
 function isGuruMapel(){return !!currentTeacher && currentTeacher.role==='guru_mapel'}

@@ -1,1 +1,1 @@
-2026-09-09 11:05 rerun repair to trigger post-repair JWT bridge
+2026-09-09 16:00 retrigger robust JWT bridge patch

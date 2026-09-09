@@ -117,10 +117,30 @@ function installD1SyncButtonFix(){
     }catch(e){alert(e?.message||'Sinkronisasi D1 gagal.')}finally{btn.disabled=false;btn.textContent=old}
   };
 }
+function installMobileTouchFix(){
+  if(window.__ADM_TOUCH_FIX_V15)return;
+  window.__ADM_TOUCH_FIX_V15=true;
+  const style=document.createElement('style');
+  style.id='adm-touch-fix-v15';
+  style.textContent='.v13-sidebar .navbtn,.v13-sidebar .navgroup,.v13-sidebar .submenu{position:relative;z-index:20;pointer-events:auto!important;touch-action:manipulation;-webkit-tap-highlight-color:transparent}#app .page.active{pointer-events:auto!important}#app .page.active input,#app .page.active select,#app .page.active textarea,#app .page.active button,#app .page.active .student-tab,#app .page.active .tablewrap{pointer-events:auto!important;touch-action:manipulation}';
+  (document.head||document.documentElement).appendChild(style);
+  const bind=()=>{
+    document.querySelectorAll('.v13-sidebar .submenu .navbtn').forEach(b=>{
+      if(b.dataset.touchV15)return;
+      b.dataset.touchV15='1';
+      b.addEventListener('click',e=>e.stopPropagation(),false);
+      b.addEventListener('touchend',e=>e.stopPropagation(),false);
+    });
+    document.querySelectorAll('#app .page.active input,#app .page.active select,#app .page.active textarea,#app .page.active button').forEach(el=>{el.style.pointerEvents='auto';el.style.touchAction='manipulation'});
+  };
+  bind();
+  new MutationObserver(bind).observe(document.body,{subtree:true,attributes:true,attributeFilter:['class']});
+}
 function boot(){
   installAuthTokenBridge();
   applyRoleMenu();
   installD1SyncButtonFix();
+  installMobileTouchFix();
   loadScript('assets/ui-feedback.js?v=1','__ADM_UI_FEEDBACK_LOADED');
   loadScript('assets/loading-system.js?v=1','__ADM_LOADING_SYSTEM');
   loadScript('assets/multi-rombel.js?v=1','__ADM_MULTI_ROMBEL_LOADED');

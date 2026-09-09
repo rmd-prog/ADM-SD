@@ -24,23 +24,35 @@ jobs:
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
-          import re
           p=Path('index.html')
           s=p.read_text(encoding='utf-8')
           marker='let currentTeacher=null;'
-          if marker not in s: raise SystemExit('currentTeacher marker not found')
-          helper="""function getAuthToken(){try{const t=localStorage.getItem('siAuthToken')||sessionStorage.getItem('siAuthToken')||'';if(t)return t}catch(e){}try{const x=JSON.parse(localStorage.getItem('siLogin')||'null');const t=String(x?.token||x?.user?.token||'').trim();if(t)return t}catch(e){}return String(currentTeacher?.token||'').trim()}"""
-          if 'function getAuthToken()' not in s:
+          helper="function getAuthToken(){try{const t=localStorage.getItem('siAuthToken')||sessionStorage.getItem('siAuthToken')||'';if(t)return String(t).trim()}catch(e){}try{const x=JSON.parse(localStorage.getItem('siLogin')||'null');const t=String(x?.token||x?.user?.token||'').trim();if(t)return t}catch(e){}return String(currentTeacher?.token||'').trim()}"
+          lines=s.splitlines()
+          found=False
+          out=[]
+          for line in lines:
+              if line.startswith('function getAuthToken(){'):
+                  out.append(helper)
+                  found=True
+              else:
+                  out.append(line)
+          s='\n'.join(out)+('\n' if s.endswith('\n') else '')
+          if not found:
+              if marker not in s: raise SystemExit('currentTeacher marker not found')
               s=s.replace(marker,marker+'\n'+helper,1)
-          else:
-              s=re.sub(r'function getAuthToken\(\)\{.*?\}',helper,s,count=1)
-          # Replace all direct auth-token reads outside the helper without creating recursion.
-          saved=helper
-          s=s.replace(saved,'__AUTH_HELPER__',1)
-          s=s.replace("localStorage.getItem('siAuthToken')||''",'getAuthToken()')
-          s=s.replace("sessionStorage.getItem('siAuthToken')||''",'getAuthToken()')
-          s=s.replace('__AUTH_HELPER__',saved,1)
-          # Ensure login response also remains available in memory if the browser blocks storage.
+          # Replace direct reads only outside the helper line.
+          lines=s.splitlines()
+          out=[]
+          for line in lines:
+              if line == helper:
+                  out.append(line)
+                  continue
+              line=line.replace("localStorage.getItem('siAuthToken')||''",'getAuthToken()')
+              line=line.replace("sessionStorage.getItem('siAuthToken')||''",'getAuthToken()')
+              out.append(line)
+          s='\n'.join(out)+('\n' if s.endswith('\n') else '')
+          # Preserve the active JWT in memory as a fallback for storage failures.
           s=s.replace("localStorage.setItem('siAuthToken',t.token);","localStorage.setItem('siAuthToken',t.token);try{if(currentTeacher)currentTeacher.token=t.token}catch(e){}")
           p.write_text(s,encoding='utf-8')
           PY
@@ -53,8 +65,7 @@ jobs:
           from pathlib import Path
           import re
           s=Path('index.html').read_text(encoding='utf-8')
-          assert 'function getAuthToken()' in s
-          assert s.count('function getAuthToken()')==1
+          assert s.count('function getAuthToken(){')==1
           scripts=re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>',s,re.S|re.I)
           Path('/tmp/index-inline.js').write_text('\n'.join(scripts),encoding='utf-8')
           PY

@@ -1,0 +1,72 @@
+name: Fix sync auth after repair
+
+on:
+  workflow_run:
+    workflows: ["repair html script parser"]
+    types: [completed]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Patch auth bridge
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          marker='let currentTeacher=null;'
+          if marker not in s: raise SystemExit('currentTeacher marker not found')
+          helper="""function getAuthToken(){try{const t=localStorage.getItem('siAuthToken')||sessionStorage.getItem('siAuthToken')||'';if(t)return t}catch(e){}try{const x=JSON.parse(localStorage.getItem('siLogin')||'null');const t=String(x?.token||x?.user?.token||'').trim();if(t)return t}catch(e){}return String(currentTeacher?.token||'').trim()}"""
+          if 'function getAuthToken()' not in s:
+              s=s.replace(marker,marker+'\n'+helper,1)
+          else:
+              s=re.sub(r'function getAuthToken\(\)\{.*?\}',helper,s,count=1)
+          # Replace all direct auth-token reads outside the helper without creating recursion.
+          saved=helper
+          s=s.replace(saved,'__AUTH_HELPER__',1)
+          s=s.replace("localStorage.getItem('siAuthToken')||''",'getAuthToken()')
+          s=s.replace("sessionStorage.getItem('siAuthToken')||''",'getAuthToken()')
+          s=s.replace('__AUTH_HELPER__',saved,1)
+          # Ensure login response also remains available in memory if the browser blocks storage.
+          s=s.replace("localStorage.setItem('siAuthToken',t.token);","localStorage.setItem('siAuthToken',t.token);try{if(currentTeacher)currentTeacher.token=t.token}catch(e){}")
+          p.write_text(s,encoding='utf-8')
+          PY
+
+      - name: Validate frontend
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('index.html').read_text(encoding='utf-8')
+          assert 'function getAuthToken()' in s
+          assert s.count('function getAuthToken()')==1
+          scripts=re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>',s,re.S|re.I)
+          Path('/tmp/index-inline.js').write_text('\n'.join(scripts),encoding='utf-8')
+          PY
+          node --check /tmp/index-inline.js
+
+      - name: Commit auth fix
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          if git diff --cached --quiet; then echo 'Auth bridge already patched'; exit 0; fi
+          git commit -m 'fix: make D1 sync reuse active JWT [skip ci]'
+          git push origin main

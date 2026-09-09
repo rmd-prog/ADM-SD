@@ -328,6 +328,10 @@ body{background:radial-gradient(circle at 10% 0%,#dbeafe,transparent 32%),radial
 .login .wide{background:linear-gradient(135deg,#2563eb,#6366f1 55%,#7c3aed)!important;box-shadow:0 10px 22px #4f46e53d}
 html[data-theme=dark] input,html[data-theme=dark] select,html[data-theme=dark] textarea{background:#0f172a!important;color:#e5e7eb!important;border-color:#334155!important}
 </style>
+
+<style id="adm-v13-menu">
+.v13-sidebar{padding:12px;background:linear-gradient(180deg,#0b1220,#172554 58%,#312e81)!important}.v13-group{margin:4px 0}.v13-sidebar .navgroup{border:1px solid #ffffff10;border-radius:12px;color:#e2e8f0;padding:11px 12px}.v13-sidebar .navgroup:hover{background:#ffffff0d}.v13-main-icon{display:inline-grid;place-items:center;width:25px;margin-right:4px}.v13-chevron{font-size:12px;opacity:.75}.v13-sidebar .submenu{padding:3px 0 5px 8px}.v13-sidebar .submenu .navbtn{font-size:13px;padding:9px 11px;color:#cbd5e1!important}.v13-sidebar .submenu .navbtn:hover,.v13-sidebar .submenu .navbtn.active{background:#2563eb!important;color:#fff!important;transform:translateX(2px)}.v13-sidebar .v13-home{margin-bottom:5px;background:#1e3a8a!important;color:#fff!important}.v13-sidebar .side-title{letter-spacing:.04em;font-size:12px;opacity:.85}
+</style>
 </head>
 <body class="v10-login"><!-- GURU+ SD V11 • LOGIN DESIGN -->
 
@@ -396,19 +400,50 @@ html[data-theme=dark] input,html[data-theme=dark] select,html[data-theme=dark] t
   <div class="top-right"><div class="teacher-profile"><div class="teacher-avatar" id="teacherAvatar">👨‍🏫</div><div class="teacher-info"><div class="teacher-name" id="userLabel">Guru</div><div class="teacher-role" id="userRoleLabel">Guru Kelas</div></div></div><button id="logoutBtn" class="btn danger">Logout</button></div>
 </header>
 <div class="layout">
-<aside id="sidebar" class="side"><div class="side-title">MENU UTAMA</div>
-<button type="button" class="navbtn active" data-page="dashboard">🏠 Dashboard</button>
-<div class="menu-group"><button type="button" class="navgroup">👥 DATA MASTER <span>▾</span></button><div class="submenu">
-<button type="button" class="navbtn" data-page="students">Data Siswa</button>
-<button type="button" class="navbtn admin-only" data-page="teachers">Data Guru</button>
+<aside id="sidebar" class="side v13-sidebar">
+<div class="side-title">MENU UTAMA</div>
+<button type="button" class="navbtn v13-home active" data-page="dashboard"><span class="v13-main-icon">🏠</span><span>Dashboard</span></button>
+<div class="menu-group v13-group"><button type="button" class="navgroup"><span><span class="v13-main-icon">👨‍🏫</span> ADMINISTRASI GURU</span><span class="v13-chevron">▾</span></button><div class="submenu">
+<button type="button" class="navbtn" data-page="aiGenerate">📝 Jurnal &amp; Refleksi</button>
+<button type="button" class="navbtn admin-only" data-page="teachers">👩‍🏫 Data Guru</button>
 </div></div>
-<button type="button" class="navbtn" data-page="aiGenerate">🤖 AI Generate</button>
-<div class="menu-group"><button type="button" class="navgroup">📝 PENILAIAN <span>▾</span></button><div class="submenu">
-<button type="button" class="navbtn" data-page="scores">Nilai Per BAB</button><button type="button" class="navbtn admin-only" data-page="importScores">Import Nilai</button><button type="button" class="navbtn" data-page="report">Rapor</button>
+<div class="menu-group v13-group"><button type="button" class="navgroup"><span><span class="v13-main-icon">📚</span> PERANGKAT PEMBELAJARAN</span><span class="v13-chevron">▾</span></button><div class="submenu">
+<button type="button" class="navbtn" data-page="cp">CP — Capaian Pembelajaran</button>
+<button type="button" class="navbtn" data-page="tp">TP — Tujuan Pembelajaran</button>
+<button type="button" class="navbtn" data-page="atp">ATP — Alur Tujuan Pembelajaran</button>
+<button type="button" class="navbtn" data-page="prota">Prota — Program Tahunan</button>
+<button type="button" class="navbtn" data-page="prosem">Prosem — Program Semester</button>
+<button type="button" class="navbtn" data-page="rpm">RPM / Modul Ajar</button>
+<button type="button" class="navbtn" data-page="aiGenerate">📄 Bahan Ajar &amp; LKPD</button>
 </div></div>
+<div class="menu-group v13-group"><button type="button" class="navgroup"><span><span class="v13-main-icon">📝</span> PENILAIAN</span><span class="v13-chevron">▾</span></button><div class="submenu">
+<button type="button" class="navbtn" data-page="aiGenerate">🤖 Generate Soal</button>
+<button type="button" class="navbtn" data-page="aiGenerate">📋 Kisi-kisi</button>
+<button type="button" class="navbtn" data-page="aiGenerate">🎯 Rubrik</button>
+<button type="button" class="navbtn" data-page="scores">✍️ Input Nilai</button>
+<button type="button" class="navbtn" data-page="report">📊 Rekap / Rapor</button>
+<button type="button" class="navbtn" data-page="aiGenerate">📈 Analisis Hasil</button>
+<button type="button" class="navbtn" data-page="aiGenerate">🔄 Remedial</button>
+<button type="button" class="navbtn" data-page="aiGenerate">🚀 Pengayaan</button>
+<button type="button" class="navbtn" data-page="aiGenerate">🧠 Deskripsi Hasil Belajar</button>
+<button type="button" class="navbtn admin-only" data-page="importScores">📥 Import Nilai</button>
+</div></div>
+<div class="menu-group v13-group"><button type="button" class="navgroup"><span><span class="v13-main-icon">👥</span> DATA SISWA</span><span class="v13-chevron">▾</span></button><div class="submenu">
+<button type="button" class="navbtn" data-page="students">📋 Daftar Siswa</button>
+<button type="button" class="navbtn admin-only" data-page="students">📥 Import Siswa</button>
+</div></div>
+<div class="menu-group v13-group"><button type="button" class="navgroup"><span><span class="v13-main-icon">🤖</span> AI GENERATOR SUPER</span><span class="v13-chevron">▾</span></button><div class="submenu">
+<button type="button" class="navbtn" data-page="aiGenerate">✨ Semua Generator AI</button>
+<button type="button" class="navbtn" data-page="aiGenerate">📚 Perangkat &amp; Materi</button>
+<button type="button" class="navbtn" data-page="aiGenerate">📝 Asesmen</button>
+<button type="button" class="navbtn" data-page="aiGenerate">👨‍🏫 Administrasi Guru</button>
+</div></div>
+<div class="menu-group v13-group"><button type="button" class="navgroup"><span><span class="v13-main-icon">📊</span> LAPORAN &amp; DOKUMEN</span><span class="v13-chevron">▾</span></button><div class="submenu">
+<button type="button" class="navbtn" data-page="report">📑 Laporan &amp; Rapor</button>
 <button type="button" class="navbtn" data-page="reference">📖 Referensi SIBI</button>
-<div class="menu-group admin-only"><button type="button" class="navgroup">⚙️ SISTEM <span>▾</span></button><div class="submenu">
-<button type="button" class="navbtn" data-page="backup">Backup / Restore</button>
+</div></div>
+<div class="menu-group v13-group admin-only"><button type="button" class="navgroup"><span><span class="v13-main-icon">⚙️</span> PENGATURAN</span><span class="v13-chevron">▾</span></button><div class="submenu">
+<button type="button" class="navbtn admin-only" data-page="backup">💾 Backup / Restore</button>
 </div></div>
 </aside>
 <main class="main">

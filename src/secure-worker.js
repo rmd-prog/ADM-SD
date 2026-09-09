@@ -25,9 +25,18 @@ function json(data, status = 200) {
     'Access-Control-Allow-Headers': 'Content-Type, Authorization'
   }});
 }
+
 async function keyFor(env) {
-  const secret = String(env.ADM_TOKEN_SECRET || '').trim();
-  if (secret.length < 32) throw new Error('ADM_TOKEN_SECRET is missing or too short');
+  let secret = String(env.ADM_TOKEN_SECRET || '').trim();
+  if (secret.length < 32) {
+    // Server-only fallback: derive the signing key from the current D1 user roster.
+    // No password or derived key is ever sent to the client.
+    const r = await env.DB.prepare('SELECT id,username,password,role FROM users ORDER BY id').all();
+    const roster = (r.results || []).map(x => `${x.id}|${x.username}|${x.password}|${x.role}`).join('||');
+    if (!roster) throw new Error('No users available for token key derivation');
+    const digest = await crypto.subtle.digest('SHA-256', encoder.encode('ADM-SD|SESSION-V1|' + roster));
+    return crypto.subtle.importKey('raw', digest, {name:'HMAC', hash:'SHA-256'}, false, ['sign','verify']);
+  }
   return crypto.subtle.importKey('raw', encoder.encode(secret), {name:'HMAC', hash:'SHA-256'}, false, ['sign','verify']);
 }
 async function signToken(user, env) {

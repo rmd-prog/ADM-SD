@@ -1,0 +1,4 @@
+Adaptive chain contract:
+Kelas + Fase + Mapel + Materi/BAB -> CP -> ATP -> TP -> JP -> Jadwal/Tanggal -> PROTA -> PROMES -> RPM -> LKPD -> Asesmen.
+Materials are selected from the adaptive catalog, not typed manually in PROTA/PROMES/RPM.
+Actual dates come from saved subject schedule where available.

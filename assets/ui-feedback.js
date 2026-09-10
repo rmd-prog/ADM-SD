@@ -18,4 +18,5 @@ window.alert=function(message){const s=String(message||'');let type='info',title
  const z=document.createElement('script');z.src='assets/assessment-smart.js?v=3';z.async=false;(document.head||document.documentElement).appendChild(z);
  const a=document.createElement('script');a.src='assets/assessment-auto.js?v=1';a.async=false;(document.head||document.documentElement).appendChild(a);
  const ab=document.createElement('script');ab.src='assets/assessment-absensi-bridge.js?v=3';ab.async=false;(document.head||document.documentElement).appendChild(ab);
+ const r=document.createElement('script');r.src='assets/assessment-rekap-smart.js?v=1';r.async=false;(document.head||document.documentElement).appendChild(r);
 }catch(e){console.warn('Assessment module load:',e)}})();

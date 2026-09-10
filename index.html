@@ -851,6 +851,7 @@ function exportHtml(type){const d=docPayload(type);return '<!doctype html><html 
 <script src="assets/perangkat-binding-super-v1.js"></script>
 <script src="assets/perangkat-jp-super-v1.js"></script>
 <script src="assets/perangkat-pertemuan-super-v1.js"></script>
+<script src="assets/perangkat-kalender-adaptif-v1.js"></script>
 </body></html>'}
 function ensureDoc(type){const meta=docMeta(type);if(!id(meta[3]).value.trim())generateDoc(type);return docPayload(type)}
 function exportPDF(type){const d=ensureDoc(type);if(typeof html2pdf==='undefined'){alert('Modul PDF belum termuat. Pastikan internet aktif lalu coba lagi.');return}const el=document.createElement('div');el.innerHTML='<h1>'+escHtml(d.title)+'</h1><p>Tahun Pelajaran 2026/2027</p>'+d.body;el.style.cssText='font-family:Arial,sans-serif;color:#172033;padding:20px;background:white;width:100%;';document.body.appendChild(el);html2pdf().set({margin:10,filename:d.title.replace(/[^a-z0-9]+/gi,'-').toLowerCase()+'.pdf',image:{type:'jpeg',quality:.98},html2canvas:{scale:1.7,useCORS:true},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}}).from(el).save().then(()=>el.remove()).catch(()=>el.remove())}

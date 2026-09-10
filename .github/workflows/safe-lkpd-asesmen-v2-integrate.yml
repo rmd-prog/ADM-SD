@@ -1,0 +1,32 @@
+name: Safe LKPD Asesmen SUPER v2 Integrate
+on:
+  push:
+    branches: [feat-perangkat-pembelajaran-super-2026-09-10]
+permissions:
+  contents: write
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Safely insert loader
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html'); s=p.read_text(encoding='utf-8')
+          tag='<script src="assets/perangkat-lkpd-asesmen-super-v2.js"></script>'
+          if tag in s: raise SystemExit('loader already present')
+          anchor='<script src="assets/perangkat-lkpd-asesmen-super-v1.js"></script>'
+          if anchor not in s: raise SystemExit('v1 anchor not found')
+          s=s.replace(anchor,anchor+'\n'+tag,1)
+          if s.count(tag)!=1: raise SystemExit('loader validation failed')
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add index.html
+          git diff --cached --quiet || git commit -m "ci: load LKPD asesmen SUPER v2"
+          git push

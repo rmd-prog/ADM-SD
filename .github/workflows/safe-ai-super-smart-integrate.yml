@@ -1,0 +1,59 @@
+name: Safe AI Generate SUPER Smart Integrate
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Safely load smart layer
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          tag='<script src="assets/ai-super-smart.js"></script>'
+          if tag in s:
+              print('Smart loader already present')
+              raise SystemExit(0)
+          marker='<script src="assets/ai-generate-super.js"></script>'
+          if marker not in s:
+              raise SystemExit('ERROR: existing AI Generate SUPER loader not found; refusing to modify index.html')
+          s=s.replace(marker, marker+'\n'+tag, 1)
+          if s.count(tag)!=1:
+              raise SystemExit('ERROR: smart loader count is not exactly one')
+          p.write_text(s,encoding='utf-8')
+          print('Smart loader inserted safely after AI Generate SUPER loader')
+
+      - name: Validate
+        shell: python
+        run: |
+          from pathlib import Path
+          s=Path('index.html').read_text(encoding='utf-8')
+          a='<script src="assets/ai-generate-super.js"></script>'
+          b='<script src="assets/ai-super-smart.js"></script>'
+          if s.count(a)!=1 or s.count(b)!=1:
+              raise SystemExit('ERROR: loader count validation failed')
+          if s.index(b)<=s.index(a):
+              raise SystemExit('ERROR: smart loader must come after AI Generate SUPER loader')
+          print('Validation OK')
+
+      - name: Commit integration
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          if git diff --cached --quiet; then
+            echo 'No changes to commit'
+          else
+            git commit -m 'ci: load AI Generate SUPER Smart layer'
+            git push
+          fi

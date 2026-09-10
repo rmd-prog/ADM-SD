@@ -1,0 +1,62 @@
+name: Safe AI Generate SUPER Integrate
+
+on:
+  push:
+    branches: ["feat-ai-super-antlimit-2026-09-10"]
+
+permissions:
+  contents: write
+
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Safely add AI SUPER loader
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          tag='<script src="assets/ai-generate-super.js"></script>'
+          if tag in s:
+              print('AI SUPER loader already present')
+              raise SystemExit(0)
+          marker='<script src="assets/auto-doc-super.js"></script>'
+          if marker not in s:
+              raise SystemExit('Existing AUTO DOC SUPER loader not found; refusing to modify index.html')
+          s=s.replace(marker, marker+'\n'+tag, 1)
+          p.write_text(s,encoding='utf-8')
+          print('AI SUPER loader added after AUTO DOC SUPER loader')
+          PY
+
+      - name: Validate
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('index.html').read_text(encoding='utf-8')
+          tag='<script src="assets/ai-generate-super.js"></script>'
+          if s.count(tag)!=1:
+              raise SystemExit(f'Expected exactly one AI SUPER loader, got {s.count(tag)}')
+          if s.count('<script src="assets/auto-doc-super.js"></script>')!=1:
+              raise SystemExit('AUTO DOC SUPER loader count is not exactly one')
+          if s.index(tag) < s.index('<script src="assets/auto-doc-super.js"></script>'):
+              raise SystemExit('AI SUPER loader is not after AUTO DOC SUPER loader')
+          print('Validation passed')
+          PY
+
+      - name: Commit changes
+        shell: bash
+        run: |
+          if git diff --quiet -- index.html; then
+            echo 'No index change required'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'feat: load AI Generate SUPER safely'
+          git push

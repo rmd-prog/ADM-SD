@@ -58,6 +58,27 @@ function applyRoleMenu(){
   const cur=document.querySelector('.page.active');
   if(!admin&&cur&&norm(cur.id)==='teachers'){const d=document.querySelector('[data-page="dashboard"]');if(d)d.click()}
 }
+function applySiapGuruBrand(){
+  try{
+    document.title='🚀 SIAP GURU — 2026/2027 • Portal Administrasi Guru';
+    const replaceText=(root)=>{
+      if(!root)return;
+      const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+      const nodes=[];let n;
+      while(n=walker.nextNode())nodes.push(n);
+      nodes.forEach(node=>{
+        const p=node.parentElement;
+        if(!p||['SCRIPT','STYLE','TEXTAREA'].includes(p.tagName))return;
+        if(/GURU\+\s*SD/i.test(node.nodeValue))node.nodeValue=node.nodeValue.replace(/GURU\+\s*SD/gi,'SIAP GURU');
+      });
+    };
+    replaceText(document.body);
+    const brand=document.querySelector('.brand');
+    if(brand)brand.setAttribute('aria-label','SIAP GURU');
+    const meta=document.querySelector('meta[name="app-version"]');
+    if(meta)meta.setAttribute('content','SIAP-GURU-2026-09-10');
+  }catch(e){console.warn('Brand SIAP GURU:',e)}
+}
 function loadScript(src,key){
   if(window[key])return;
   if(document.querySelector('script[src*="'+src.split('?')[0]+'"]')){window[key]=true;return}
@@ -92,7 +113,7 @@ function bindLazyModules(){
   },true);
 }
 function boot(){
-  installAuthTokenBridge();applyRoleMenu();installD1SyncButtonFix();installMobileTouchFix();bindLazyModules();
+  installAuthTokenBridge();applyRoleMenu();installD1SyncButtonFix();installMobileTouchFix();bindLazyModules();applySiapGuruBrand();
   loadScript('assets/ui-feedback.js?v=2','__ADM_UI_FEEDBACK_LOADED');
   loadScript('assets/loading-system.js?v=2','__ADM_LOADING_SYSTEM');
 }

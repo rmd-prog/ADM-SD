@@ -1,0 +1,41 @@
+name: Safe PROTA PROMES SUPER v2 Integrate
+on:
+  push:
+    branches: [feat-perangkat-pembelajaran-super-2026-09-10]
+permissions:
+  contents: write
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Safely add PROTA PROMES v2 loader
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html'); s=p.read_text(encoding='utf-8')
+          tag='<script src="assets/perangkat-prota-promes-super-v2.js"></script>'
+          if tag in s:
+              print('Loader already present')
+              raise SystemExit(0)
+          anchor='<script src="assets/perangkat-pembelajaran-super.js"></script>'
+          if anchor not in s:
+              raise SystemExit('Anchor perangkat-pembelajaran-super.js not found; refusing unsafe edit')
+          s=s.replace(anchor,anchor+'\n'+tag,1)
+          if s.count(tag)!=1: raise SystemExit('Loader count invalid')
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Validate loader
+        run: |
+          test "$(grep -o 'assets/perangkat-prota-promes-super-v2.js' index.html | wc -l)" -eq 1
+          test "$(grep -o 'assets/perangkat-pembelajaran-super.js' index.html | wc -l)" -ge 1
+      - name: Commit loader if changed
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          if git diff --cached --quiet; then echo 'No loader change'; exit 0; fi
+          git commit -m 'ci: safely load PROTA PROMES SUPER v2'
+          git push

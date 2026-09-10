@@ -20,7 +20,6 @@ jobs:
         shell: python
         run: |
           from pathlib import Path
-          import re
 
           p = Path('index.html')
           s = p.read_text(encoding='utf-8')
@@ -30,20 +29,28 @@ jobs:
               raise SystemExit('exportHtml boundary not found')
 
           seg = s[start:end]
-          # Keep the escaped guru-mapel script, but remove every raw closing
-          # script tag accidentally embedded in the exportHtml JavaScript string.
-          pat = re.compile(r'\\n<script src=\\"assets/perangkat-pembelajaran-super\\.js\\"></script>.*?\\n</body></html>', re.S)
-          newseg, n = pat.subn('\\n</body></html>', seg, count=1)
-          if n != 1:
-              raise SystemExit(f'unsafe exportHtml block not found: {n}')
+          marker = 'assets/perangkat-pembelajaran-super.js'
+          marker_at = seg.find(marker)
+          if marker_at < 0:
+              raise SystemExit('unsafe perangkat script marker not found')
 
+          block_start = seg.rfind('<script', 0, marker_at)
+          block_end = seg.find('</body></html>', marker_at)
+          if block_start < 0 or block_end < 0:
+              raise SystemExit('unsafe export block boundaries not found')
+          block_end += len('</body></html>')
+
+          newseg = seg[:block_start] + '</body></html>' + seg[block_end:]
           s2 = s[:start] + newseg + s[end:]
           p.write_text(s2, encoding='utf-8')
 
-          # Hard validation: exportHtml must not contain a literal raw </script>.
-          check = s2[s2.find('function exportHtml(type){'):s2.find('function ensureDoc(type)', s2.find('function exportHtml(type){'))]
+          check_start = s2.find('function exportHtml(type){')
+          check_end = s2.find('function ensureDoc(type)', check_start)
+          check = s2[check_start:check_end]
           if '</script>' in check:
               raise SystemExit('VALIDATION FAILED: raw </script> remains inside exportHtml')
+          if 'assets/perangkat-pembelajaran-super.js' in check:
+              raise SystemExit('VALIDATION FAILED: perangkat loader remains inside exportHtml')
 
       - name: Validate HTML script boundaries
         shell: python
@@ -51,7 +58,7 @@ jobs:
           from pathlib import Path
           import re
           s = Path('index.html').read_text(encoding='utf-8')
-          n_open = len(re.findall(r'<script(?:\\s[^>]*)?>', s, flags=re.I))
+          n_open = len(re.findall(r'<script(?:\s[^>]*)?>', s, flags=re.I))
           n_close = len(re.findall(r'</script>', s, flags=re.I))
           if n_open != n_close:
               raise SystemExit(f'script tag mismatch: open={n_open} close={n_close}')

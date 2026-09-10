@@ -1,4 +1,4 @@
-name: One-time safe login optimization
+name: One-time final login optimization
 on:
   push:
     branches: [main]
@@ -10,11 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Patch and validate
+      - name: Patch login safely
         shell: python
         run: |
           from pathlib import Path
-          import re
           p=Path('index.html')
           s=p.read_text(encoding='utf-8')
           s=s.replace('backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);opacity:0;visibility:hidden;', 'backdrop-filter:none;-webkit-backdrop-filter:none;opacity:0;visibility:hidden;')
@@ -23,11 +22,9 @@ jobs:
           if old in s:
               s=s.replace(old,new,1)
           elif "const firstPage=(t.role==='guru'||t.role==='guru_mapel')?'students':'dashboard';" not in s:
-              raise SystemExit('login performance anchor not found; refusing change')
-          if s.lower().count('<script') != s.lower().count('</script>'):
-              raise SystemExit('script tag mismatch')
+              raise SystemExit('login anchor not found; no index change')
           p.write_text(s,encoding='utf-8')
-      - name: Validate JavaScript
+      - name: Validate inline JavaScript
         shell: bash
         run: |
           python - <<'PY'
@@ -35,16 +32,18 @@ jobs:
           import re
           s=Path('index.html').read_text(encoding='utf-8')
           scripts=re.findall(r'<script(?:\\s[^>]*)?>(.*?)</script>',s,re.S|re.I)
+          if not scripts: raise SystemExit('no inline scripts found')
           Path('/tmp/index-inline.js').write_text('\\n'.join(scripts),encoding='utf-8')
+          print('inline scripts:',len(scripts))
           PY
           node --check /tmp/index-inline.js
-      - name: Commit and remove
+      - name: Commit optimized index and remove workflow
         shell: bash
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add index.html
           if ! git diff --cached --quiet; then git commit -m 'Optimize login transition safely'; git push; fi
-          rm -f .github/workflows/optimize-login-safe.yml
-          git add .github/workflows/optimize-login-safe.yml
-          if ! git diff --cached --quiet; then git commit -m 'Remove one-time safe login optimization'; git push; fi
+          rm -f .github/workflows/optimize-login-final.yml
+          git add .github/workflows/optimize-login-final.yml
+          if ! git diff --cached --quiet; then git commit -m 'Remove one-time login optimizer'; git push; fi

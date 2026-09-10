@@ -1,14 +1,13 @@
 /* GURU+ SD — MASTER ENFORCER + CHAIN GUARD
- * Canonical source: GURU_SD_MASTER.
+ * Canonical source: guru_sd_pembelajaran_master_v1 / GURU_SD_MASTER.
  * Legacy state is a derived mirror only.
  * Blocks stale BAB/unit generators from overriding the active master state.
  * No D1/Worker access.
  */
 (function(){'use strict';
-if(window.__GURU_SD_MASTER_ENFORCER_V2__)return;window.__GURU_SD_MASTER_ENFORCER_V2__=1;
-const LEGACY='guru_sd_perangkat_super_v1';
-const read=()=>{try{return JSON.parse(localStorage.getItem('guru_sd_pembelajaran_master_v1')||'null')}catch(e){return null}};
-function master(){try{return window.GURU_SD_MASTER?.get?.()||read()}catch(e){return read()}}
+if(window.__GURU_SD_MASTER_ENFORCER_V3__)return;window.__GURU_SD_MASTER_ENFORCER_V3__=1;
+const KEY='guru_sd_pembelajaran_master_v1',LEGACY='guru_sd_perangkat_super_v1';
+function master(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
 function mirror(x){
   if(!x||!x.rombel||!x.mapel||!x.babId)return;
   try{localStorage.setItem(LEGACY,JSON.stringify({
@@ -27,7 +26,7 @@ function syncDom(x){
     const opts=[...b.options];
     let i=opts.findIndex(o=>String(o.textContent||'').toLowerCase().includes(String(x.material).toLowerCase()));
     if(i<0&&x.babNo)i=opts.findIndex(o=>new RegExp('BAB\\s*'+Number(x.babNo)+'\\b','i').test(String(o.textContent||'')));
-    if(i>=0)b.selectedIndex=i;
+    if(i>=0&&b.selectedIndex!==i)b.selectedIndex=i;
   }
 }
 function guardCatalog(x){
@@ -69,9 +68,9 @@ function audit(){
 }
 function boot(){
   audit();
-  window.addEventListener('guruSdMasterChanged',e=>{mirror(e.detail);audit()});
+  window.addEventListener('guruSdMasterChanged',e=>{mirror(e.detail);setTimeout(audit,0)});
   ['pkR','pkM','pkB','pkI','rpmBab'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('change',()=>setTimeout(audit,0))});
-  setInterval(audit,1200);
+  setInterval(audit,1500);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 })();

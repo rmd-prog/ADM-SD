@@ -1,0 +1,73 @@
+name: Fix Login Script Leak
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Remove unsafe script tags from exportHtml
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          start = s.find('function exportHtml(type){')
+          end = s.find('function ensureDoc(type)', start)
+          if start < 0 or end < 0:
+              raise SystemExit('exportHtml boundary not found')
+
+          seg = s[start:end]
+          # Keep the escaped guru-mapel script, but remove every raw closing
+          # script tag accidentally embedded in the exportHtml JavaScript string.
+          pat = re.compile(r'\\n<script src=\\"assets/perangkat-pembelajaran-super\\.js\\"></script>.*?\\n</body></html>', re.S)
+          newseg, n = pat.subn('\\n</body></html>', seg, count=1)
+          if n != 1:
+              raise SystemExit(f'unsafe exportHtml block not found: {n}')
+
+          s2 = s[:start] + newseg + s[end:]
+          p.write_text(s2, encoding='utf-8')
+
+          # Hard validation: exportHtml must not contain a literal raw </script>.
+          check = s2[s2.find('function exportHtml(type){'):s2.find('function ensureDoc(type)', s2.find('function exportHtml(type){'))]
+          if '</script>' in check:
+              raise SystemExit('VALIDATION FAILED: raw </script> remains inside exportHtml')
+
+      - name: Validate HTML script boundaries
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+          s = Path('index.html').read_text(encoding='utf-8')
+          n_open = len(re.findall(r'<script(?:\\s[^>]*)?>', s, flags=re.I))
+          n_close = len(re.findall(r'</script>', s, flags=re.I))
+          if n_open != n_close:
+              raise SystemExit(f'script tag mismatch: open={n_open} close={n_close}')
+          if not s.rstrip().endswith('</html>'):
+              raise SystemExit('index.html does not end with </html>')
+          print(f'VALID: script tags balanced ({n_open}/{n_close})')
+
+      - name: Commit repair
+        shell: bash
+        run: |
+          if git diff --quiet -- index.html; then
+            echo 'No repair needed.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'fix: prevent login JS truncation from exportHtml'
+          git push

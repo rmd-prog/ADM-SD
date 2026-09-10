@@ -1,0 +1,81 @@
+name: Safe Perangkat SUPER Master Loader
+on:
+  push:
+    branches: [feat-perangkat-pembelajaran-super-2026-09-10]
+permissions:
+  contents: write
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Safely append master loaders before final body
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          loaders=[
+            'assets/perangkat-pembelajaran-super.js',
+            'assets/perangkat-katalog-super-v2.js',
+            'assets/perangkat-cp-atp-tp-super-v2.js',
+            'assets/perangkat-binding-super-v1.js',
+            'assets/perangkat-jp-super-v1.js',
+            'assets/perangkat-pertemuan-super-v1.js',
+            'assets/perangkat-prota-promes-super-v2.js',
+            'assets/perangkat-rpm-super-v2.js',
+            'assets/perangkat-lkpd-asesmen-super-v1.js',
+            'assets/perangkat-lkpd-asesmen-super-v2.js',
+            'assets/perangkat-audit-super-v1.js',
+            'assets/perangkat-kalender-adaptif-v1.js',
+          ]
+          # Only inspect the final document boundary. Earlier </body> text can exist
+          # inside exportHtml() strings and must never be used as the insertion point.
+          pos=s.rfind('</body>')
+          if pos < 0:
+              raise SystemExit('final </body> not found')
+          missing=[x for x in loaders if f'<script src="{x}"></script>' not in s]
+          if not missing:
+              raise SystemExit('master loaders already present')
+          block='\n'.join(f'<script src="{x}"></script>' for x in missing)+'\n'
+          s=s[:pos]+block+s[pos:]
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Validate master stack
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('index.html').read_text(encoding='utf-8')
+          loaders=[
+            'assets/perangkat-pembelajaran-super.js',
+            'assets/perangkat-katalog-super-v2.js',
+            'assets/perangkat-cp-atp-tp-super-v2.js',
+            'assets/perangkat-binding-super-v1.js',
+            'assets/perangkat-jp-super-v1.js',
+            'assets/perangkat-pertemuan-super-v1.js',
+            'assets/perangkat-prota-promes-super-v2.js',
+            'assets/perangkat-rpm-super-v2.js',
+            'assets/perangkat-lkpd-asesmen-super-v1.js',
+            'assets/perangkat-lkpd-asesmen-super-v2.js',
+            'assets/perangkat-audit-super-v1.js',
+            'assets/perangkat-kalender-adaptif-v1.js',
+          ]
+          for x in loaders:
+              tag=f'<script src="{x}"></script>'
+              if s.count(tag)!=1: raise SystemExit(f'loader count invalid: {x}: {s.count(tag)}')
+          final=s.rfind('</body>')
+          for x in loaders:
+              if s.find(f'<script src="{x}"></script>', final-20000, final)<0:
+                  raise SystemExit(f'loader not in final document boundary: {x}')
+          print('Validated',len(loaders),'Perangkat SUPER loaders at final document boundary')
+          PY
+      - name: Commit
+        shell: bash
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add index.html
+          git diff --cached --quiet || git commit -m "ci: load Perangkat Pembelajaran SUPER master stack"
+          git push

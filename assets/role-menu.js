@@ -132,16 +132,33 @@ function installMobileTouchFix(){
   });
   document.querySelectorAll('#app .page.active input,#app .page.active select,#app .page.active textarea,#app .page.active button').forEach(el=>{el.style.pointerEvents='auto';el.style.touchAction='manipulation'});
 }
+function loadHeavyModules(){
+  loadScript('assets/multi-rombel.js?v=1','__ADM_MULTI_ROMBEL_LOADED');
+  loadScript('assets/guru-mapel-access.js?v=2','__ADM_GURU_MAPEL_ACCESS_LOADED');
+  loadScript('assets/ai-brain-v41.js?v=411','__ADM_AI_V41_LOADED');
+}
+function scheduleHeavyModules(){
+  const run=()=>loadHeavyModules();
+  if('requestIdleCallback' in window)requestIdleCallback(run,{timeout:2500});
+  else setTimeout(run,1800);
+}
+function bindLazyModules(){
+  document.addEventListener('click',e=>{
+    const b=e.target?.closest?.('[data-page]');
+    if(!b)return;
+    const p=String(b.getAttribute('data-page')||'');
+    if(p==='aiGenerate'||p==='scores'||p==='report')loadHeavyModules();
+  },true);
+}
 function boot(){
   installAuthTokenBridge();
   applyRoleMenu();
   installD1SyncButtonFix();
   installMobileTouchFix();
+  bindLazyModules();
   loadScript('assets/ui-feedback.js?v=1','__ADM_UI_FEEDBACK_LOADED');
   loadScript('assets/loading-system.js?v=1','__ADM_LOADING_SYSTEM');
-  loadScript('assets/multi-rombel.js?v=1','__ADM_MULTI_ROMBEL_LOADED');
-  loadScript('assets/guru-mapel-access.js?v=2','__ADM_GURU_MAPEL_ACCESS_LOADED');
-  loadScript('assets/ai-brain-v41.js?v=411','__ADM_AI_V41_LOADED');
+  scheduleHeavyModules();
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();

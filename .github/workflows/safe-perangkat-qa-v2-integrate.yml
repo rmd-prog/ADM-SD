@@ -1,0 +1,36 @@
+name: Safe Perangkat QA v2
+on:
+  push:
+    branches: ["feat/kaldik-master-2026-09-10"]
+permissions:
+  contents: write
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Integrate loader safely
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          loader='<script src="assets/perangkat-qa-super-v2.js"></script>'
+          if s.count(loader)==0:
+              marker='<script src="assets/absensi.js"'
+              i=s.find(marker)
+              if i<0: raise SystemExit('loader marker not found')
+              s=s[:i]+loader+'\n'+s[i:]
+              p.write_text(s,encoding='utf-8')
+          if s.count(loader)!=1: raise SystemExit('QA loader count != 1')
+          if s.count('</script>') < s.count('<script'): raise SystemExit('script boundary mismatch')
+          PY
+      - name: Commit if changed
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git diff --cached --quiet || git commit -m 'ci: add Perangkat QA v2 loader'
+          git push

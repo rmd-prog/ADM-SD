@@ -18,6 +18,6 @@ window.alert=function(message){const s=String(message||'');let type='info',title
  const z=document.createElement('script');z.src='assets/assessment-smart.js?v=3';z.async=false;(document.head||document.documentElement).appendChild(z);
  const a=document.createElement('script');a.src='assets/assessment-auto.js?v=2';a.async=false;(document.head||document.documentElement).appendChild(a);
  const ab=document.createElement('script');ab.src='assets/assessment-absensi-bridge.js?v=3';ab.async=false;(document.head||document.documentElement).appendChild(ab);
- const r=document.createElement('script');r.src='assets/assessment-rekap-smart.js?v=2';r.async=false;(document.head||document.documentElement).appendChild(r);
- const bm=document.createElement('script');bm.src='assets/assessment-bab-matrix.js?v=2';bm.async=false;(document.head||document.documentElement).appendChild(bm);
+ const r=document.createElement('script');r.src='assets/assessment-rekap-smart.js?v=3';r.async=false;(document.head||document.documentElement).appendChild(r);
+ const bm=document.createElement('script');bm.src='assets/assessment-bab-matrix.js?v=3';bm.async=false;(document.head||document.documentElement).appendChild(bm);
 }catch(e){console.warn('Assessment module load:',e)}})();

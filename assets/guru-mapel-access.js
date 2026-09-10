@@ -18,7 +18,12 @@ if(!window.__ADM_GURU_MAPEL_FETCH__){
   };
 }
 function lockSubjectSelects(){const subject=own();if(!subject)return;document.querySelectorAll('select').forEach(sel=>{const opts=[...sel.options];opts.forEach(o=>{const s=normalizeSubject(o.value||o.textContent||'');if(SUBJECTS.some(x=>normalize(x)===normalize(s))&&normalize(s)!==subject){o.hidden=true;o.disabled=true}});const good=opts.find(o=>!o.disabled&&normalizeSubject(o.value||o.textContent||'')===subject);if(good)sel.value=good.value})}
-const obs=new MutationObserver(()=>{try{lockSubjectSelects()}catch{}});
-function boot(){lockSubjectSelects();obs.observe(document.body,{childList:true,subtree:true});}
+function boot(){
+  const subject=own();
+  if(!subject)return;
+  lockSubjectSelects();
+  const obs=new MutationObserver(()=>{try{lockSubjectSelects()}catch{}});
+  obs.observe(document.body,{childList:true,subtree:true});
+}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();

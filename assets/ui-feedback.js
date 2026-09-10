@@ -18,4 +18,7 @@ function loading(show,title='Memproses...',message='Mohon tunggu sebentar'){let 
 window.ADM_UI={toast,success:(m,t)=>toast(m,'success',t),error:(m,t)=>toast(m,'error',t),warning:(m,t)=>toast(m,'warning',t),info:(m,t)=>toast(m,'info',t),loading,hideLoading:()=>loading(false)};
 const oldAlert=window.alert;window.alert=function(message){const s=String(message||'');let type='info',title='Informasi';if(/berhasil|sudah disinkronkan|sukses|tersimpan|selesai/i.test(s)){type='success';title='Berhasil'}else if(/gagal|error|tidak ditemukan|tidak valid|belum login/i.test(s)){type='error';title='Gagal'}else if(/perhatian|silakan|wajib|harus/i.test(s)){type='warning';title='Perhatian'}toast(s,type,title)};
 })();
-(function(){try{const s=document.createElement('script');s.src='assets/assessment-kokurikuler.js?v=1';s.async=false;(document.head||document.documentElement).appendChild(s)}catch(e){console.warn('Assessment module load:',e)}})();
+(function(){try{
+ const b=document.createElement('script');b.src='assets/assessment-data-bridge.js?v=2';b.async=false;(document.head||document.documentElement).appendChild(b);
+ const s=document.createElement('script');s.src='assets/assessment-kokurikuler.js?v=2';s.async=false;(document.head||document.documentElement).appendChild(s);
+}catch(e){console.warn('Assessment module load:',e)}})();

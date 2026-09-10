@@ -20,42 +20,23 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           import re
-
-          p = Path('index.html')
-          s = p.read_text(encoding='utf-8')
-
-          canonical = [
-              'assets/perangkat-master-state-super-v1.js',
-              'assets/perangkat-pembelajaran-super.js',
-              'assets/perangkat-katalog-super-v2.js',
-              'assets/perangkat-binding-super-v1.js',
-              'assets/perangkat-jp-super-v1.js',
-              'assets/perangkat-pertemuan-super-v1.js',
-              'assets/perangkat-audit-super-v1.js',
-              'assets/perangkat-kalender-adaptif-v1.js',
-          ]
-
-          legacy = [
-              'assets/perangkat-cp-atp-tp-super-v2.js',
-              'assets/perangkat-prota-promes-super-v2.js',
-              'assets/perangkat-rpm-super-v2.js',
-              'assets/perangkat-lkpd-asesmen-super-v1.js',
-              'assets/perangkat-lkpd-asesmen-super-v2.js',
-          ]
-
-          all_managed = canonical + legacy
-          for src in all_managed:
-              pat = re.compile(r'\s*<script\s+src=["\']' + re.escape(src) + r'["\']\s*>\s*</script>\s*', re.I)
-              s = pat.sub('\n', s)
-
-          pos = s.rfind('</body>')
-          if pos < 0:
-              raise SystemExit('final </body> not found')
-
-          block = '\n' + '\n'.join(f'<script src="{src}"></script>' for src in canonical) + '\n'
-          s = s[:pos] + block + s[pos:]
-          p.write_text(s, encoding='utf-8')
-          print('Canonical stack normalized:', len(canonical), 'loaders')
+          p=Path('index.html'); s=p.read_text(encoding='utf-8')
+          canonical=[
+            'assets/perangkat-master-state-super-v1.js','assets/perangkat-pembelajaran-super.js',
+            'assets/perangkat-katalog-super-v2.js','assets/perangkat-binding-super-v1.js',
+            'assets/perangkat-jp-super-v1.js','assets/perangkat-pertemuan-super-v1.js',
+            'assets/perangkat-audit-super-v1.js','assets/perangkat-kalender-adaptif-v1.js',
+            'assets/perangkat-master-enforcer-super-v1.js']
+          legacy=[
+            'assets/perangkat-cp-atp-tp-super-v2.js','assets/perangkat-prota-promes-super-v2.js',
+            'assets/perangkat-rpm-super-v2.js','assets/perangkat-lkpd-asesmen-super-v1.js',
+            'assets/perangkat-lkpd-asesmen-super-v2.js']
+          for src in canonical+legacy:
+            s=re.sub(r'\s*<script\s+src=["\']'+re.escape(src)+r'["\']\s*>\s*</script>\s*','\n',s,flags=re.I)
+          pos=s.rfind('</body>')
+          if pos<0: raise SystemExit('final </body> not found')
+          s=s[:pos]+'\n'+'\n'.join(f'<script src="{x}"></script>' for x in canonical)+'\n'+s[pos:]
+          p.write_text(s,encoding='utf-8')
           PY
 
       - name: Validate canonical Perangkat SUPER stack globally
@@ -64,33 +45,23 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           import re
-          s = Path('index.html').read_text(encoding='utf-8')
-          canonical = [
-              'assets/perangkat-master-state-super-v1.js',
-              'assets/perangkat-pembelajaran-super.js',
-              'assets/perangkat-katalog-super-v2.js',
-              'assets/perangkat-binding-super-v1.js',
-              'assets/perangkat-jp-super-v1.js',
-              'assets/perangkat-pertemuan-super-v1.js',
-              'assets/perangkat-audit-super-v1.js',
-              'assets/perangkat-kalender-adaptif-v1.js',
-          ]
-          legacy = [
-              'assets/perangkat-cp-atp-tp-super-v2.js',
-              'assets/perangkat-prota-promes-super-v2.js',
-              'assets/perangkat-rpm-super-v2.js',
-              'assets/perangkat-lkpd-asesmen-super-v1.js',
-              'assets/perangkat-lkpd-asesmen-super-v2.js',
-          ]
-          for src in canonical:
-              n = len(re.findall(r'<script\s+src=["\']' + re.escape(src) + r'["\']\s*>\s*</script>', s, re.I))
-              if n != 1:
-                  raise SystemExit(f'canonical loader invalid: {src}: {n}')
-          for src in legacy:
-              n = len(re.findall(r'<script\s+src=["\']' + re.escape(src) + r'["\']\s*>\s*</script>', s, re.I))
-              if n != 0:
-                  raise SystemExit(f'legacy loader still present: {src}: {n}')
-          print('Validated canonical stack: 8 unique loaders; 0 duplicate generator loaders')
+          s=Path('index.html').read_text(encoding='utf-8')
+          canonical=[
+            'assets/perangkat-master-state-super-v1.js','assets/perangkat-pembelajaran-super.js',
+            'assets/perangkat-katalog-super-v2.js','assets/perangkat-binding-super-v1.js',
+            'assets/perangkat-jp-super-v1.js','assets/perangkat-pertemuan-super-v1.js',
+            'assets/perangkat-audit-super-v1.js','assets/perangkat-kalender-adaptif-v1.js',
+            'assets/perangkat-master-enforcer-super-v1.js']
+          legacy=[
+            'assets/perangkat-cp-atp-tp-super-v2.js','assets/perangkat-prota-promes-super-v2.js',
+            'assets/perangkat-rpm-super-v2.js','assets/perangkat-lkpd-asesmen-super-v1.js',
+            'assets/perangkat-lkpd-asesmen-super-v2.js']
+          def count(src): return len(re.findall(r'<script\s+src=["\']'+re.escape(src)+r'["\']\s*>\s*</script>',s,re.I))
+          for x in canonical:
+            if count(x)!=1: raise SystemExit(f'canonical loader invalid: {x}: {count(x)}')
+          for x in legacy:
+            if count(x)!=0: raise SystemExit(f'legacy loader still present: {x}: {count(x)}')
+          print('Validated canonical stack: 9 unique loaders; 0 duplicate generator loaders')
           PY
 
       - name: Commit normalized index

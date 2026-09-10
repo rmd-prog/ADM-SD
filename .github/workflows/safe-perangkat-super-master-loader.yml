@@ -30,17 +30,20 @@ jobs:
             'assets/perangkat-audit-super-v1.js',
             'assets/perangkat-kalender-adaptif-v1.js',
           ]
-          # Only inspect the final document boundary. Earlier </body> text can exist
-          # inside exportHtml() strings and must never be used as the insertion point.
           pos=s.rfind('</body>')
-          if pos < 0:
-              raise SystemExit('final </body> not found')
-          missing=[x for x in loaders if f'<script src="{x}"></script>' not in s]
+          if pos < 0: raise SystemExit('final </body> not found')
+          tail=s[:pos]
+          # Tags inside exportHtml() strings are not document loaders.
+          final_script=s.rfind('</script>',0,pos)
+          final_area=s[final_script+9:pos] if final_script>=0 else s[:pos]
+          missing=[x for x in loaders if f'<script src="{x}"></script>' not in final_area]
           if not missing:
-              raise SystemExit('master loaders already present')
+              print('All master loaders already present in final document')
+              raise SystemExit(0)
           block='\n'.join(f'<script src="{x}"></script>' for x in missing)+'\n'
           s=s[:pos]+block+s[pos:]
           p.write_text(s,encoding='utf-8')
+          print('Inserted',len(missing),'master loaders')
           PY
       - name: Validate master stack
         shell: bash
@@ -62,14 +65,12 @@ jobs:
             'assets/perangkat-audit-super-v1.js',
             'assets/perangkat-kalender-adaptif-v1.js',
           ]
+          pos=s.rfind('</body>'); final_script=s.rfind('</script>',0,pos)
+          area=s[final_script+9:pos]
           for x in loaders:
               tag=f'<script src="{x}"></script>'
-              if s.count(tag)!=1: raise SystemExit(f'loader count invalid: {x}: {s.count(tag)}')
-          final=s.rfind('</body>')
-          for x in loaders:
-              if s.find(f'<script src="{x}"></script>', final-20000, final)<0:
-                  raise SystemExit(f'loader not in final document boundary: {x}')
-          print('Validated',len(loaders),'Perangkat SUPER loaders at final document boundary')
+              if area.count(tag)!=1: raise SystemExit(f'final loader invalid: {x}: {area.count(tag)}')
+          print('Validated',len(loaders),'Perangkat SUPER loaders in the real document body')
           PY
       - name: Commit
         shell: bash

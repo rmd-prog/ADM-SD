@@ -1,79 +1,105 @@
 name: Safe Perangkat SUPER Master Loader
+
 on:
   push:
     branches: [feat-perangkat-pembelajaran-super-2026-09-10]
+  workflow_dispatch:
+
 permissions:
   contents: write
+
 jobs:
   integrate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Safely append canonical Perangkat loaders before final body
+
+      - name: Normalize canonical Perangkat SUPER script stack
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
-          p=Path('index.html')
-          s=p.read_text(encoding='utf-8')
-          loaders=[
-            'assets/perangkat-master-state-super-v1.js',
-            'assets/perangkat-pembelajaran-super.js',
-            'assets/perangkat-katalog-super-v2.js',
-            'assets/perangkat-binding-super-v1.js',
-            'assets/perangkat-jp-super-v1.js',
-            'assets/perangkat-pertemuan-super-v1.js',
-            'assets/perangkat-prota-promes-super-v2.js',
-            'assets/perangkat-rpm-super-v2.js',
-            'assets/perangkat-lkpd-asesmen-super-v2.js',
-            'assets/perangkat-audit-super-v1.js',
-            'assets/perangkat-kalender-adaptif-v1.js',
+          import re
+
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+
+          canonical = [
+              'assets/perangkat-master-state-super-v1.js',
+              'assets/perangkat-pembelajaran-super.js',
+              'assets/perangkat-katalog-super-v2.js',
+              'assets/perangkat-binding-super-v1.js',
+              'assets/perangkat-jp-super-v1.js',
+              'assets/perangkat-pertemuan-super-v1.js',
+              'assets/perangkat-audit-super-v1.js',
+              'assets/perangkat-kalender-adaptif-v1.js',
           ]
-          pos=s.rfind('</body>')
-          if pos < 0: raise SystemExit('final </body> not found')
-          tail=s[:pos]
-          final_script=s.rfind('</script>',0,pos)
-          final_area=s[final_script+9:pos] if final_script>=0 else s[:pos]
-          missing=[x for x in loaders if f'<script src="{x}"></script>' not in final_area]
-          if not missing:
-              print('Canonical Perangkat SUPER loaders already present')
-              raise SystemExit(0)
-          block='\n'.join(f'<script src="{x}"></script>' for x in missing)+'\n'
-          s=s[:pos]+block+s[pos:]
-          p.write_text(s,encoding='utf-8')
-          print('Inserted',len(missing),'canonical loaders')
+
+          # These are legacy/duplicate generators or duplicate integration outputs.
+          # The unified engine owns CP/ATP/TP/PROTA/PROMES/RPM/LKPD/Asesmen.
+          legacy = [
+              'assets/perangkat-cp-atp-tp-super-v2.js',
+              'assets/perangkat-prota-promes-super-v2.js',
+              'assets/perangkat-rpm-super-v2.js',
+              'assets/perangkat-lkpd-asesmen-super-v1.js',
+              'assets/perangkat-lkpd-asesmen-super-v2.js',
+          ]
+
+          all_managed = canonical + legacy
+          for src in all_managed:
+              pat = re.compile(r'\\s*<script\\s+src=["\\\']' + re.escape(src) + r'["\\\']\\s*>\\s*</script>\\s*', re.I)
+              s = pat.sub('\\n', s)
+
+          pos = s.rfind('</body>')
+          if pos < 0:
+              raise SystemExit('final </body> not found')
+
+          block = '\n' + '\n'.join(f'<script src="{src}"></script>' for src in canonical) + '\n'
+          s = s[:pos] + block + s[pos:]
+          p.write_text(s, encoding='utf-8')
+          print('Canonical stack normalized:', len(canonical), 'loaders')
           PY
-      - name: Validate canonical stack
+
+      - name: Validate canonical Perangkat SUPER stack globally
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
-          s=Path('index.html').read_text(encoding='utf-8')
-          loaders=[
-            'assets/perangkat-master-state-super-v1.js',
-            'assets/perangkat-pembelajaran-super.js',
-            'assets/perangkat-katalog-super-v2.js',
-            'assets/perangkat-binding-super-v1.js',
-            'assets/perangkat-jp-super-v1.js',
-            'assets/perangkat-pertemuan-super-v1.js',
-            'assets/perangkat-prota-promes-super-v2.js',
-            'assets/perangkat-rpm-super-v2.js',
-            'assets/perangkat-lkpd-asesmen-super-v2.js',
-            'assets/perangkat-audit-super-v1.js',
-            'assets/perangkat-kalender-adaptif-v1.js',
+          import re
+          s = Path('index.html').read_text(encoding='utf-8')
+          canonical = [
+              'assets/perangkat-master-state-super-v1.js',
+              'assets/perangkat-pembelajaran-super.js',
+              'assets/perangkat-katalog-super-v2.js',
+              'assets/perangkat-binding-super-v1.js',
+              'assets/perangkat-jp-super-v1.js',
+              'assets/perangkat-pertemuan-super-v1.js',
+              'assets/perangkat-audit-super-v1.js',
+              'assets/perangkat-kalender-adaptif-v1.js',
           ]
-          pos=s.rfind('</body>'); final_script=s.rfind('</script>',0,pos)
-          area=s[final_script+9:pos]
-          for x in loaders:
-              tag=f'<script src="{x}"></script>'
-              if area.count(tag)!=1: raise SystemExit(f'final loader invalid: {x}: {area.count(tag)}')
-          print('Validated',len(loaders),'canonical Perangkat SUPER loaders')
+          legacy = [
+              'assets/perangkat-cp-atp-tp-super-v2.js',
+              'assets/perangkat-prota-promes-super-v2.js',
+              'assets/perangkat-rpm-super-v2.js',
+              'assets/perangkat-lkpd-asesmen-super-v1.js',
+              'assets/perangkat-lkpd-asesmen-super-v2.js',
+          ]
+          for src in canonical:
+              n = len(re.findall(r'<script\\s+src=["\\\']' + re.escape(src) + r'["\\\']\\s*>\\s*</script>', s, re.I))
+              if n != 1:
+                  raise SystemExit(f'canonical loader invalid: {src}: {n}')
+          for src in legacy:
+              n = len(re.findall(r'<script\\s+src=["\\\']' + re.escape(src) + r'["\\\']\\s*>\\s*</script>', s, re.I))
+              if n != 0:
+                  raise SystemExit(f'legacy loader still present: {src}: {n}')
+          print('Validated canonical stack: 8 unique loaders; 0 duplicate generator loaders')
           PY
-      - name: Commit
+
+      - name: Commit normalized index
         shell: bash
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add index.html
-          git diff --cached --quiet || git commit -m "ci: load canonical Perangkat SUPER state"
+          git diff --cached --quiet || git commit -m "ci: normalize canonical Perangkat SUPER stack"
           git push

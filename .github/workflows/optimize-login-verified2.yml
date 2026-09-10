@@ -1,4 +1,4 @@
-name: One-time verified login optimization
+name: One-time verified login optimization 2
 on:
   push:
     branches: [main]
@@ -19,37 +19,37 @@ jobs:
           old="""  applyClassLock();syncRoleMenu();initAIGenerator();renderBookBasisStatus();renderStats();renderStudents();renderScores();renderReport();showPage((t.role==='guru'||t.role==='guru_mapel')?'students':'dashboard');\n  // Sinkronisasi D1 berjalan di belakang layar agar login tidak tertahan.\n  syncRemoteData(t).catch(err=>console.warn('Sinkronisasi D1 gagal:',err));"""
           new="""  applyClassLock();syncRoleMenu();\n  const firstPage=(t.role==='guru'||t.role==='guru_mapel')?'students':'dashboard';\n  showPage(firstPage);\n  const defer=window.requestAnimationFrame||((fn)=>setTimeout(fn,0));\n  defer(()=>setTimeout(()=>{\n    try{initAIGenerator();renderBookBasisStatus();renderStats();renderStudents();renderScores();renderReport();}catch(err){console.warn('Init dashboard tertunda:',err)}\n    syncRemoteData(t).catch(err=>console.warn('Sinkronisasi D1 gagal:',err));\n  },0));"""
           if old in s: s=s.replace(old,new,1)
-          elif "const firstPage=(t.role==='guru'||t.role==='guru_mapel')?'students':'dashboard';" not in s: raise SystemExit('login anchor missing; refusing change')
+          elif "const firstPage=(t.role==='guru'||t.role==='guru_mapel')?'students':'dashboard';" not in s: raise SystemExit('login anchor missing')
           p.write_text(s,encoding='utf-8')
-      - name: Structural HTML verification
+      - name: Verify HTML structure
         shell: python
         run: |
           from html.parser import HTMLParser
           from pathlib import Path
           class P(HTMLParser):
-              def __init__(self): super().__init__(); self.open=0; self.close=0
+              def __init__(self): super().__init__(); self.nstart=0; self.nend=0
               def handle_starttag(self,t,a):
-                  if t.lower()=='script': self.open+=1
+                  if t.lower()=='script': self.nstart+=1
               def handle_endtag(self,t):
-                  if t.lower()=='script': self.close+=1
+                  if t.lower()=='script': self.nend+=1
           s=Path('index.html').read_text(encoding='utf-8')
           p=P(); p.feed(s); p.close()
-          print('script start/end:',p.open,p.close)
-          if p.open!=p.close: raise SystemExit('unbalanced script tags')
+          print('script tags:',p.nstart,p.nend)
+          if p.nstart!=p.nend: raise SystemExit('unbalanced script tags')
           if 'function finishLogin' not in s: raise SystemExit('finishLogin missing')
-      - name: JavaScript verification
+      - name: Verify JavaScript modules
         shell: bash
         run: |
           node --check assets/role-menu.js
           node --check assets/multi-rombel.js
           node --check assets/ai-brain-v41.js
-      - name: Commit optimized index and remove workflow
+      - name: Commit and remove optimizer
         shell: bash
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add index.html
           if ! git diff --cached --quiet; then git commit -m 'Optimize login transition safely'; git push; fi
-          rm -f .github/workflows/optimize-login-verified.yml
-          git add .github/workflows/optimize-login-verified.yml
-          if ! git diff --cached --quiet; then git commit -m 'Remove one-time verified login optimizer'; git push; fi
+          rm -f .github/workflows/optimize-login-verified2.yml
+          git add .github/workflows/optimize-login-verified2.yml
+          if ! git diff --cached --quiet; then git commit -m 'Remove one-time login optimizer'; git push; fi

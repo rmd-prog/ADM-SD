@@ -1,0 +1,34 @@
+/* SIAP GURU — Input Nilai BAB Matrix
+   One persistent table: students x BAB. Edit/Save mode.
+   Reads/writes existing siapGuruAssessmentV1 records; no D1 changes.
+*/
+(function(){
+'use strict';
+if(window.__ADM_ASSESS_BAB_MATRIX__)return;window.__ADM_ASSESS_BAB_MATRIX__=true;
+const KEY='siapGuruAssessmentV1';
+const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
+const read=(k,d)=>{try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(d))}catch{return d}};
+const write=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));return true}catch{return false}};
+const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+function login(){try{return JSON.parse(localStorage.getItem('siLogin')||'null')||{}}catch{return {}}}
+function user(){const x=login();return x.user||x||{}}
+function normR(v){const s=String(v??'').trim().toUpperCase().replace(/\s+/g,'');return ({'1A':'IA','1B':'IB','2A':'IIA','2B':'IIB','3A':'IIIA','3B':'IIIB','4A':'IVA','4B':'IVB','5':'V','6':'VI','KELAS1A':'IA','KELAS1B':'IB','KELAS2A':'IIA','KELAS2B':'IIB','KELAS3A':'IIIA','KELAS3B':'IIIB','KELAS4A':'IVA','KELAS4B':'IVB','KELAS5':'V','KELAS6':'VI'})[s]||s}
+function rombel(){return normR(user().activeRombel||user().rombel||user().kelas||'')}
+function students(){const a=window.db?.students||window.students||[];const r=rombel();return Array.isArray(a)?a.map((s,i)=>({id:String(s.id??s.nisn??s.nis??i),name:String(s.name??s.nama??s.nama_siswa??'').trim(),rombel:normR(s.rombel??s.kelas??'')})).filter(s=>s.name&&(!r||r==='ALL'||!s.rombel||s.rombel===r)):[]}
+function mapels(){const u=user(),out=[],add=v=>{if(Array.isArray(v))return v.forEach(add);if(!v)return;if(typeof v==='object'){['mapel','mataPelajaran','subject','name','nama'].forEach(k=>add(v[k]));return}String(v).split(/[;,|]/).map(x=>x.trim()).filter(Boolean).forEach(x=>{if(!out.some(y=>y.toLowerCase()===x.toLowerCase()))out.push(x)})};['mapel','mapels','mataPelajaran','mataPelajaranList','subjects','subject'].forEach(k=>add(u[k]));return out.length?out:['Bahasa Indonesia','Matematika','Pendidikan Pancasila','IPAS','Seni dan Budaya','PJOK','Pendidikan Agama dan Budi Pekerti','Bahasa Inggris']}
+function chapters(m){const n={'Bahasa Indonesia':8,'Matematika':8,'Pendidikan Pancasila':6,'IPAS':8,'Seni dan Budaya':6,'PJOK':6,'Pendidikan Agama':6,'Pendidikan Agama dan Budi Pekerti':6,'Bahasa Inggris':6}[m]||8;return Array.from({length:n},(_,i)=>`BAB ${i+1}`)}
+function active(){const p=$('#penilaianPro');return p&&p.classList.contains('active')&&$('.sg-tab.active',p)?.dataset.at==='input'}
+function render(force){if(!active())return;const host=$('#sgAssessmentBody');if(!host)return;const d=read(KEY,{weights:{formative:20,task:20,chapter:30,summative:30},rows:{}}),ss=students(),ms=mapels();let m=host.dataset.babMapel||ms[0]||'',sem=host.dataset.babSem||'1',edit=host.dataset.babEdit==='1';if(!ms.includes(m))m=ms[0]||'';const ch=chapters(m);const sig=[m,sem,ss.length,edit].join('|');if(!force&&host.dataset.babSig===sig&&host.querySelector('#sgBabMatrix'))return;host.dataset.babSig=sig;host.dataset.babMapel=m;host.dataset.babSem=sem;host.dataset.babEdit=edit?'1':'0';
+const vals=(sid,b)=>{const prefix=`${sid}|${m}|${sem}|Ulangan BAB|${b}`;const row=d.rows?.[prefix];return row?.nilai??''};
+const avg=s=>{const a=ch.map(b=>Number(vals(s.id,b))).filter(v=>Number.isFinite(v)&&v>=0);return a.length?(a.reduce((x,y)=>x+y,0)/a.length).toFixed(1):'—'};
+const cells=s=>ch.map(b=>{const v=vals(s.id,b);return edit?`<td><input class="sgBabScore" data-sid="${esc(s.id)}" data-bab="${esc(b)}" type="number" min="0" max="100" value="${esc(v)}" inputmode="numeric" placeholder="-"></td>`:`<td class="sgBabView">${v===''?'—':esc(v)}</td>`}).join('');
+host.innerHTML=`<div class="sg-note"><b>Nilai per BAB</b> — semua BAB tersimpan dalam satu tabel. Nilai BAB yang sudah diisi tetap ada saat pindah BAB. Gunakan Edit untuk mengubah, lalu Simpan.</div><div class="sg-grid"><label>Rombel<input value="${esc(rombel()||'Semua rombel')}" readonly></label><label>Mapel<select id="sgBabMapel">${ms.map(x=>`<option ${x===m?'selected':''}>${esc(x)}</option>`).join('')}</select></label><label>Semester<select id="sgBabSem"><option ${sem==='1'?'selected':''}>1</option><option ${sem==='2'?'selected':''}>2</option></select></label><label>Status<input value="${edit?'Mode Edit':'Mode Lihat'}" readonly></label></div><div class="sg-actions"><button class="btn ${edit?'secondary':'primary'}" id="sgBabEdit">✏️ ${edit?'Batal Edit':'Edit Nilai'}</button>${edit?'<button class="btn primary" id="sgBabSave">💾 Simpan Nilai BAB</button>':''}<button class="btn secondary" id="sgBabRefresh">↻ Perbarui</button></div><div class="tablewrap" id="sgBabMatrix"><table class="table sg-table" style="min-width:${760+ch.length*90}px"><thead><tr><th>No</th><th>Nama Siswa</th>${ch.map(b=>`<th>${b}</th>`).join('')}<th>Rata-rata BAB</th></tr></thead><tbody>${ss.map((s,i)=>`<tr><td>${i+1}</td><td><b>${esc(s.name)}</b><div class="muted">${esc(s.rombel)}</div></td>${cells(s)}<td><b class="sgBabAvg" data-sid="${esc(s.id)}">${avg(s)}</b></td></tr>`).join('')||'<tr><td colspan="20">Data siswa belum tersedia.</td></tr>'}</tbody></table></div>`;
+$('#sgBabMapel').onchange=e=>{host.dataset.babMapel=e.target.value;host.dataset.babSig='';render(true)};
+$('#sgBabSem').onchange=e=>{host.dataset.babSem=e.target.value;host.dataset.babSig='';render(true)};
+$('#sgBabEdit').onclick=()=>{host.dataset.babEdit=edit?'0':'1';host.dataset.babSig='';render(true)};
+$('#sgBabRefresh').onclick=async()=>{if(window.ADM_ASSESS_LOAD_STUDENTS)await window.ADM_ASSESS_LOAD_STUDENTS();host.dataset.babSig='';render(true)};
+if(edit)$('#sgBabSave').onclick=()=>{const now=read(KEY,{weights:{formative:20,task:20,chapter:30,summative:30},rows:{}});now.rows=now.rows||{};let n=0;$$('#sgBabMatrix .sgBabScore').forEach(i=>{const sid=i.dataset.sid,b=i.dataset.bab,v=i.value.trim(),key=`${sid}|${m}|${sem}|Ulangan BAB|${b}`;if(v===''){if(now.rows[key]){delete now.rows[key];n++}return}now.rows[key]={studentId:sid,mapel:m,semester:sem,jenis:'Ulangan BAB',item:b,nilai:Math.max(0,Math.min(100,Number(v))),catatan:now.rows[key]?.catatan||''};n++});write(KEY,now);host.dataset.babEdit='0';host.dataset.babSig='';render(true);document.dispatchEvent(new Event('adm:assessment-saved'));window.ADM_UI?.success?.(`${n} nilai BAB disimpan.`)};
+}
+function wire(){const p=$('#penilaianPro');if(!p||p.__babMatrix)return false;p.__babMatrix=true;p.addEventListener('click',e=>{const b=e.target.closest?.('.sg-tab[data-at="input"]');if(b)setTimeout(()=>render(true),50)});return true}
+setInterval(()=>{wire();render(false)},1200);setTimeout(()=>{wire();render(true)},350);document.addEventListener('adm:students-ready',()=>setTimeout(()=>render(true),100));
+})();

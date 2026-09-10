@@ -1,0 +1,35 @@
+name: Safe Kaldik Chain Bridge
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Insert bridge safely
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html'); s=p.read_text(encoding='utf-8')
+          tag='<script src="assets/perangkat-kaldik-chain-bridge-v1.js"></script>'
+          if s.count(tag)==0:
+              marker='<script src="assets/absensi.js"'
+              i=s.find(marker)
+              if i<0: raise SystemExit('safe loader marker not found')
+              s=s[:i]+tag+'\n'+s[i:]
+              p.write_text(s,encoding='utf-8')
+          if s.count(tag)!=1: raise SystemExit('bridge loader count != 1')
+          if s.count('</script>') < s.count('<script'): raise SystemExit('script boundary mismatch')
+          PY
+      - name: Commit loader if changed
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git diff --cached --quiet || git commit -m 'ci: add Kaldik chain bridge loader'
+          git push

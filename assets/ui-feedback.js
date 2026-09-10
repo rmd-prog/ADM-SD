@@ -12,8 +12,8 @@ window.ADM_UI={toast,success:(m,t)=>toast(m,'success',t),error:(m,t)=>toast(m,'e
 const oldAlert=window.alert;window.alert=function(message){const s=String(message||'');let type='info',title='Informasi';if(/berhasil|sudah disinkronkan|sukses|tersimpan|selesai/i.test(s)){type='success';title='Berhasil'}else if(/gagal|error|tidak ditemukan|tidak valid|belum login/i.test(s)){type='error';title='Gagal'}else if(/perhatian|silakan|wajib|harus/i.test(s)){type='warning';title='Perhatian'}toast(s,type,title)};
 })();
 (function(){try{
- const b=document.createElement('script');b.src='assets/assessment-data-bridge.js?v=5';b.async=false;(document.head||document.documentElement).appendChild(b);
- const s=document.createElement('script');s.src='assets/assessment-kokurikuler.js?v=5';s.async=false;(document.head||document.documentElement).appendChild(s);
- const f=document.createElement('script');f.src='assets/assessment-ui-fix.js?v=3';f.async=false;(document.head||document.documentElement).appendChild(f);
- const z=document.createElement('script');z.src='assets/assessment-smart.js?v=2';z.async=false;(document.head||document.documentElement).appendChild(z);
+ const b=document.createElement('script');b.src='assets/assessment-data-bridge.js?v=6';b.async=false;(document.head||document.documentElement).appendChild(b);
+ const s=document.createElement('script');s.src='assets/assessment-kokurikuler.js?v=6';s.async=false;(document.head||document.documentElement).appendChild(s);
+ const f=document.createElement('script');f.src='assets/assessment-ui-fix.js?v=4';f.async=false;(document.head||document.documentElement).appendChild(f);
+ const z=document.createElement('script');z.src='assets/assessment-smart.js?v=3';z.async=false;(document.head||document.documentElement).appendChild(z);
 }catch(e){console.warn('Assessment module load:',e)}})();

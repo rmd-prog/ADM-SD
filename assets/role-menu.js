@@ -60,7 +60,7 @@ function applyRoleMenu(){
 }
 function applySiapGuruBrand(){
   try{
-    document.title='🚀 SIAP GURU — 2026/2027 • Portal Administrasi Guru';
+    document.title='🚀 SIAP GURU — Sistem Informasi Administrasi & Pembelajaran GURU';
     const replaceText=(root)=>{
       if(!root)return;
       const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
@@ -74,7 +74,19 @@ function applySiapGuruBrand(){
     };
     replaceText(document.body);
     const brand=document.querySelector('.brand');
-    if(brand)brand.setAttribute('aria-label','SIAP GURU');
+    if(brand){
+      brand.setAttribute('aria-label','SIAP GURU — Sistem Informasi Administrasi & Pembelajaran GURU');
+      const existing=brand.querySelector('.siap-guru-tagline');
+      if(existing)existing.remove();
+      const tag=document.createElement('small');
+      tag.className='siap-guru-tagline';
+      tag.textContent='Sistem Informasi Administrasi & Pembelajaran GURU';
+      tag.style.cssText='display:block;font-size:.68em;font-weight:600;line-height:1.15;opacity:.82;margin-top:2px;';
+      brand.appendChild(tag);
+    }
+    document.querySelectorAll('[data-page],.navbtn,.navgroup').forEach(el=>{
+      if(/GURU\+\s*SD/i.test(el.textContent))el.innerHTML=el.innerHTML.replace(/GURU\+\s*SD/gi,'SIAP GURU');
+    });
     const meta=document.querySelector('meta[name="app-version"]');
     if(meta)meta.setAttribute('content','SIAP-GURU-2026-09-10');
   }catch(e){console.warn('Brand SIAP GURU:',e)}

@@ -124,17 +124,13 @@ function installMobileTouchFix(){
   style.id='adm-touch-fix-v15';
   style.textContent='.v13-sidebar .navbtn,.v13-sidebar .navgroup,.v13-sidebar .submenu{position:relative;z-index:20;pointer-events:auto!important;touch-action:manipulation;-webkit-tap-highlight-color:transparent}#app .page.active{pointer-events:auto!important}#app .page.active input,#app .page.active select,#app .page.active textarea,#app .page.active button,#app .page.active .student-tab,#app .page.active .tablewrap{pointer-events:auto!important;touch-action:manipulation}';
   (document.head||document.documentElement).appendChild(style);
-  const bind=()=>{
-    document.querySelectorAll('.v13-sidebar .submenu .navbtn').forEach(b=>{
-      if(b.dataset.touchV15)return;
-      b.dataset.touchV15='1';
-      b.addEventListener('click',e=>e.stopPropagation(),false);
-      b.addEventListener('touchend',e=>e.stopPropagation(),false);
-    });
-    document.querySelectorAll('#app .page.active input,#app .page.active select,#app .page.active textarea,#app .page.active button').forEach(el=>{el.style.pointerEvents='auto';el.style.touchAction='manipulation'});
-  };
-  bind();
-  new MutationObserver(bind).observe(document.body,{subtree:true,attributes:true,attributeFilter:['class']});
+  document.querySelectorAll('.v13-sidebar .submenu .navbtn').forEach(b=>{
+    if(b.dataset.touchV15)return;
+    b.dataset.touchV15='1';
+    b.addEventListener('click',e=>e.stopPropagation(),false);
+    b.addEventListener('touchend',e=>e.stopPropagation(),false);
+  });
+  document.querySelectorAll('#app .page.active input,#app .page.active select,#app .page.active textarea,#app .page.active button').forEach(el=>{el.style.pointerEvents='auto';el.style.touchAction='manipulation'});
 }
 function boot(){
   installAuthTokenBridge();
@@ -148,10 +144,4 @@ function boot(){
   loadScript('assets/ai-brain-v41.js?v=411','__ADM_AI_V41_LOADED');
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
-const obs=new MutationObserver(()=>{
-  installD1SyncButtonFix();
-  if(!window.__ADM_AI_V41_LOADED)loadScript('assets/ai-brain-v41.js?v=411','__ADM_AI_V41_LOADED');
-  if(!window.__ADM_GURU_MAPEL_ACCESS_LOADED)loadScript('assets/guru-mapel-access.js?v=2','__ADM_GURU_MAPEL_ACCESS_LOADED');
-});
-if(document.body)obs.observe(document.body,{childList:true,subtree:true});
 })();

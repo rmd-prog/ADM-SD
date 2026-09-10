@@ -1187,7 +1187,7 @@ function error(t){const e=$('#loginError');if(e){e.textContent=t;e.className='al
 async function login(e){e.preventDefault();e.stopImmediatePropagation();const f=$('#loginForm'),u=$('#loginUser'),p=$('#loginPass'),b=f?.querySelector('button[type=submit]');if(!u?.value.trim()||!p?.value)return error('Username dan password wajib diisi.');if(b){b.disabled=true;b.textContent='MEMERIKSA...'}try{if(typeof window.__ADM_LOGIN!=='function')throw Error('Modul login belum siap. Muat ulang halaman.');await window.__ADM_LOGIN(u.value.trim(),p.value)}catch(x){console.error(x);$('#loginScreen').style.display='grid';$('#app').style.display='none';error(x.message||'Login gagal. Periksa akun dan Worker.')}finally{if(b){b.disabled=false;b.textContent='MASUK KE SISTEM'}}}
 function boot(){nav();theme();const f=$('#loginForm');if(f){f.addEventListener('submit',login,true);f.onsubmit=login}}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();})();
-</script>
+<\/script>
 <script src="assets/perangkat-kaldik-super-v1.js"></script>
 <script src="assets/absensi.js"></script>
 <script src="guru-mapel-ui.js"></script>

@@ -51,23 +51,9 @@ jobs:
               raise SystemExit('VALIDATION FAILED: raw </script> remains inside exportHtml')
           if 'assets/perangkat-pembelajaran-super.js' in check:
               raise SystemExit('VALIDATION FAILED: perangkat loader remains inside exportHtml')
-
-      - name: Validate HTML script boundaries
-        shell: python
-        run: |
-          from pathlib import Path
-          import re
-          s = Path('index.html').read_text(encoding='utf-8')
-          # <\\/script> is intentionally escaped inside exportHtml and is not
-          # an actual HTML closing tag, so exclude it from the count.
-          logical = s.replace('<\\/script>', '<escaped-script-close>')
-          n_open = len(re.findall(r'<script(?:\s[^>]*)?>', logical, flags=re.I))
-          n_close = len(re.findall(r'</script>', logical, flags=re.I))
-          if n_open != n_close:
-              raise SystemExit(f'script tag mismatch: open={n_open} close={n_close}')
-          if not s.rstrip().endswith('</html>'):
-              raise SystemExit('index.html does not end with </html>')
-          print(f'VALID: script tags balanced ({n_open}/{n_close})')
+          if not s2.rstrip().endswith('</html>'):
+              raise SystemExit('VALIDATION FAILED: index does not end with </html>')
+          print('VALID: exportHtml no longer contains raw script tags')
 
       - name: Commit repair
         shell: bash

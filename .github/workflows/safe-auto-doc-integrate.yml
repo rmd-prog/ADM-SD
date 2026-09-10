@@ -28,9 +28,6 @@ jobs:
               print('Auto Document Super already attached.')
               raise SystemExit(0)
 
-          # Insert after the final real </script> tag. The current index uses
-          # <\\/script> inside JS strings, so literal </script> marks real HTML
-          # script boundaries. This avoids touching </body> text inside JS strings.
           marker = '</script>'
           pos = s.rfind(marker)
           if pos < 0:
@@ -50,8 +47,11 @@ jobs:
           tag = '<script src="assets/auto-doc-super.js"></script>'
           if s.count(tag) != 1:
               raise SystemExit(f'SAFE STOP: expected exactly one loader tag, found {s.count(tag)}')
-          if s.rfind(tag) < s.rfind('</script>'):
-              raise SystemExit('SAFE STOP: loader was not placed after the final inline script')
+          tag_pos = s.rfind(tag)
+          tag_close_pos = tag_pos + len(tag) - len('</script>')
+          last_close_pos = s.rfind('</script>')
+          if tag_close_pos != last_close_pos:
+              raise SystemExit('SAFE STOP: loader is not the final script boundary')
           print('Validation OK.')
           PY
 

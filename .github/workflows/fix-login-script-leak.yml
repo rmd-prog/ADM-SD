@@ -58,8 +58,11 @@ jobs:
           from pathlib import Path
           import re
           s = Path('index.html').read_text(encoding='utf-8')
-          n_open = len(re.findall(r'<script(?:\s[^>]*)?>', s, flags=re.I))
-          n_close = len(re.findall(r'</script>', s, flags=re.I))
+          # <\\/script> is intentionally escaped inside exportHtml and is not
+          # an actual HTML closing tag, so exclude it from the count.
+          logical = s.replace('<\\/script>', '<escaped-script-close>')
+          n_open = len(re.findall(r'<script(?:\s[^>]*)?>', logical, flags=re.I))
+          n_close = len(re.findall(r'</script>', logical, flags=re.I))
           if n_open != n_close:
               raise SystemExit(f'script tag mismatch: open={n_open} close={n_close}')
           if not s.rstrip().endswith('</html>'):

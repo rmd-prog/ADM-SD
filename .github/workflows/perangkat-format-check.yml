@@ -1,0 +1,21 @@
+name: Perangkat Format Check
+on:
+  pull_request:
+    paths:
+      - 'assets/perangkat-*.js'
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate required formats
+        run: |
+          grep -q 'Minggu Ke-' assets/perangkat-prota-promes-super-v2.js
+          grep -q 'Tanggal Pelaksanaan' assets/perangkat-prota-promes-super-v2.js
+          grep -q 'Asesmen' assets/perangkat-prota-promes-super-v2.js
+          grep -q 'A. Identitas Pembelajaran' assets/perangkat-rpm-super-v2.js
+          grep -q 'P. Lampiran' assets/perangkat-rpm-super-v2.js
+          grep -q 'Meaningful' assets/perangkat-rpm-super-v2.js
+          grep -q 'Mindful' assets/perangkat-rpm-super-v2.js
+          grep -q 'Joyful' assets/perangkat-rpm-super-v2.js
+          echo 'Perangkat format validation OK'

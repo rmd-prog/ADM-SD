@@ -1,0 +1,25 @@
+/* GURU+ SD — KALDIK / KALENDER PENDIDIKAN SUPER v1
+ * Master tanggal editable/importable. No D1/Worker/login/assessment bridge changes.
+ */
+(function(){'use strict';
+if(window.__GURU_SD_KALDIK_SUPER_V1__)return;window.__GURU_SD_KALDIK_SUPER_V1__=1;
+const KEY='guru_sd_kaldik_super_v1';
+const DEFAULT={tahun:'2026/2027',semester:[
+ {id:1,nama:'Semester 1',start:'2026-07-22',end:'2026-12-19'},
+ {id:2,nama:'Semester 2',start:'2027-01-04',end:'2027-06-19'}],events:[]};
+const $=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function load(){try{const x=JSON.parse(localStorage.getItem(KEY)||'null');return x&&Array.isArray(x.events)&&Array.isArray(x.semester)?x:DEFAULT}catch(e){return DEFAULT}}
+function save(x){localStorage.setItem(KEY,JSON.stringify(x));window.dispatchEvent(new CustomEvent('guruSdKaldikChanged',{detail:x}));return x}
+function iso(d){return d instanceof Date?d.toISOString().slice(0,10):String(d).slice(0,10)}
+function sem(date){const d=iso(date),x=load();return x.semester.find(s=>d>=s.start&&d<=s.end)?.id||null}
+function event(date){const d=iso(date),x=load();return x.events.find(e=>String(e.date)===d)||null}
+function blocked(date){const e=event(date);return !!(e&&(e.effective===false||['libur','non-efektif'].includes(e.type))) }
+function isEffective(date){const d=new Date(iso(date)+'T00:00:00');if(d.getDay()===0)return false;const s=sem(d);if(!s)return false;return !blocked(d)}
+function nextEffective(date,dayName){let d=new Date(iso(date)+'T00:00:00');const days=['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];const target=days.indexOf(dayName);for(let i=0;i<370;i++){if((target<0||d.getDay()===target)&&isEffective(d))return new Date(d);d.setDate(d.getDate()+1)}return null}
+function addEvent(ev){const x=load(),e=Object.assign({date:'',type:'kegiatan',title:'',semester:sem(ev.date),effective:true},ev);if(!e.date)return x;const idx=x.events.findIndex(v=>v.date===e.date);if(idx>=0)x.events[idx]=e;else x.events.push(e);x.events.sort((a,b)=>String(a.date).localeCompare(String(b.date)));return save(x)}
+function importEvents(items){const x=load();(Array.isArray(items)?items:[]).forEach(ev=>{if(ev&&ev.date){const e=Object.assign({type:'kegiatan',title:'',effective:true,semester:sem(ev.date)},ev);const i=x.events.findIndex(v=>v.date===e.date);if(i>=0)x.events[i]=e;else x.events.push(e)}});x.events.sort((a,b)=>String(a.date).localeCompare(String(b.date)));return save(x)}
+function api(){window.GURU_SD_KALDIK={KEY,getStored:load,save,isEffective,isBlocked:blocked,event,semester:sem,nextEffective,addEvent,importEvents};}
+function render(){const host=$('perangkatSuperPanel');if(!host)return;let box=$('kaldikSuperBox');if(!box){box=document.createElement('div');box.id='kaldikSuperBox';box.style='margin:14px 0;padding:16px;border:1px solid #dbe4f0;border-radius:16px;background:#fff';host.insertBefore(box,host.firstChild)}const x=load();const count=x.events.length;box.innerHTML='<div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap"><div><b>📅 KALDIK / KALENDER PENDIDIKAN</b><div style="font-size:12px;color:#64748b;margin-top:3px">Master tanggal untuk seluruh generator perangkat pembelajaran.</div></div><span style="padding:5px 9px;border-radius:999px;background:#eff6ff;color:#1d4ed8;font-size:12px;font-weight:800">'+count+' kegiatan</span></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;margin-top:12px">'+x.semester.map(s=>'<div style="padding:10px;border:1px solid #e2e8f0;border-radius:12px"><b>'+esc(s.nama)+'</b><div style="font-size:12px;color:#64748b">'+esc(s.start)+' → '+esc(s.end)+'</div></div>').join('')+'</div><details style="margin-top:12px"><summary style="cursor:pointer;font-weight:800">➕ Tambah tanggal Kaldik</summary><div style="display:grid;gap:8px;grid-template-columns:1fr 1fr;margin-top:10px"><input id="kaldikDate" type="date"><select id="kaldikType"><option value="libur">Libur</option><option value="non-efektif">Hari tidak efektif</option><option value="kegiatan">Kegiatan Sekolah</option><option value="asesmen">Asesmen</option><option value="rapor">Rapor</option></select><input id="kaldikTitle" placeholder="Nama kegiatan/tanggal"></div><button id="kaldikAdd" style="margin-top:8px;padding:9px 12px;border:0;border-radius:10px">Simpan Kaldik</button></details><div style="margin-top:10px;padding:10px;border-radius:10px;background:#f8fafc;color:#475569;font-size:12px">Kaldik bawaan hanya batas semester kerja dan dapat diedit. Tanggal resmi sekolah/Disdik nanti dapat diimpor tanpa mengubah mesin jadwal.</div>';
+const btn=$('kaldikAdd');if(btn)btn.onclick=()=>{const d=$('kaldikDate')?.value,t=$('kaldikType')?.value,title=$('kaldikTitle')?.value.trim();if(!d)return alert('Pilih tanggal.');addEvent({date:d,type:t,title,effective:t==='libur'||t==='non-efektif'?false:true});render()};}
+api();if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',render);else render();window.addEventListener('guruSdKaldikChanged',render);
+})();

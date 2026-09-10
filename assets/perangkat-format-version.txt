@@ -1,0 +1,5 @@
+Perangkat Format Revision 2026-09-10
+PROTA/PROMES: v3
+RPM: v3 A-P
+Material: adaptive class + mapel catalog
+Schedule: actual subject dates when configured

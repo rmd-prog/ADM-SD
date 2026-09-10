@@ -1,0 +1,1 @@
+Summary: adaptive materials; requested PROTA/PROMES table columns; semester split; RPM A-P; Deep Learning principles; read-only QA. D1, Worker, login, and assessment bridge remain untouched.

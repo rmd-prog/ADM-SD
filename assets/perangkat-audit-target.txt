@@ -1,0 +1,1 @@
+Audit target: ensure CP/ATP/TP, JP, schedule, PROTA, PROMES, RPM, LKPD and BAB assessment remain linked and adaptive by class/fase/mapel.

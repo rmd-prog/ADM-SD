@@ -1,0 +1,8 @@
+/* GURU+ SD — Perangkat Chain QA SUPER v1
+ * Read-only diagnostics. No D1/Worker/login/assessment bridge changes.
+ */
+(function(){'use strict';if(window.__PERANGKAT_QA_SUPER_V1__)return;window.__PERANGKAT_QA_SUPER_V1__=1;
+const $=id=>document.getElementById(id),read=(k,d=null)=>{try{return JSON.parse(localStorage.getItem(k)||'null')??d}catch{return d}};
+function run(){const keys=['guru_sd_perangkat_katalog_v2','guru_sd_cp_atp_tp_super_v1','guru_sd_jp_allocation_super_v1','guru_sd_kurikulum_super_schedule_v2','guru_sd_prota_promes_super_v2','guru_sd_rpm_super_v2','guru_sd_lkpd_asesmen_super_v2'];const labels=['Materi/BAB','CP-ATP-TP','Pembagian JP','Jadwal','PROTA/PROMES','RPM','LKPD/Asesmen'];let ok=0;const rows=keys.map((k,i)=>{const v=read(k,null),yes=!!v;if(yes)ok++;return `<tr><td>${labels[i]}</td><td>${yes?'✅ Siap':'⚠️ Belum ada data'}</td></tr>`}).join('');return `<div class="card panel"><b>🔎 Audit Perangkat SUPER</b><p>Rantai: Materi → CP → ATP → TP → JP → Jadwal → PROTA/PROMES → RPM → LKPD/Asesmen</p><table><tbody>${rows}</tbody></table><p><b>${ok}/${keys.length}</b> komponen memiliki data tersimpan. Audit bersifat read-only.</p></div>`}
+function mount(){const host=$('perangkatSuperPanel');if(!host)return;let b=$('perangkatQASuper');if(!b){b=document.createElement('div');b.id='perangkatQASuper';host.appendChild(b)}b.innerHTML=run()}
+let n=0,t=setInterval(()=>{if($('perangkatSuperPanel')){clearInterval(t);mount()}if(++n>40)clearInterval(t)},250);})();

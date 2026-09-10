@@ -1,0 +1,8 @@
+Next audit targets:
+1 CP/ATP/TP source alignment by class/fase/mapel
+2 JP allocation across BAB/TP
+3 actual schedule dates and semester boundaries
+4 PROTA/PROMES mapping
+5 RPM per actual meeting
+6 LKPD and assessment per BAB, no STS
+7 adaptive subject-specific activities

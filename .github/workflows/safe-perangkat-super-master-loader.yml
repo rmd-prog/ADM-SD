@@ -35,8 +35,6 @@ jobs:
               'assets/perangkat-kalender-adaptif-v1.js',
           ]
 
-          # These are legacy/duplicate generators or duplicate integration outputs.
-          # The unified engine owns CP/ATP/TP/PROTA/PROMES/RPM/LKPD/Asesmen.
           legacy = [
               'assets/perangkat-cp-atp-tp-super-v2.js',
               'assets/perangkat-prota-promes-super-v2.js',
@@ -47,8 +45,8 @@ jobs:
 
           all_managed = canonical + legacy
           for src in all_managed:
-              pat = re.compile(r'\\s*<script\\s+src=["\\\']' + re.escape(src) + r'["\\\']\\s*>\\s*</script>\\s*', re.I)
-              s = pat.sub('\\n', s)
+              pat = re.compile(r'\s*<script\s+src=["\']' + re.escape(src) + r'["\']\s*>\s*</script>\s*', re.I)
+              s = pat.sub('\n', s)
 
           pos = s.rfind('</body>')
           if pos < 0:
@@ -85,11 +83,11 @@ jobs:
               'assets/perangkat-lkpd-asesmen-super-v2.js',
           ]
           for src in canonical:
-              n = len(re.findall(r'<script\\s+src=["\\\']' + re.escape(src) + r'["\\\']\\s*>\\s*</script>', s, re.I))
+              n = len(re.findall(r'<script\s+src=["\']' + re.escape(src) + r'["\']\s*>\s*</script>', s, re.I))
               if n != 1:
                   raise SystemExit(f'canonical loader invalid: {src}: {n}')
           for src in legacy:
-              n = len(re.findall(r'<script\\s+src=["\\\']' + re.escape(src) + r'["\\\']\\s*>\\s*</script>', s, re.I))
+              n = len(re.findall(r'<script\s+src=["\']' + re.escape(src) + r'["\']\s*>\s*</script>', s, re.I))
               if n != 0:
                   raise SystemExit(f'legacy loader still present: {src}: {n}')
           print('Validated canonical stack: 8 unique loaders; 0 duplicate generator loaders')

@@ -28,7 +28,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Recover existing D1 binding from Worker version history
+      - name: Recover existing D1 binding from account Worker metadata
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
@@ -36,52 +36,47 @@ jobs:
           import json, urllib.request
           account='${{ env.CLOUDFLARE_ACCOUNT_ID }}'
           token='${{ secrets.CLOUDFLARE_API_TOKEN }}'
-          base=f'https://api.cloudflare.com/client/v4/accounts/{account}/workers/scripts/adm-sd'
+          api=f'https://api.cloudflare.com/client/v4/accounts/{account}'
           def get(url):
               req=urllib.request.Request(url,headers={'Authorization':f'Bearer {token}'})
               with urllib.request.urlopen(req,timeout=20) as r:return json.load(r)
-          def items(obj):
+          def arr(obj):
               if isinstance(obj,list): return obj
               if isinstance(obj,dict):
-                  for k in ('result','versions','items'):
+                  for k in ('result','items','workers','scripts'):
                       if k in obj:
                           x=obj[k]
                           if isinstance(x,list): return x
                           if isinstance(x,dict):
-                              y=items(x)
+                              y=arr(x)
                               if y:return y
               return []
-          current=json.load(open('wrangler.jsonc'))
-          found=None
-          try:
-              versions=items(get(base+'/versions?per_page=50').get('result',[]))
-              print('Worker versions inspected:',len(versions))
-              for v in versions:
-                  vid=v.get('id') if isinstance(v,dict) else None
-                  if not vid: continue
-                  detail=get(base+'/versions/'+vid).get('result',{})
-                  bindings=(detail.get('resources',{}) or {}).get('bindings',[]) if isinstance(detail,dict) else []
-                  for b in bindings or []:
+          current=json.load(open('wrangler.jsonc')); found=None; owner=None
+          scripts=arr(get(api+'/workers/scripts').get('result',[]))
+          print('Worker scripts inspected:',len(scripts))
+          for s in scripts:
+              name=s.get('id') or s.get('name') if isinstance(s,dict) else None
+              if not name: continue
+              try:
+                  settings=get(api+'/workers/scripts/'+name+'/settings').get('result',{})
+                  for b in settings.get('bindings',[]) or []:
                       if isinstance(b,dict) and b.get('type')=='d1' and b.get('name') and b.get('database_id'):
-                          found={'binding':b['name'],'database_id':b['database_id'],'database_name':b.get('database_name','')}
-                          break
-                  if found: break
-          except Exception as e:
-              print('Version-history lookup failed:',type(e).__name__,str(e)[:160])
+                          found={'binding':b['name'],'database_id':b['database_id'],'database_name':b.get('database_name','')}; owner=name; break
+              except Exception as e:
+                  print('settings lookup skipped for',name,type(e).__name__)
+              if found: break
           if not found:
-              raise SystemExit('NO_EXISTING_D1_BINDING_FOUND_IN_WORKER_VERSION_HISTORY')
-          print('RECOVERED D1 BINDING:',json.dumps(found))
-          current.pop('keep_bindings',None)
-          current['d1_databases']=[found]
+              raise SystemExit('NO_D1_BINDING_FOUND_IN_ACCOUNT_WORKERS')
+          print('RECOVERED D1 BINDING FROM WORKER:',owner)
+          print('RECOVERED D1 DATABASE:',found.get('database_name',''),found.get('database_id',''))
+          current.pop('keep_bindings',None); current['d1_databases']=[found]
           with open('wrangler.recovered.jsonc','w') as f: json.dump(current,f,indent=2)
           repo=json.load(open('wrangler.jsonc'))
           if repo.get('d1_databases') != [found]:
-              repo.pop('keep_bindings',None)
-              repo['d1_databases']=[found]
+              repo.pop('keep_bindings',None); repo['d1_databases']=[found]
               with open('wrangler.jsonc','w') as f: json.dump(repo,f,indent=2); f.write('\n')
               print('Persisting recovered D1 binding into wrangler.jsonc')
-          else:
-              print('wrangler.jsonc already contains recovered D1 binding')
+          else: print('wrangler.jsonc already contains recovered D1 binding')
           PY
       - name: Deploy Worker with recovered D1 binding
         env:

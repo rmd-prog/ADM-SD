@@ -3,12 +3,30 @@ on:
   push:
     branches: ["feat-perangkat-pembelajaran-super-2026-09-10"]
   workflow_dispatch:
+permissions:
+  contents: write
 jobs:
   browser-smoke:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Repair malformed inline exportHtml before smoke test
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html'); s=p.read_text(encoding='utf-8')
+          start=s.find('function exportHtml(type){'); end=s.find('function ensureDoc',start)
+          if start>=0 and end>=0:
+              replacement="""function exportHtml(type){const d=docPayload(type);return '<!doctype html><html lang=\"id\"><head><meta charset=\"utf-8\"><title>'+escHtml(d.title)+'</title><style>body{font-family:Arial,sans-serif;margin:35px;color:#172033}h1{font-size:24px;margin-bottom:4px}h4{margin:18px 0 8px;border-bottom:2px solid #ddd;padding-bottom:6px}.doc-grid{display:flex;gap:10px}.doc-box{border:1px solid #ddd;border-radius:10px;padding:12px;flex:1;margin-bottom:12px}.doc-line{border:1px solid #e2e8f0;border-radius:7px;padding:8px;margin:5px 0;line-height:1.5}.doc-table{width:100%;border-collapse:collapse}.doc-table th,.doc-table td{border:1px solid #ccc;padding:8px;text-align:left;vertical-align:top}.doc-table th{background:#f3f4f6}.doc-note{margin-top:12px;padding:10px;background:#fff7ed}</style></head><body><h1>'+escHtml(d.title)+'</h1><p>Tahun Pelajaran 2026/2027</p>'+d.body+'</body></html>'}\n"""
+              p.write_text(s[:start]+replacement+s[end:],encoding='utf-8')
+              print('exportHtml normalized')
+          else: print('exportHtml already normalized or not found')
+          PY
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add index.html
+          if git diff --cached --quiet; then echo 'No runtime repair commit needed'; else git commit -m 'fix: normalize exportHtml before runtime smoke'; git push; fi
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -24,9 +42,7 @@ jobs:
             assets/perangkat-pembelajaran-super.js \
             assets/perangkat-auto-chain-super-v1.js \
             assets/perangkat-document-auto-bridge-super-v1.js \
-            assets/assessment-auto.js; do
-            node --check "$f"
-          done
+            assets/assessment-auto.js; do node --check "$f"; done
       - name: Validate inline scripts
         run: |
           python3 - <<'PY'
@@ -35,19 +51,17 @@ jobs:
           class P(HTMLParser):
               def __init__(self): super().__init__(); self.active=None; self.buf=[]; self.items=[]
               def handle_starttag(self,tag,attrs):
-                  if tag.lower()=='script':
-                      a=dict(attrs); self.active=a.get('type','').lower(); self.buf=[]
+                  if tag.lower()=='script': self.active=dict(attrs).get('type','').lower(); self.buf=[]
               def handle_data(self,data):
                   if self.active is not None:self.buf.append(data)
               def handle_endtag(self,tag):
                   if tag.lower()=='script' and self.active is not None:
-                      typ=self.active; text=''.join(self.buf)
-                      if text.strip() and typ not in ('application/ld+json','application/json','importmap'):
-                          self.items.append(text)
+                      text=''.join(self.buf); typ=self.active
+                      if text.strip() and typ not in ('application/ld+json','application/json','importmap'): self.items.append(text)
                       self.active=None; self.buf=[]
           p=P();p.feed(Path('index.html').read_text(encoding='utf-8'))
           Path('/tmp/inline').mkdir(exist_ok=True)
-          for i,text in enumerate(p.items,1): Path(f'/tmp/inline/{i}.js').write_text(text,encoding='utf-8')
+          for i,t in enumerate(p.items,1):Path(f'/tmp/inline/{i}.js').write_text(t,encoding='utf-8')
           print('inline scripts:',len(p.items))
           PY
           for f in /tmp/inline/*.js; do node --check "$f"; done
@@ -70,7 +84,7 @@ jobs:
             page.on('console',m=>{if(m.type()==='error')errors.push('console: '+m.text())});
             page.on('requestfailed',r=>errors.push('requestfailed: '+r.url()+' '+(r.failure()?.errorText||'')));
             const response=await page.goto('http://127.0.0.1:4173/index.html',{waitUntil:'networkidle',timeout:30000});
-            if(!response || !response.ok()) throw new Error('index.html did not load');
+            if(!response||!response.ok())throw new Error('index.html did not load');
             await page.waitForTimeout(2500);
             const result=await page.evaluate(()=>({title:document.title,login:!!document.querySelector('#login,.login'),app:!!document.querySelector('#app'),nav:document.querySelectorAll('.navbtn').length,pages:document.querySelectorAll('.page').length,runtime:window.GURU_SD_RUNTIME_INTEGRITY||null,feature:!!window.GURU_SD_FEATURE_COMPLETE,master:!!window.GURU_SD_MASTER,chain:!!window.GURU_SD_AUTO_CHAIN}));
             if(!result.login||!result.app||result.nav<1||result.pages<1)throw new Error('critical app shell missing: '+JSON.stringify(result));

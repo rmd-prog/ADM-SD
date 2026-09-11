@@ -13,16 +13,12 @@ jobs:
           python3 - <<'PY'
           import re
           from pathlib import Path
-          p=Path('index.html')
-          s=p.read_text(encoding='utf-8')
-          pattern=r'<\\/script>\\n[ \t]*\n[ \t]*<script src="assets/perangkat-prota-promes-super-v1.js">'
-          replacement='<\\/script>\\n<script src="assets/perangkat-prota-promes-super-v1.js">'
+          p=Path('index.html'); s=p.read_text(encoding='utf-8')
+          pattern=r'(<script src="guru-mapel-ui\.js"><\\/script>\\n)[ \t]*\n[ \t]*(<script src="assets/perangkat-prota-promes-super-v1\.js">)'
+          replacement=r'\1\2'
           s2,n=re.subn(pattern,replacement,s,count=1)
-          if n:
-              p.write_text(s2,encoding='utf-8')
-              print('patched:',n)
-          else:
-              print('no patch needed')
+          print('matches:',n)
+          if n:p.write_text(s2,encoding='utf-8')
           PY
       - name: Validate inline scripts after repair
         run: |

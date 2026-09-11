@@ -1,10 +1,39 @@
-/* SIAP GURU — assessment automatic sync layer V2
-   Keeps assessment data events lightweight.
-   Rekap/Bobot renderers own their DOM; never click tabs on save because that resets scroll.
-   Does not touch D1 or src/index.js.
+/* SIAP GURU — Assessment Integrity Layer V3
+   Canonical curriculum source: window.ADM_CURRICULUM + GURU_SD_MASTER.
+   Assessment records remain local assessment data; curriculum/chapter identity is never invented here.
+   Migrates legacy BAB N keys to real chapter names and repairs Input/Matrix/Rekap DOM after legacy renderers run.
+   Does not touch D1, students, login, or Worker.
 */
 (function(){
 'use strict';
-if(window.__ADM_ASSESS_AUTO__)return;
-window.__ADM_ASSESS_AUTO__=true;
+if(window.__ADM_ASSESS_AUTO_V3__)return;window.__ADM_ASSESS_AUTO_V3__=true;
+const KEY='siapGuruAssessmentV1';
+const q=(s,r=document)=>r.querySelector(s),qa=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const read=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'null')||{weights:{formative:20,task:20,chapter:30,summative:30},rows:{}}}catch{return {weights:{formative:20,task:20,chapter:30,summative:30},rows:{}}}};
+const write=x=>{try{localStorage.setItem(KEY,JSON.stringify(x));return true}catch{return false}};
+function login(){try{return JSON.parse(localStorage.getItem('siLogin')||'null')||{}}catch{return {}}}
+function user(){const x=login();return x.user||x||{}}
+function cls(){const s=String(user().activeRombel||user().rombel||user().kelas||'').trim().toUpperCase().replace(/\s+/g,'');return ({'1A':'1','1B':'1','2A':'2','2B':'2','3A':'3','3B':'3','4A':'4','4B':'4','5':'5','6':'6','KELAS1A':'1','KELAS1B':'1','KELAS2A':'2','KELAS2B':'2','KELAS3A':'3','KELAS3B':'3','KELAS4A':'4','KELAS4B':'4','KELAS5':'5','KELAS6':'6'})[s]||s||''}
+function master(){try{return window.GURU_SD_MASTER?.get?.()||null}catch{return null}}
+function curriculum(m){const c=window.ADM_CURRICULUM?.[m]?.[cls()];return c&&typeof c==='object'?Object.keys(c):[]}
+function canonicalChapters(m){const x=curriculum(m);if(x.length)return x;const z=master();if(z&&String(z.mapel||'')===String(m||'' )&&z.material)return [String(z.material)];return []}
+function canonicalMapels(){return Object.keys(window.ADM_CURRICULUM||{})}
+function migrate(){const d=read();if(!d.rows)return;let changed=false;Object.keys(d.rows).forEach(k=>{const r=d.rows[k];if(!r||String(r.jenis||'').toLowerCase().indexOf('bab')<0)return;const m=String(r.mapel||''),ch=canonicalChapters(m);if(!ch.length)return;const item=String(r.item||'').trim();const hit=item.match(/^BAB\s*(\d+)$/i);if(!hit)return;const n=Number(hit[1]);const real=ch[n-1];if(!real||real===item)return;const nk=`${r.studentId}|${m}|${r.semester}|${r.jenis}|${real}`;if(!d.rows[nk])d.rows[nk]={...r,item:real};delete d.rows[k];changed=true});if(changed)write(d)}
+function setSelectOptions(sel,items,current){if(!sel||!items.length)return;const cur=current||sel.value;sel.innerHTML=items.map(x=>`<option value="${esc(x)}" ${String(x)===String(cur)?'selected':''}>${esc(x)}</option>`).join('');if(!items.includes(cur))sel.value=items[0]||''}
+function repairInput(){const p=q('#penilaianPro');if(!p?.classList.contains('active'))return;const body=q('#sgAssessmentBody');if(!body)return;const ms=q('#sgMapelSmart')||q('#sgBabMapel')||q('#sgMapel');const mapel=ms?.value||master()?.mapel||'';const ch=canonicalChapters(mapel);if(!ch.length)return;const item=q('#sgItemSmart')||q('#sgItem');if(item&&item.tagName==='SELECT')setSelectOptions(item,ch,item.value);else if(item&&item.tagName==='INPUT'&&item.id==='sgItem'){item.setAttribute('list','sgCanonicalBabList');let dl=q('#sgCanonicalBabList');if(!dl){dl=document.createElement('datalist');dl.id='sgCanonicalBabList';document.body.appendChild(dl)}dl.innerHTML=ch.map(x=>`<option value="${esc(x)}">`).join('')}}
+function repairMatrix(){const p=q('#penilaianPro');if(!p?.classList.contains('active'))return;const table=q('#sgBabMatrix table');if(!table)return;const m=q('#sgBabMapel')?.value||master()?.mapel||'';const sem=q('#sgBabSem')?.value||'1';const ch=canonicalChapters(m);if(!ch.length)return;const d=read(),ss=Array.isArray(window.db?.students)?window.db.students:[];const r=String(user().activeRombel||user().rombel||user().kelas||'').trim().toUpperCase();const norm=v=>String(v??'').trim().toUpperCase().replace(/\s+/g,'');const students=ss.map((s,i)=>({id:String(s.id??s.nisn??s.nis??i),name:String(s.name??s.nama??s.nama_siswa??'').trim(),rombel:norm(s.rombel??s.kelas??'')})).filter(s=>s.name&&(!r||!s.rombel||s.rombel===norm(r)));
+ const oldEdit=!!q('#sgBabEdit')?.textContent?.toLowerCase().includes('batal');
+ const thead=table.tHead||table.querySelector('thead'),tbody=table.tBodies[0]||table.querySelector('tbody');if(!thead||!tbody)return;
+ thead.innerHTML=`<tr><th>No</th><th>Nama Siswa</th>${ch.map(b=>`<th>${esc(b)}</th>`).join('')}<th>Rata-rata BAB</th></tr>`;
+ tbody.innerHTML=students.map((s,i)=>{const vals=ch.map(b=>d.rows?.[`${s.id}|${m}|${sem}|Ulangan BAB|${b}`]?.nilai??'');const nums=vals.map(Number).filter(v=>Number.isFinite(v)&&v>=0);const av=nums.length?(nums.reduce((a,b)=>a+b,0)/nums.length).toFixed(1):'—';return `<tr><td>${i+1}</td><td><b>${esc(s.name)}</b><div class="muted">${esc(s.rombel)}</div></td>${ch.map((b,j)=>oldEdit?`<td><input class="sgBabScore" data-sid="${esc(s.id)}" data-bab="${esc(b)}" type="number" min="0" max="100" value="${esc(vals[j])}" inputmode="numeric" placeholder="-"></td>`:`<td class="sgBabView">${vals[j]===''?'—':esc(vals[j])}</td>`).join('')}<td><b class="sgBabAvg" data-sid="${esc(s.id)}">${av}</b></td></tr>`}).join('')||`<tr><td colspan="${ch.length+3}">Data siswa belum tersedia.</td></tr>`;
+}
+function repairRekap(){const p=q('#penilaianPro');if(!p?.classList.contains('active'))return;const root=q('#sgRekapAuto');if(!root)return;const m=q('#sgRekapMapel')?.value||master()?.mapel||'';const sem=q('#sgRekapSem')?.value||'1';const ch=canonicalChapters(m);if(!ch.length)return;const d=read(),w={formative:+d.weights?.formative||0,task:+d.weights?.task||0,chapter:+d.weights?.chapter||0,summative:+d.weights?.summative||0};const ss=Array.isArray(window.db?.students)?window.db.students:[];const u=user(),r=String(u.activeRombel||u.rombel||u.kelas||'').trim().toUpperCase();const norm=v=>String(v??'').trim().toUpperCase().replace(/\s+/g,'');const students=ss.map((s,i)=>({id:String(s.id??s.nisn??s.nis??i),name:String(s.name??s.nama??s.nama_siswa??'').trim(),rombel:norm(s.rombel??s.kelas??'')})).filter(s=>s.name&&(!r||!s.rombel||s.rombel===norm(r)));const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:null;
+ const out=students.map(s=>{const f=[],t=[],c=[],su=[];Object.values(d.rows||{}).forEach(x=>{if(String(x.studentId)!==s.id||String(x.mapel)!==m||String(x.semester)!==sem)return;const j=String(x.jenis||'').toLowerCase(),v=Number(x.nilai);if(!Number.isFinite(v))return;if(j.includes('formatif'))f.push(v);else if(j.includes('tugas'))t.push(v);else if(j.includes('bab'))c.push(v);else if(j.includes('sumatif'))su.push(v)});const fv=avg(f),tv=avg(t),cv=avg(c),sv=avg(su),parts=[[fv,w.formative],[tv,w.task],[cv,w.chapter],[sv,w.summative]].filter(([v,b])=>v!==null&&b>0),den=parts.reduce((a,[,b])=>a+b,0),final=den?Math.round(parts.reduce((a,[v,b])=>a+v*b,0)/den):null;return{s,g:{f:fv,t:tv,c:cv,su:sv},final}});
+ const old=root.querySelector('.tablewrap');if(!old)return;old.innerHTML=`<table class="table" style="min-width:${920+ch.length*78}px"><thead><tr><th>No</th><th>Nama Siswa</th>${ch.map(b=>`<th>${esc(b)}</th>`).join('')}<th>Rata-rata BAB</th><th>Formatif</th><th>Tugas</th><th>Sumatif</th><th>Nilai Akhir</th></tr></thead><tbody>${out.map((x,i)=>`<tr><td>${i+1}</td><td><b>${esc(x.s.name)}</b><div class="muted">${esc(x.s.rombel)}</div></td>${ch.map(b=>{const v=d.rows?.[`${x.s.id}|${m}|${sem}|Ulangan BAB|${b}`]?.nilai;return `<td>${v??'—'}</td>`}).join('')}<td><b>${x.g.c===null?'—':x.g.c.toFixed(1)}</b></td><td>${x.g.f===null?'—':x.g.f.toFixed(1)}</td><td>${x.g.t===null?'—':x.g.t.toFixed(1)}</td><td>${x.g.su===null?'—':x.g.su.toFixed(1)}</td><td><b>${x.final===null?'—':x.final}</b></td></tr>`).join('')||`<tr><td colspan="${ch.length+7}">Data siswa belum tersedia.</td></tr>`}</tbody></table>`;
+}
+function run(){migrate();repairInput();repairMatrix();repairRekap();}
+const mo=new MutationObserver(()=>{clearTimeout(run._t);run._t=setTimeout(run,40)});function boot(){const p=q('#penilaianPro');if(p)mo.observe(p,{childList:true,subtree:true});run();setInterval(run,1500)}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
+window.GURU_SD_ASSESSMENT_INTEGRITY={run,migrate,chapters:canonicalChapters};
 })();

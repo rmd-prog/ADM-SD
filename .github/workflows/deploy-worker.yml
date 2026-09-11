@@ -34,9 +34,7 @@ jobs:
         run: |
           python3 - <<'PY'
           import json, urllib.request
-          account='${{ env.CLOUDFLARE_ACCOUNT_ID }}'
-          token='${{ secrets.CLOUDFLARE_API_TOKEN }}'
-          api=f'https://api.cloudflare.com/client/v4/accounts/{account}'
+          account='${{ env.CLOUDFLARE_ACCOUNT_ID }}'; token='${{ secrets.CLOUDFLARE_API_TOKEN }}'; api=f'https://api.cloudflare.com/client/v4/accounts/{account}'
           def get(url):
               req=urllib.request.Request(url,headers={'Authorization':f'Bearer {token}'})
               with urllib.request.urlopen(req,timeout=20) as r:return json.load(r)
@@ -51,43 +49,38 @@ jobs:
                               y=arr(x)
                               if y:return y
               return []
-          current=json.load(open('wrangler.jsonc')); found=None; owner=None
+          current=json.load(open('wrangler.jsonc')); found=None
           scripts=arr(get(api+'/workers/scripts').get('result',[]))
-          print('Worker scripts inspected:',len(scripts))
           for s in scripts:
-              name=s.get('id') or s.get('name') if isinstance(s,dict) else None
+              name=(s.get('id') or s.get('name')) if isinstance(s,dict) else None
               if not name: continue
               try:
                   settings=get(api+'/workers/scripts/'+name+'/settings').get('result',{})
                   for b in settings.get('bindings',[]) or []:
                       if isinstance(b,dict) and b.get('type')=='d1' and b.get('name') and b.get('database_id'):
-                          found={'binding':b['name'],'database_id':b['database_id'],'database_name':b.get('database_name','')}; owner=name; break
-              except Exception as e:
-                  print('settings lookup skipped for',name,type(e).__name__)
+                          found={'binding':b['name'],'database_id':b['database_id'],'database_name':b.get('database_name','')}; break
+              except Exception: pass
               if found: break
-          if not found:
-              raise SystemExit('NO_D1_BINDING_FOUND_IN_ACCOUNT_WORKERS')
-          print('RECOVERED D1 BINDING FROM WORKER:',owner)
-          print('RECOVERED D1 DATABASE:',found.get('database_name',''),found.get('database_id',''))
+          if not found: raise SystemExit('NO_D1_BINDING_FOUND_IN_ACCOUNT_WORKERS')
+          print('RECOVERED D1 DATABASE ID:',found['database_id'])
           current.pop('keep_bindings',None); current['d1_databases']=[found]
           with open('wrangler.recovered.jsonc','w') as f: json.dump(current,f,indent=2)
           repo=json.load(open('wrangler.jsonc'))
           if repo.get('d1_databases') != [found]:
               repo.pop('keep_bindings',None); repo['d1_databases']=[found]
               with open('wrangler.jsonc','w') as f: json.dump(repo,f,indent=2); f.write('\n')
-              print('Persisting recovered D1 binding into wrangler.jsonc')
-          else: print('wrangler.jsonc already contains recovered D1 binding')
           PY
       - name: Deploy Worker with recovered D1 binding
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: npx --yes wrangler@latest deploy --config wrangler.recovered.jsonc --keep-vars
+      - name: Probe users schema read-only
         run: |
-          npx --yes wrangler@latest deploy --config wrangler.recovered.jsonc --keep-vars
+          echo 'PRODUCTION USERS SCHEMA:'
+          curl -fsSL 'https://adm-sd.adm-sd.workers.dev/api/health?schema=users'
+          echo
       - name: Commit recovered D1 binding
         run: |
           if git diff --quiet -- wrangler.jsonc; then echo 'No config persistence needed'; exit 0; fi
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add wrangler.jsonc
-          git commit -m 'fix: restore production D1 binding in Wrangler config'
-          git push
+          git config user.name 'github-actions[bot]'; git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add wrangler.jsonc; git commit -m 'fix: restore production D1 binding in Wrangler config'; git push

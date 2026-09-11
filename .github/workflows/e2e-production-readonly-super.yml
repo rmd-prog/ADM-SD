@@ -1,0 +1,69 @@
+name: E2E Production Readonly SUPER
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: Production URL
+        required: false
+        default: https://rmd-prog.github.io/ADM-SD/
+      api_base:
+        description: Production Worker API base
+        required: false
+        default: https://adm-sd.adm-sd.workers.dev/api
+permissions:
+  contents: read
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    env:
+      E2E_USERNAME: ${{ secrets.E2E_ADMIN_USERNAME }}
+      E2E_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
+      BASE_URL: ${{ inputs.base_url }}
+      API_BASE: ${{ inputs.api_base }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Validate secret presence
+        run: |
+          test -n "$E2E_USERNAME"
+          test -n "$E2E_PASSWORD"
+          echo "E2E credentials are present (values are never printed)."
+      - name: Install Playwright
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm install --no-save playwright@1.55.0 >/dev/null 2>&1
+          npx playwright install --with-deps chromium >/dev/null 2>&1
+      - name: Production readonly E2E
+        run: |
+          node <<'NODE'
+          const {chromium}=require('playwright');
+          (async()=>{
+            const b=await chromium.launch({headless:true});
+            const p=await b.newPage({viewport:{width:390,height:844},isMobile:true});
+            const base=process.env.BASE_URL, api=process.env.API_BASE;
+            const errors=[];
+            p.on('pageerror',e=>errors.push(e.message));
+            const r=await p.goto(base,{waitUntil:'networkidle',timeout:45000});
+            if(!r||!r.ok()) throw Error('Production page gagal dimuat: '+(r&&r.status()));
+            await p.waitForTimeout(2500);
+            const shell=await p.evaluate(()=>({login:!!document.querySelector('.login'),app:!!document.querySelector('#app'),inputs:document.querySelectorAll('.login input').length,buttons:document.querySelectorAll('.login button').length,master:!!window.GURU_SD_MASTER,chain:!!window.GURU_SD_AUTO_CHAIN,engine:!!window.GURU_SD_PERANGKAT_ENGINE,room:!!window.ADM_ROOM_LAYOUT}));
+            if(!shell.login||!shell.app||shell.inputs<2) throw Error('Login shell contract gagal: '+JSON.stringify(shell));
+            const inputs=await p.locator('.login input').all();
+            await inputs[0].fill(process.env.E2E_USERNAME);
+            await inputs[1].fill(process.env.E2E_PASSWORD);
+            const btn=p.locator('.login button').first();
+            await btn.click();
+            await p.waitForTimeout(3000);
+            const after=await p.evaluate(()=>({loginDisplay:getComputedStyle(document.querySelector('.login')).display,appDisplay:getComputedStyle(document.querySelector('#app')).display,token:!!(localStorage.getItem('siAuthToken')||localStorage.getItem('token')||localStorage.getItem('authToken')),user:!!(localStorage.getItem('siLogin')||localStorage.getItem('currentUser'))}));
+            if(after.loginDisplay!=='none' && !after.token) throw Error('Login produksi tidak terdeteksi: '+JSON.stringify(after));
+            const apiResp=await p.evaluate(async(api)=>{const t=localStorage.getItem('siAuthToken')||localStorage.getItem('token')||localStorage.getItem('authToken')||'';const r=await fetch(api+'/guru',{headers:t?{Authorization:'Bearer '+t}:{}});return {status:r.status,text:(await r.text()).slice(0,500)}} ,api);
+            if(apiResp.status===401||apiResp.status===403) throw Error('Token/session tidak diterima Worker: '+JSON.stringify(apiResp));
+            if(apiResp.status>=500) throw Error('Worker production 5xx: '+apiResp.status);
+            const state=await p.evaluate(()=>({master:window.GURU_SD_MASTER?.get?.(),chain:!!window.GURU_SD_AUTO_CHAIN?.run?.(),pages:[...document.querySelectorAll('.page')].filter(x=>getComputedStyle(x).display!=='none').map(x=>x.id)}));
+            if(!state.master) console.warn('Master belum memiliki konteks; login E2E tetap lolos, konteks akan diuji oleh flow menu bila tersedia.');
+            console.log('PRODUCTION READONLY E2E PASS',JSON.stringify({shell,after,apiStatus:apiResp.status,master:state.master?{rombel:state.master.rombel,mapel:state.master.mapel,material:state.master.material}:null,pages:state.pages,errors}));
+            await b.close();
+          })().catch(e=>{console.error(e);process.exit(1)});
+          NODE

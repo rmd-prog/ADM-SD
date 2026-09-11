@@ -5,6 +5,9 @@ on:
   workflow_dispatch:
 permissions:
   contents: write
+concurrency:
+  group: adm-sd-runtime-smoke-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   browser-smoke:
     runs-on: ubuntu-latest
@@ -79,12 +82,12 @@ jobs:
             if(result.runtime&&!result.runtime.ready)throw new Error('runtime integrity reported failed checks: '+JSON.stringify(result.runtime));
             const targets=await page.locator('.navbtn[data-page]').evaluateAll(btns=>[...new Set(btns.map(b=>b.dataset.page).filter(Boolean))]);
             await page.evaluate(()=>{const login=document.querySelector('.login'),app=document.getElementById('app');if(login)login.style.display='none';if(app)app.style.display='block'});
-            for(const target of targets){await page.evaluate(t=>document.querySelector('.navbtn[data-page="'+CSS.escape(t)+'"]')?.click(),target);await page.waitForTimeout(40);const active=await page.locator('#'+target).evaluate(el=>el.classList.contains('active'));if(!active)throw new Error('navigation failed: '+target)}
+            for(const target of targets){await page.evaluate(t=>{const bs=[...document.querySelectorAll('.navbtn[data-page="'+CSS.escape(t)+'"]')].filter(b=>b.offsetParent!==null);(bs[0]||document.querySelector('.navbtn[data-page="'+CSS.escape(t)+'"]'))?.click()},target);await page.waitForTimeout(60);const active=await page.locator('.page.active').evaluateAll(es=>es.some(el=>el.id===target));if(!active)throw new Error('navigation failed: '+target)}
             const roomAudit=await page.evaluate(async()=>{
               const visible=e=>!!e&&getComputedStyle(e).display!=='none'&&e.offsetParent!==null;
               const out=[];
               const clickLabel=async(re,expectPage,check)=>{
-                const b=[...document.querySelectorAll('.navbtn[data-page]')].find(x=>re.test((x.innerText||'').trim()));
+                const b=[...document.querySelectorAll('.navbtn[data-page]')].find(x=>re.test((x.innerText||'').trim())&&x.offsetParent!==null);
                 if(!b)throw new Error('room button missing: '+re);
                 b.click();await new Promise(r=>setTimeout(r,180));
                 const p=document.getElementById(expectPage);if(!p?.classList.contains('active'))throw new Error('room page failed: '+re+' -> '+expectPage);

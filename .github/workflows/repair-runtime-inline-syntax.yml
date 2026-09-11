@@ -6,20 +6,21 @@ on:
 jobs:
   repair:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - name: Repair malformed exportHtml function
         run: |
           python3 - <<'PY'
-          import re
           from pathlib import Path
           p=Path('index.html'); s=p.read_text(encoding='utf-8')
-          replacement="""function exportHtml(type){const d=docPayload(type);return '<!doctype html><html lang=\"id\"><head><meta charset=\"utf-8\"><title>'+escHtml(d.title)+'</title><style>body{font-family:Arial,sans-serif;margin:35px;color:#172033}h1{font-size:24px;margin-bottom:4px}h4{margin:18px 0 8px;border-bottom:2px solid #ddd;padding-bottom:6px}.doc-grid{display:flex;gap:10px}.doc-box{border:1px solid #ddd;border-radius:10px;padding:12px;flex:1;margin-bottom:12px}.doc-line{border:1px solid #e2e8f0;border-radius:7px;padding:8px;margin:5px 0;line-height:1.5}.doc-table{width:100%;border-collapse:collapse}.doc-table th,.doc-table td{border:1px solid #ccc;padding:8px;text-align:left;vertical-align:top}.doc-table th{background:#f3f4f6}.doc-note{margin-top:12px;padding:10px;background:#fff7ed}</style></head><body><h1>'+escHtml(d.title)+'</h1><p>Tahun Pelajaran 2026/2027</p>'+d.body+'</body></html>'}
-function ensureDoc"""
-          pattern=r'function exportHtml\(type\)\{.*?\}\nfunction ensureDoc'
-          s2,n=re.subn(pattern,replacement,s,count=1,flags=re.S)
-          print('exportHtml replacements:',n)
-          if n:p.write_text(s2,encoding='utf-8')
+          start=s.find('function exportHtml(type){')
+          end=s.find('function ensureDoc',start)
+          if start<0 or end<0: raise SystemExit('exportHtml boundaries not found')
+          replacement="""function exportHtml(type){const d=docPayload(type);return '<!doctype html><html lang=\"id\"><head><meta charset=\"utf-8\"><title>'+escHtml(d.title)+'</title><style>body{font-family:Arial,sans-serif;margin:35px;color:#172033}h1{font-size:24px;margin-bottom:4px}h4{margin:18px 0 8px;border-bottom:2px solid #ddd;padding-bottom:6px}.doc-grid{display:flex;gap:10px}.doc-box{border:1px solid #ddd;border-radius:10px;padding:12px;flex:1;margin-bottom:12px}.doc-line{border:1px solid #e2e8f0;border-radius:7px;padding:8px;margin:5px 0;line-height:1.5}.doc-table{width:100%;border-collapse:collapse}.doc-table th,.doc-table td{border:1px solid #ccc;padding:8px;text-align:left;vertical-align:top}.doc-table th{background:#f3f4f6}.doc-note{margin-top:12px;padding:10px;background:#fff7ed}</style></head><body><h1>'+escHtml(d.title)+'</h1><p>Tahun Pelajaran 2026/2027</p>'+d.body+'</body></html>'}\n"""
+          p.write_text(s[:start]+replacement+s[end:],encoding='utf-8')
+          print('exportHtml patched')
           PY
       - name: Validate inline scripts after repair
         run: |

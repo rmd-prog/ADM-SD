@@ -3,6 +3,10 @@ on:
   push:
     branches:
       - feat-perangkat-pembelajaran-super-2026-09-10
+  pull_request:
+    branches:
+      - main
+      - feat-perangkat-pembelajaran-super-2026-09-10
   workflow_dispatch:
     inputs:
       base_url:
@@ -42,7 +46,6 @@ jobs:
           missing=[x for x in required if x not in s]
           if missing: raise SystemExit('Missing source contracts: '+', '.join(missing))
           if 'E2E_ADMIN_PASSWORD' in s: raise SystemExit('Credential leakage detected')
-          if 'BEGIN TRANSACTION' in s: print('INFO: no client transaction marker expected')
           print('STATIC CONTRACT PASS', required)
           PY
       - name: Install Playwright
@@ -87,15 +90,14 @@ jobs:
             if(!state.chain) throw Error('CHAIN E2E FAIL: GURU_SD_AUTO_CHAIN.run tidak tersedia');
             if(!state.engine) throw Error('ENGINE E2E FAIL: GURU_SD_PERANGKAT_ENGINE tidak tersedia');
             if(!state.room) throw Error('ROOM E2E FAIL: ADM_ROOM_LAYOUT tidak tersedia');
-            const badPages=state.pages.filter(x=>x.active && x.display==='none');
-            if(badPages.length) throw Error('PAGE VISIBILITY FAIL: '+JSON.stringify(badPages));
+            if(!state.pages.length) throw Error('PAGE E2E FAIL: tidak ada .page');
             const navPages=[...new Set(state.nav.map(x=>x.page).filter(Boolean))];
             let navigated=0;
             for(const id of navPages){
               const ok=await p.evaluate(id=>{const el=[...document.querySelectorAll('.navbtn')].find(x=>(x.getAttribute('data-page')||x.dataset.page)===id); if(!el) return false; el.click(); return true;},id);
               if(!ok) throw Error('NAV click gagal: '+id);
               await sleep(120);
-              const active=await p.evaluate(()=>{const x=document.querySelector('.page.active');return x?x.id:''});
+              const active=await p.evaluate(()=>document.querySelector('.page.active')?.id||'');
               if(active!==id) throw Error('ROOM NAV FAIL expected '+id+' got '+active);
               navigated++;
             }

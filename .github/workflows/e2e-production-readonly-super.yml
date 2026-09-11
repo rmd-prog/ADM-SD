@@ -41,12 +41,19 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-          s=Path('index.html').read_text(encoding='utf-8')
+          root=Path('.')
+          files=[root/'index.html']+sorted((root/'assets').glob('*.js'))
+          s='\n'.join(p.read_text(encoding='utf-8',errors='ignore') for p in files)
           required=['GURU_SD_MASTER','GURU_SD_AUTO_CHAIN','GURU_SD_PERANGKAT_ENGINE','ADM_ROOM_LAYOUT','guru_sd_pembelajaran_master_v1']
           missing=[x for x in required if x not in s]
-          if missing: raise SystemExit('Missing source contracts: '+', '.join(missing))
-          if 'E2E_ADMIN_PASSWORD' in s: raise SystemExit('Credential leakage detected')
+          if missing: raise SystemExit('Missing source contracts across loaded assets: '+', '.join(missing))
+          index=(root/'index.html').read_text(encoding='utf-8',errors='ignore')
+          expected=['assets/perangkat-master-state-super-v1.js','assets/perangkat-auto-chain-super-v1.js','assets/perangkat-master-engine-harden-v1.js','assets/perangkat-global-integrity-super-v1.js']
+          not_loaded=[x for x in expected if x not in index]
+          if not_loaded: raise SystemExit('Expected SUPER assets not loaded by index: '+', '.join(not_loaded))
+          if 'E2E_ADMIN_PASSWORD' in index: raise SystemExit('Credential leakage detected')
           print('STATIC CONTRACT PASS', required)
+          print('LOADED SUPER ASSETS PASS', expected)
           PY
       - name: Install Playwright
         run: |

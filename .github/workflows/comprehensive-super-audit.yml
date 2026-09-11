@@ -1,0 +1,100 @@
+name: Comprehensive SUPER Audit
+on:
+  push:
+    branches: ["feat-perangkat-pembelajaran-super-2026-09-10"]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: adm-sd-comprehensive-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: JavaScript syntax audit
+        run: |
+          set -e
+          find . -type f -name '*.js' -not -path './node_modules/*' -print0 | xargs -0 -n1 node --check
+          echo 'All JavaScript syntax: PASS'
+      - name: Static safety and architecture audit
+        run: |
+          set -e
+          ! grep -R -n --exclude-dir=.git --exclude='*.png' --exclude='*.jpg' --exclude='*.jpeg' 'E2E_ADMIN_PASSWORD' .
+          ! grep -R -n --exclude-dir=.git --exclude='*.png' --exclude='*.jpg' --exclude='*.jpeg' 'BEGIN TRANSACTION' src assets index.html
+          grep -q 'binding.*DB' wrangler.jsonc
+          grep -q 'd1_databases' wrangler.jsonc
+          grep -q "guru_sd_pembelajaran_master_v1" assets/perangkat-master-state-super-v1.js
+          grep -q "GURU_SD_MASTER" assets/perangkat-pembelajaran-super.js
+          grep -q "GURU_SD_AUTO_CHAIN" assets/perangkat-auto-chain-super-v1.js
+          grep -q "ADM_ROOM_LAYOUT" assets/app-room-layout-super-v1.js
+          grep -q "GURU_SD_PERANGKAT_ENGINE" assets/perangkat-pembelajaran-super.js
+          ! grep -R -n --exclude-dir=.git --exclude='*.png' --exclude='*.jpg' --exclude='*.jpeg' "const BOOK=" assets/ai-super-smart.js
+          ! grep -R -n --exclude-dir=.git --exclude='*.png' --exclude='*.jpg' --exclude='*.jpeg' "const ROMBELS=" assets/ai-super-smart.js
+          ! grep -R -n --exclude-dir=.git --exclude='*.png' --exclude='*.jpg' --exclude='*.jpeg' "const MAPEL=" assets/ai-super-smart.js
+          ! grep -R -n --exclude-dir=.git --exclude='*.png' --exclude='*.jpg' --exclude='*.jpeg' 'STS' assets/assessment-auto.js assets/assessment-smart.js assets/assessment-bab-matrix.js assets/assessment-rekap-smart.js
+          echo 'Static architecture/safety contracts: PASS'
+      - name: Install Playwright
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm install --no-save playwright@1.55.0 >/dev/null 2>&1
+          npx playwright install --with-deps chromium >/dev/null 2>&1
+      - name: Start local site
+        run: python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/adm-server.log 2>&1 &
+      - name: Browser exhaustive curriculum and chain audit
+        run: |
+          node <<'NODE'
+          const {chromium}=require('playwright');
+          (async()=>{
+            const browser=await chromium.launch({headless:true});
+            const page=await browser.newPage({viewport:{width:390,height:844},isMobile:true});
+            const errors=[];
+            page.on('pageerror',e=>errors.push('pageerror: '+e.message));
+            page.on('console',m=>{if(m.type()==='error'&&!/status of 401/i.test(m.text()))errors.push('console: '+m.text())});
+            const r=await page.goto('http://127.0.0.1:4173/index.html',{waitUntil:'networkidle',timeout:30000});
+            if(!r?.ok())throw Error('index.html failed');
+            await page.waitForTimeout(3000);
+            const boot=await page.evaluate(()=>({catalog:!!window.BOOK_CATALOG,master:!!window.GURU_SD_MASTER,engine:!!window.GURU_SD_PERANGKAT_ENGINE,chain:!!window.GURU_SD_AUTO_CHAIN,room:!!window.ADM_ROOM_LAYOUT,complete:!!window.GURU_SD_FEATURE_COMPLETE,rombel:Object.keys(window.BOOK_CATALOG||{}).length}));
+            if(!boot.catalog||!boot.master||!boot.engine||!boot.chain||!boot.room||!boot.complete)throw Error('critical globals missing: '+JSON.stringify(boot));
+            await page.evaluate(()=>{document.querySelector('.login')?.style.setProperty('display','none');document.querySelector('#app')?.style.setProperty('display','block')});
+            const report=await page.evaluate(()=>{
+              const cat=window.BOOK_CATALOG||{}, grades={IA:1,IB:1,IIA:2,IIB:2,IIIA:3,IIIB:3,IVA:4,IVB:4,V:5,VI:6};
+              const engine=window.GURU_SD_PERANGKAT_ENGINE, types=['CP','ATP','TP','PROTA','PROMES','RPM','LKPD','ASESMEN'];
+              const out={subjects:Object.keys(cat),checkedSubjects:0,checkedContexts:0,checkedChapters:0,failures:[],perSubject:{}};
+              for(const [mapel,byGrade] of Object.entries(cat)){
+                out.checkedSubjects++;
+                let chapters=0,contexts=0;
+                for(const [rombel,g] of Object.entries(grades)){
+                  const src=byGrade?.[g]; if(!src)continue;
+                  const list=Array.isArray(src.chapters)?src.chapters:(src&&typeof src==='object'?Object.keys(src):[]);
+                  for(let i=0;i<list.length;i++){
+                    const material=String(list[i]); chapters++; out.checkedChapters++;
+                    const babNo=i+1,babId=`${rombel}|${mapel}|${babNo}|${material.toLowerCase()}`;
+                    const tp=[{no:1,text:`Memahami ${material}`,jp:0},{no:2,text:`Menerapkan ${material}`,jp:0},{no:3,text:`Mengomunikasikan ${material}`,jp:0},{no:4,text:`Merefleksikan ${material}`,jp:0}];
+                    const dpl=['Keimanan dan ketakwaan kepada Tuhan Yang Maha Esa','Kewargaan','Penalaran kritis','Kreativitas','Kolaborasi','Kemandirian','Kesehatan','Komunikasi'];
+                    window.GURU_SD_MASTER.set({source:'GURU_SD_MASTER',rombel,mapel,babId,babNo,material,semester:babNo<=3?1:2,jp:4,tp,dpl,modelPembelajaran:'Problem Based Learning',fase:g<=2?'A':g<=4?'B':'C',tahunPelajaran:'2026/2027'});
+                    const x=window.GURU_SD_MASTER.get(); contexts++;
+                    if(!x||x.babId!==babId||x.material!==material||x.jp!==4)out.failures.push(`${rombel}/${mapel}/${babNo}: master identity`);
+                    const alloc=engine.allocate(x); if(alloc.reduce((a,t)=>a+t.jp,0)!==4)out.failures.push(`${rombel}/${mapel}/${babNo}: exact JP`);
+                    for(const t of types){const text=String(engine.generate(t)||'');if(!text.includes(material)||!text.includes(babId))out.failures.push(`${rombel}/${mapel}/${babNo}: ${t} context`);}
+                  }
+                }
+                out.perSubject[mapel]={chapters,contexts};
+              }
+              return out;
+            });
+            if(report.checkedSubjects<11)throw Error('Expected 11 subjects, got '+report.checkedSubjects);
+            if(report.checkedChapters<1)throw Error('No chapters discovered');
+            if(report.failures.length)throw Error('Exhaustive chain failures: '+report.failures.slice(0,30).join(' | '));
+            if(errors.length)throw Error('Runtime errors: '+errors.join(' | '));
+            console.log('COMPREHENSIVE SUPER AUDIT PASS');
+            console.log(JSON.stringify({subjects:report.checkedSubjects,chapters:report.checkedChapters,contexts:report.checkedContexts,perSubject:report.perSubject}));
+            await browser.close();
+          })().catch(e=>{console.error(e);process.exit(1)});
+          NODE

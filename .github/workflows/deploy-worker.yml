@@ -9,7 +9,7 @@ on:
       - '.github/workflows/deploy-worker.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: adm-sd-worker-deploy-${{ github.ref }}
@@ -28,23 +28,59 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Inspect current Worker bindings via Workers API
+      - name: Recover existing D1 binding from Worker version history
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
-          curl -fsSL "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/workers/scripts/adm-sd/settings" \
-            -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" > /tmp/worker-settings.json
           python3 - <<'PY'
-          import json
-          d=json.load(open('/tmp/worker-settings.json'))
-          if not d.get('success'): raise SystemExit('Workers API settings lookup failed')
-          for b in d.get('result',{}).get('bindings',[]):
-              if b.get('type')=='d1':
-                  print('CURRENT D1 BINDING:',json.dumps({k:b.get(k) for k in ('name','type','database_id') if b.get(k)}))
-          print('CURRENT BINDING TYPES:',sorted(set(b.get('type','') for b in d.get('result',{}).get('bindings',[]))))
+          import json, subprocess, urllib.request
+          account='${{ env.CLOUDFLARE_ACCOUNT_ID }}'
+          token='${{ secrets.CLOUDFLARE_API_TOKEN }}'
+          base=f'https://api.cloudflare.com/client/v4/accounts/{account}/workers/scripts/adm-sd'
+          def get(url):
+              req=urllib.request.Request(url,headers={'Authorization':f'Bearer {token}'})
+              with urllib.request.urlopen(req,timeout=20) as r:return json.load(r)
+          current=json.load(open('wrangler.jsonc'))
+          found=None
+          try:
+              versions=get(base+'/versions?per_page=50').get('result',[])
+              for v in versions:
+                  vid=v.get('id')
+                  if not vid: continue
+                  detail=get(base+'/versions/'+vid).get('result',{})
+                  for b in detail.get('resources',{}).get('bindings',[]) or []:
+                      if b.get('type')=='d1' and b.get('name') and b.get('database_id'):
+                          found={'binding':b['name'],'database_id':b['database_id'],'database_name':b.get('database_name','')}
+                          break
+                  if found: break
+          except Exception as e:
+              print('Version-history lookup failed:',type(e).__name__,str(e)[:160])
+          if not found:
+              raise SystemExit('NO_EXISTING_D1_BINDING_FOUND_IN_WORKER_VERSION_HISTORY')
+          print('RECOVERED D1 BINDING:',json.dumps(found))
+          current.pop('keep_bindings',None)
+          current['d1_databases']=[found]
+          with open('wrangler.recovered.jsonc','w') as f: json.dump(current,f,indent=2)
+          existing=current.copy(); existing.pop('d1_databases',None)
+          repo=json.load(open('wrangler.jsonc'))
+          if repo.get('d1_databases') != [found]:
+              repo.pop('keep_bindings',None)
+              repo['d1_databases']=[found]
+              with open('wrangler.jsonc','w') as f: json.dump(repo,f,indent=2); f.write('\n')
+              print('Persisting recovered D1 binding into wrangler.jsonc')
+          else:
+              print('wrangler.jsonc already contains recovered D1 binding')
           PY
-      - name: Deploy Worker preserving existing production bindings
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          command: deploy --config wrangler.jsonc --keep-vars
+      - name: Deploy Worker with recovered D1 binding
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          npx --yes wrangler@latest deploy --config wrangler.recovered.jsonc --keep-vars
+      - name: Commit recovered D1 binding
+        run: |
+          if git diff --quiet -- wrangler.jsonc; then echo 'No config persistence needed'; exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add wrangler.jsonc
+          git commit -m 'fix: restore production D1 binding in Wrangler config'
+          git push

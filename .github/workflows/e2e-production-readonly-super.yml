@@ -32,7 +32,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
       - name: Validate secret presence
         run: |
           test -n "$E2E_USERNAME"
@@ -85,40 +85,22 @@ jobs:
             const base=process.env.BASE_URL, api=process.env.API_BASE, errors=[];
             let loginResponse=null;
             p.on('pageerror',e=>errors.push(e.message));
-            p.on('response',async res=>{
-              if(res.url()===api+'/login'){
-                try{const text=await res.text();loginResponse={status:res.status(),ok:res.ok(),body:text.slice(0,300)};}catch(e){loginResponse={status:res.status(),ok:res.ok(),body:'<unreadable>'};}
-              }
-            });
+            p.on('response',async res=>{if(res.url()===api+'/login'){try{const text=await res.text();loginResponse={status:res.status(),ok:res.ok(),body:text.slice(0,300)};}catch(e){loginResponse={status:res.status(),ok:res.ok(),body:'<unreadable>'};}}});
             const r=await p.goto(base,{waitUntil:'networkidle',timeout:45000});
-            if(!r||!r.ok()) throw Error('Production page gagal dimuat: '+(r&&r.status()));
+            if(!r||!r.ok())throw Error('Production page gagal dimuat: '+(r&&r.status()));
             await sleep(2500);
             const shell=await p.evaluate(()=>({login:!!document.querySelector('.login'),app:!!document.querySelector('#app'),inputs:document.querySelectorAll('.login input').length,buttons:document.querySelectorAll('.login button').length,master:!!window.GURU_SD_MASTER,chain:!!window.GURU_SD_AUTO_CHAIN,engine:!!window.GURU_SD_PERANGKAT_ENGINE,room:!!window.ADM_ROOM_LAYOUT}));
-            if(!shell.login||!shell.app||shell.inputs<2) throw Error('Login shell contract gagal: '+JSON.stringify(shell));
-            const inputs=await p.locator('.login input').all();
-            await inputs[0].fill(process.env.E2E_USERNAME); await inputs[1].fill(process.env.E2E_PASSWORD);
-            await p.locator('#loginForm button[type="submit"]').click();
-            await sleep(3500);
+            if(!shell.login||!shell.app||shell.inputs<2)throw Error('Login shell contract gagal: '+JSON.stringify(shell));
+            const inputs=await p.locator('.login input').all();await inputs[0].fill(process.env.E2E_USERNAME);await inputs[1].fill(process.env.E2E_PASSWORD);await p.locator('#loginForm button[type="submit"]').click();await sleep(3500);
             const auth=await p.evaluate(()=>({loginDisplay:getComputedStyle(document.querySelector('.login')).display,appDisplay:getComputedStyle(document.querySelector('#app')).display,token:!!(localStorage.getItem('siAuthToken')||localStorage.getItem('token')||localStorage.getItem('authToken')),user:!!(localStorage.getItem('siLogin')||localStorage.getItem('currentUser')),errorText:(document.querySelector('.login')?.innerText||'').slice(-500)}));
-            console.log('LOGIN RESPONSE DIAGNOSTIC',JSON.stringify(loginResponse));
-            console.log('AUTH STATE',JSON.stringify(auth));
-            if(auth.loginDisplay!=='none'||auth.appDisplay==='none'||!auth.token||!auth.user) throw Error('AUTH E2E FAIL: '+JSON.stringify(auth));
+            console.log('LOGIN RESPONSE DIAGNOSTIC',JSON.stringify(loginResponse));console.log('AUTH STATE',JSON.stringify(auth));
+            if(auth.loginDisplay!=='none'||auth.appDisplay==='none'||!auth.token||!auth.user)throw Error('AUTH E2E FAIL: '+JSON.stringify(auth));
             const apiResp=await p.evaluate(async(api)=>{const t=localStorage.getItem('siAuthToken')||localStorage.getItem('token')||localStorage.getItem('authToken')||'';const r=await fetch(api+'/guru',{headers:{Authorization:'Bearer '+t}});return {status:r.status,text:(await r.text()).slice(0,300)}},api);
-            if(apiResp.status!==200) throw Error('Worker /guru expected 200, got '+apiResp.status+' '+apiResp.text);
+            if(apiResp.status!==200)throw Error('Worker /guru expected 200, got '+apiResp.status+' '+apiResp.text);
             await sleep(1500);
             const state=await p.evaluate(()=>{const master=window.GURU_SD_MASTER?.get?.();const pages=[...document.querySelectorAll('.page')].map(x=>({id:x.id,active:x.classList.contains('active'),display:getComputedStyle(x).display}));const visible=pages.filter(x=>x.display!=='none').map(x=>x.id);const nav=[...document.querySelectorAll('.navbtn')].map(x=>({text:(x.textContent||'').trim(),page:x.getAttribute('data-page')||x.dataset.page||'',disabled:x.disabled}));return {master,masterOk:!!master,chain:typeof window.GURU_SD_AUTO_CHAIN?.run==='function',engine:typeof window.GURU_SD_PERANGKAT_ENGINE==='object'||typeof window.GURU_SD_PERANGKAT_ENGINE==='function',room:!!window.ADM_ROOM_LAYOUT,pages,visible,nav};});
-            if(!state.masterOk) throw Error('MASTER E2E FAIL: GURU_SD_MASTER.get() kosong');
-            if(!state.chain) throw Error('CHAIN E2E FAIL: GURU_SD_AUTO_CHAIN.run tidak tersedia');
-            if(!state.engine) throw Error('ENGINE E2E FAIL: GURU_SD_PERANGKAT_ENGINE tidak tersedia');
-            if(!state.room) throw Error('ROOM E2E FAIL: ADM_ROOM_LAYOUT tidak tersedia');
-            if(!state.pages.length) throw Error('PAGE E2E FAIL: tidak ada .page');
-            const navPages=[...new Set(state.nav.map(x=>x.page).filter(Boolean))];let navigated=0;
-            for(const id of navPages){const ok=await p.evaluate(id=>{const el=[...document.querySelectorAll('.navbtn')].find(x=>(x.getAttribute('data-page')||x.dataset.page)===id);if(!el)return false;el.click();return true;},id);if(!ok)throw Error('NAV click gagal: '+id);await sleep(120);const active=await p.evaluate(()=>document.querySelector('.page.active')?.id||'');if(active!==id)throw Error('ROOM NAV FAIL expected '+id+' got '+active);navigated++;}
-            const final=await p.evaluate(()=>({active:document.querySelector('.page.active')?.id||'',master:!!window.GURU_SD_MASTER?.get?.(),chain:typeof window.GURU_SD_AUTO_CHAIN?.run==='function',engine:!!window.GURU_SD_PERANGKAT_ENGINE,room:!!window.ADM_ROOM_LAYOUT}));
-            if(errors.some(e=>/SyntaxError|ReferenceError|TypeError/i.test(e)))throw Error('Runtime JS error: '+errors.join(' | '));
-            if(!final.active)throw Error('No active page after navigation sweep');
-            console.log('PRODUCTION SUPER E2E PASS');
-            console.log(JSON.stringify({auth,apiStatus:apiResp.status,master:{rombel:state.master.rombel,mapel:state.master.mapel,material:state.master.material},pages:state.pages.length,navPages:navPages.length,navigated,final,errors}));
-            await b.close();
+            if(!state.masterOk)throw Error('MASTER E2E FAIL: GURU_SD_MASTER.get() kosong');if(!state.chain)throw Error('CHAIN E2E FAIL: GURU_SD_AUTO_CHAIN.run tidak tersedia');if(!state.engine)throw Error('ENGINE E2E FAIL: GURU_SD_PERANGKAT_ENGINE tidak tersedia');if(!state.room)throw Error('ROOM E2E FAIL: ADM_ROOM_LAYOUT tidak tersedia');if(!state.pages.length)throw Error('PAGE E2E FAIL: tidak ada .page');
+            const navPages=[...new Set(state.nav.map(x=>x.page).filter(Boolean))];let navigated=0;for(const id of navPages){const ok=await p.evaluate(id=>{const el=[...document.querySelectorAll('.navbtn')].find(x=>(x.getAttribute('data-page')||x.dataset.page)===id);if(!el)return false;el.click();return true;},id);if(!ok)throw Error('NAV click gagal: '+id);await sleep(120);const active=await p.evaluate(()=>document.querySelector('.page.active')?.id||'');if(active!==id)throw Error('ROOM NAV FAIL expected '+id+' got '+active);navigated++;}
+            const final=await p.evaluate(()=>({active:document.querySelector('.page.active')?.id||'',master:!!window.GURU_SD_MASTER?.get?.(),chain:typeof window.GURU_SD_AUTO_CHAIN?.run==='function',engine:!!window.GURU_SD_PERANGKAT_ENGINE,room:!!window.ADM_ROOM_LAYOUT}));if(errors.some(e=>/SyntaxError|ReferenceError|TypeError/i.test(e)))throw Error('Runtime JS error: '+errors.join(' | '));if(!final.active)throw Error('No active page after navigation sweep');console.log('PRODUCTION SUPER E2E PASS');console.log(JSON.stringify({auth,apiStatus:apiResp.status,master:{rombel:state.master.rombel,mapel:state.master.mapel,material:state.master.material},pages:state.pages.length,navPages:navPages.length,navigated,final,errors}));await b.close();
           })().catch(e=>{console.error(e);process.exit(1)});
           NODE

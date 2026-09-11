@@ -1,0 +1,69 @@
+name: Curriculum Master Integrity Audit
+
+on:
+  push:
+    branches: [feat-perangkat-pembelajaran-super-2026-09-10]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: JavaScript syntax audit
+        shell: bash
+        run: |
+          set -e
+          files=(
+            assets/ai-generate-super.js
+            assets/ai-super-smart.js
+            assets/ai-curriculum-selector.js
+            assets/perangkat-master-state-super-v1.js
+            assets/perangkat-pembelajaran-super.js
+            assets/perangkat-katalog-super-v2.js
+            assets/perangkat-binding-super-v1.js
+            assets/perangkat-jp-super-v1.js
+            assets/perangkat-pertemuan-super-v1.js
+            assets/perangkat-master-enforcer-super-v1.js
+            assets/perangkat-chain-audit-super-v2.js
+            assets/perangkat-auto-chain-super-v1.js
+            assets/perangkat-document-auto-bridge-super-v1.js
+            assets/perangkat-global-integrity-super-v1.js
+          )
+          for f in "${files[@]}"; do
+            test -f "$f"
+            node --check "$f"
+          done
+          echo "JavaScript syntax: OK (${#files[@]} files)"
+      - name: Single-source architecture audit
+        shell: bash
+        run: |
+          set -e
+          test "$(grep -o 'assets/perangkat-master-state-super-v1.js' index.html | wc -l)" -eq 1
+          test "$(grep -o 'assets/perangkat-pembelajaran-super.js' index.html | wc -l)" -eq 1
+          test "$(grep -o 'assets/perangkat-auto-chain-super-v1.js' index.html | wc -l)" -eq 1
+          test "$(grep -o 'assets/perangkat-global-integrity-super-v1.js' index.html | wc -l)" -eq 1
+          ! grep -q 'assets/perangkat-cp-atp-tp-super-v2.js' index.html
+          ! grep -q 'assets/perangkat-prota-promes-super-v2.js' index.html
+          ! grep -q 'assets/perangkat-rpm-super-v2.js' index.html
+          ! grep -q 'assets/perangkat-lkpd-asesmen-super-v1.js' index.html
+          ! grep -q 'assets/perangkat-lkpd-asesmen-super-v2.js' index.html
+          ! grep -q "const BOOK=" assets/ai-super-smart.js
+          ! grep -q "const ROMBELS=" assets/ai-super-smart.js
+          ! grep -q "const MAPEL=" assets/ai-super-smart.js
+          grep -q 'GURU_SD_MASTER' assets/ai-generate-super.js
+          grep -q 'BOOK_CATALOG' assets/ai-generate-super.js
+          grep -q 'guru_sd_jp_allocation_super_v1' assets/perangkat-global-integrity-super-v1.js
+          echo "Single-source architecture: OK"
+      - name: Chain contract audit
+        shell: bash
+        run: |
+          set -e
+          grep -q "const TYPES=\['CP','ATP','TP','PROTA','PROMES','RPM','LKPD','ASESMEN'\]" assets/perangkat-auto-chain-super-v1.js
+          grep -q "function tpList(s){return s.tp}" assets/perangkat-pembelajaran-super.js
+          grep -q "BAB ID" assets/perangkat-pembelajaran-super.js
+          grep -q "source:'GURU_SD_MASTER'" assets/perangkat-global-integrity-super-v1.js
+          echo "Master chain contract: OK"

@@ -1,0 +1,54 @@
+name: Repair Runtime Inline Syntax
+on:
+  push:
+    branches: ["feat-perangkat-pembelajaran-super-2026-09-10"]
+  workflow_dispatch:
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Repair broken exportHtml string
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          old='</script>\\n\n<script src="assets/perangkat-prota-promes-super-v1.js"></script>'
+          new='</script>\\n<script src="assets/perangkat-prota-promes-super-v1.js"></script>'
+          if old in s:
+              p.write_text(s.replace(old,new,1),encoding='utf-8')
+              print('patched: removed literal newline from exportHtml JS string')
+          else:
+              print('no patch needed')
+          PY
+      - name: Validate inline scripts after repair
+        run: |
+          python3 - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          class P(HTMLParser):
+              def __init__(self): super().__init__(); self.active=None; self.buf=[]; self.items=[]
+              def handle_starttag(self,tag,attrs):
+                  if tag.lower()=='script': self.active=dict(attrs).get('type','').lower(); self.buf=[]
+              def handle_data(self,data):
+                  if self.active is not None:self.buf.append(data)
+              def handle_endtag(self,tag):
+                  if tag.lower()=='script' and self.active is not None:
+                      text=''.join(self.buf); typ=self.active
+                      if text.strip() and typ not in ('application/ld+json','application/json','importmap'): self.items.append(text)
+                      self.active=None; self.buf=[]
+          p=P();p.feed(Path('index.html').read_text(encoding='utf-8'))
+          Path('/tmp/inline').mkdir(exist_ok=True)
+          for i,t in enumerate(p.items,1):Path(f'/tmp/inline/{i}.js').write_text(t,encoding='utf-8')
+          print('inline scripts:',len(p.items))
+          PY
+          for f in /tmp/inline/*.js; do node --check "$f"; done
+      - name: Commit repair
+        run: |
+          if git diff --quiet -- index.html; then echo 'No repair commit needed'; exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'fix: repair broken exportHtml inline string'
+          git push

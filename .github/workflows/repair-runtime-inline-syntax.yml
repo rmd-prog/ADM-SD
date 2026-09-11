@@ -11,14 +11,16 @@ jobs:
       - name: Repair broken exportHtml string
         run: |
           python3 - <<'PY'
+          import re
           from pathlib import Path
           p=Path('index.html')
           s=p.read_text(encoding='utf-8')
-          old='</script>\\n\n<script src="assets/perangkat-prota-promes-super-v1.js"></script>'
-          new='</script>\\n<script src="assets/perangkat-prota-promes-super-v1.js"></script>'
-          if old in s:
-              p.write_text(s.replace(old,new,1),encoding='utf-8')
-              print('patched: removed literal newline from exportHtml JS string')
+          pattern=r'<\\/script>\\n[ \t]*\n[ \t]*<script src="assets/perangkat-prota-promes-super-v1.js">'
+          replacement='<\\/script>\\n<script src="assets/perangkat-prota-promes-super-v1.js">'
+          s2,n=re.subn(pattern,replacement,s,count=1)
+          if n:
+              p.write_text(s2,encoding='utf-8')
+              print('patched:',n)
           else:
               print('no patch needed')
           PY

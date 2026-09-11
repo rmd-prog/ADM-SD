@@ -1,0 +1,44 @@
+name: Repair Production Login NIP Contract
+on:
+  push:
+    branches: ["feat-perangkat-pembelajaran-super-2026-09-10"]
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch login request contract
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          old = "body:JSON.stringify({username:String(username),password:String(password)})"
+          new = "body:JSON.stringify({nip:String(username),username:String(username),password:String(password)})"
+          if new in s:
+              print('PASS: NIP login contract already present')
+          elif old in s:
+              s = s.replace(old, new, 1)
+              p.write_text(s, encoding='utf-8')
+              print('PASS: patched production login to send NIP + username')
+          else:
+              raise SystemExit('FAIL: expected login request contract not found')
+      - name: Validate no credential leakage
+        shell: python
+        run: |
+          from pathlib import Path
+          s = Path('index.html').read_text(encoding='utf-8')
+          assert "body:JSON.stringify({nip:String(username),username:String(username),password:String(password)})" in s
+          assert 'E2E_ADMIN_PASSWORD' not in s
+          print('PASS: login patch validated; no E2E credential secret in source')
+      - name: Commit patch
+        shell: bash
+        run: |
+          if git diff --quiet -- index.html; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "fix: align production login request with NIP auth contract"
+          git push

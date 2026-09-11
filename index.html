@@ -1056,7 +1056,7 @@ async function remoteLogin(username,password){
       mode:'cors',
       cache:'no-store',
       headers:{'Content-Type':'application/json','Accept':'application/json'},
-      body:JSON.stringify({username:String(username),password:String(password)})
+      body:JSON.stringify({nip:String(username),username:String(username),password:String(password)})
     });
   }catch(e){
     throw new Error('Worker tidak dapat dihubungi. Periksa internet atau alamat Worker.');

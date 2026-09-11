@@ -1,11 +1,11 @@
-/* GURU+ SD — SINGLE SOURCE OF TRUTH V4
+/* GURU+ SD — SINGLE SOURCE OF TRUTH V5
  * One canonical state for BAB -> CP -> ATP -> TP -> JP -> Jadwal -> PROTA -> PROMES -> RPM -> LKPD -> Asesmen.
- * UI selectors only WRITE to Master on explicit change. Generators READ the stored Master only.
- * This prevents stale DOM/legacy state from re-entering the chain between events.
+ * UI selectors WRITE to Master only on explicit user change. Generators READ the persisted Master.
+ * On page boot, an existing valid Master is restored into the UI instead of being overwritten by stale/default DOM.
  * Local-only. Never touches D1, Worker, students, login, or assessment bridge.
  */
 (function(){'use strict';
-if(window.__GURU_SD_MASTER_STATE_V4__)return;window.__GURU_SD_MASTER_STATE_V4__=1;
+if(window.__GURU_SD_MASTER_STATE_V5__)return;window.__GURU_SD_MASTER_STATE_V5__=1;
 const KEY='guru_sd_pembelajaran_master_v1',LEGACY='guru_sd_perangkat_super_v1';
 const $=id=>document.getElementById(id);
 const read=(k,d=null)=>{try{return JSON.parse(localStorage.getItem(k)||'null')??d}catch(e){return d}};
@@ -21,9 +21,10 @@ function fallbackTp(material){return Array.from({length:4},(_,i)=>({no:i+1,text:
 function fromDom(){const c=controls();if(!c.rombel||!c.mapel||!c.bab)return null;const p=parseBab();if(!p.material)return null;const old=read(KEY,null);const babId=c.rombel+'|'+c.mapel+'|'+p.babNo;const sameContext=!!old&&old.rombel===c.rombel&&old.mapel===c.mapel&&old.babId===babId;const tp=fallbackTp(p.material);const semester=p.babNo>0?(p.babNo<=3?1:2):(sameContext?Number(old.semester)||1:1);return {source:'GURU_SD_MASTER',rombel:c.rombel,mapel:c.mapel,babId,babNo:p.babNo,material:p.material,semester,jp:p.jp,tp,dpl:selectedDpl(c.mapel,old,sameContext),modelPembelajaran:selectedModel(old,sameContext),fase:phase(c.rombel),tahunPelajaran:'2026/2027',updatedAt:new Date().toISOString()};}
 function save(x){if(!x)return null;const clean={...x,source:'GURU_SD_MASTER',tp:Array.isArray(x.tp)?x.tp:[],dpl:Array.isArray(x.dpl)?x.dpl:[],updatedAt:x.updatedAt||new Date().toISOString()};const prev=read(KEY,null);const a=JSON.stringify(prev||{}),b=JSON.stringify(clean);if(a===b)return prev;localStorage.setItem(KEY,JSON.stringify(clean));localStorage.setItem(LEGACY,JSON.stringify(clean));window.dispatchEvent(new CustomEvent('guruSdMasterChanged',{detail:clean}));return clean}
 function sync(){const x=fromDom();if(!x)return null;return save(x)}
+function restoreDom(x){if(!x)return;const r=$('pkR'),m=$('pkM'),b=$('pkB');if(r&&x.rombel)r.value=x.rombel;if(m&&x.mapel){m.value=x.mapel;m.dispatchEvent(new Event('change',{bubbles:true}))}if(b&&x.material){const opts=[...b.options];let i=opts.findIndex(o=>String(o.textContent||'').trim().toLowerCase().includes(String(x.material).trim().toLowerCase()));if(i<0&&x.babNo)i=opts.findIndex(o=>new RegExp('BAB\\s*'+Number(x.babNo)+'\\b','i').test(String(o.textContent||'')));if(i>=0)b.selectedIndex=i;}}
 function get(){const x=read(KEY,null);if(x&&x.source==='GURU_SD_MASTER'&&x.babId)return x;return {source:'GURU_SD_MASTER',rombel:'',mapel:'',babId:'',babNo:0,material:'',semester:1,jp:0,tp:[],dpl:DPL,modelPembelajaran:'Problem Based Learning',fase:'A',tahunPelajaran:'2026/2027'};}
 function set(patch){return save({...get(),...patch,updatedAt:new Date().toISOString()});}
 window.GURU_SD_MASTER={KEY,get,set,sync,save,phase,dpl:defaultDpl};
-function boot(){const r=$('pkR'),m=$('pkM'),b=$('pkB');if(!r||!m||!b){setTimeout(boot,300);return}[r,m,b].forEach(el=>el.addEventListener('change',sync,true));sync();}
+function boot(){const r=$('pkR'),m=$('pkM'),b=$('pkB');if(!r||!m||!b){setTimeout(boot,300);return}const stored=read(KEY,null);if(stored&&stored.source==='GURU_SD_MASTER'&&stored.babId){restoreDom(stored);return}[r,m,b].forEach(el=>el.addEventListener('change',sync,true));sync();}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 })();

@@ -74,11 +74,6 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: npx --yes wrangler@latest deploy --config wrangler.recovered.jsonc --keep-vars
-      - name: Probe users schema read-only
-        run: |
-          echo 'PRODUCTION USERS SCHEMA:'
-          curl -fsSL 'https://adm-sd.adm-sd.workers.dev/api/health?schema=users&v=2' --retry 3 --retry-delay 2
-          echo
       - name: Commit recovered D1 binding
         run: |
           if git diff --quiet -- wrangler.jsonc; then echo 'No config persistence needed'; exit 0; fi

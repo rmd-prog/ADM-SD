@@ -76,18 +76,9 @@ jobs:
             if(!result.login||!result.app||result.nav<1||result.pages<1)throw new Error('critical app shell missing: '+JSON.stringify(result));
             if(!result.feature||!result.master||!result.chain)throw new Error('critical runtime modules missing: '+JSON.stringify(result));
             if(result.runtime&&!result.runtime.ready)throw new Error('runtime integrity reported failed checks: '+JSON.stringify(result.runtime));
-            const routing=await page.evaluate(()=>{
-              const targets=[...new Set([...document.querySelectorAll('.navbtn[data-page]')].map(x=>x.dataset.page).filter(Boolean))];
-              const out=[];const app=document.getElementById('app'),login=document.querySelector('.login');
-              if(login)login.style.display='none';if(app)app.style.display='block';
-              for(const target of targets){
-                if(!document.getElementById(target))out.push('missing:'+target);
-                else {showPage(target);if(!document.getElementById(target).classList.contains('active'))out.push('inactive:'+target)}
-              }
-              return {targets,failed:out};
-            });
+            const routing=await page.evaluate(()=>{const targets=[...new Set([...document.querySelectorAll('.navbtn[data-page]')].map(x=>x.dataset.page).filter(Boolean))];const out=[];const app=document.getElementById('app'),login=document.querySelector('.login');if(login)login.style.display='none';if(app)app.style.display='block';return {targets,failed:out}});
+            for(const target of routing.targets){const btn=page.locator('.navbtn[data-page="'+target+'"]',{has:undefined}).first();await btn.click({force:true});const active=await page.locator('#'+target).evaluate(el=>el.classList.contains('active'));if(!active)throw new Error('navigation failed: '+target)}
             console.log('routing:',JSON.stringify(routing));
-            if(routing.failed.length)throw new Error('routing failures: '+routing.failed.join(', '));
             if(errors.length)throw new Error(errors.join('\n'));
             await browser.close();
           })().catch(e=>{console.error(e);process.exit(1)});

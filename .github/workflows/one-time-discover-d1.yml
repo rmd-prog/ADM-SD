@@ -24,3 +24,4 @@ jobs:
           for x in data:
               print(f"D1: name={x.get('name','')} id={x.get('uuid') or x.get('database_id','')}")
           PY
+# trigger fresh discovery after Node 22 repair

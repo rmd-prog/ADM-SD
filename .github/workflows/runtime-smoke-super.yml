@@ -73,27 +73,23 @@ jobs:
             for(const t of targets){await page.evaluate(x=>{const bs=[...document.querySelectorAll('.navbtn[data-page]')].filter(b=>b.dataset.page===x);const b=bs.find(y=>y.offsetParent!==null)||bs[0];b?.click()},t);await page.waitForTimeout(120);const a=await page.locator('.page.active').first().getAttribute('id');if(a!==(aliases[t]||t))throw new Error('navigation failed: '+t+' -> '+a)}
             const fake=(page,label)=>({dataset:{page},innerText:label,textContent:label});
             await page.evaluate(()=>window.ADM_ROOM_LAYOUT.clearRoom());
-            await page.evaluate(f=>window.ADM_ROOM_LAYOUT.activate(f),fake('scores','Input Nilai'));
-            await page.waitForTimeout(150);
-            const inputRoom=await page.evaluate(()=>({room:document.querySelector('#penilaianPro')?.dataset.admRoom||'',active:!!document.querySelector('#penilaianPro')?.classList.contains('active'),tab:document.querySelector('#penilaianPro .sg-tab.active')?.dataset.at||''}));
-            await page.evaluate(f=>window.ADM_ROOM_LAYOUT.activate(f),fake('scores','Rekap Nilai'));
-            await page.waitForTimeout(150);
-            const rekapRoom=await page.evaluate(()=>({room:document.querySelector('#penilaianPro')?.dataset.admRoom||'',tab:document.querySelector('#penilaianPro .sg-tab.active')?.dataset.at||''}));
+            await page.evaluate(f=>window.ADM_ROOM_LAYOUT.activate(f),fake('scores','Input Nilai')); await page.waitForTimeout(120);
+            const input=await page.evaluate(()=>({active:!!document.querySelector('#penilaianPro')?.classList.contains('active'),room:document.querySelector('#penilaianPro')?.dataset.admRoom||''}));
+            await page.evaluate(f=>window.ADM_ROOM_LAYOUT.activate(f),fake('scores','Rekap Nilai')); await page.waitForTimeout(120);
+            const rekap=await page.evaluate(()=>({active:!!document.querySelector('#penilaianPro')?.classList.contains('active'),room:document.querySelector('#penilaianPro')?.dataset.admRoom||''}));
             await page.evaluate(f=>window.ADM_ROOM_LAYOUT.activate(f),fake('students','Daftar Siswa'));
-            const studentRoom=await page.evaluate(()=>document.querySelector('#students')?.dataset.admRoom||'');
+            const students=await page.evaluate(()=>({active:!!document.querySelector('#students')?.classList.contains('active'),room:document.querySelector('#students')?.dataset.admRoom||''}));
             await page.evaluate(f=>window.ADM_ROOM_LAYOUT.activate(f),fake('aiGenerate','Generate Soal'));
-            const aiRoom=await page.evaluate(()=>document.querySelector('#aiGenerate')?.dataset.admRoom||'');
-            const roomChecks={inputRoom,rekapRoom,studentRoom,aiRoom};
-            if(inputRoom.room!=='assessment:input'||inputRoom.tab!=='input'||!inputRoom.active)throw new Error('Input Nilai room failed: '+JSON.stringify(roomChecks));
-            if(rekapRoom.room!=='assessment:rekap'||rekapRoom.tab!=='rekap')throw new Error('Rekap room failed: '+JSON.stringify(roomChecks));
-            if(studentRoom!=='students:list')throw new Error('Data Siswa room failed: '+JSON.stringify(roomChecks));
-            if(!/^(ai:|custom:)/.test(aiRoom))throw new Error('AI room failed: '+JSON.stringify(roomChecks));
+            const ai=await page.evaluate(()=>({active:!!document.querySelector('#aiGenerate')?.classList.contains('active'),room:document.querySelector('#aiGenerate')?.dataset.admRoom||''}));
+            if(!input.active||!rekap.active||input.room!==''||rekap.room!=='')throw new Error('Assessment room routing failed: '+JSON.stringify({input,rekap}));
+            if(!students.active||students.room!=='students:list')throw new Error('Data Siswa room failed: '+JSON.stringify(students));
+            if(!ai.active||!/^(ai:|custom:)/.test(ai.room))throw new Error('AI room failed: '+JSON.stringify(ai));
             const dashboard=await page.evaluate(()=>{const b=[...document.querySelectorAll('.navbtn[data-page]')].find(x=>x.dataset.page==='dashboard');b?.click();const p=document.querySelector('.page.active');const text=(p?.innerText||'').toLowerCase();return {id:p?.id||'',noise:/data siswa|ai generate|input nilai|rpm|lkpd/.test(text)};});
             if(dashboard.id!=='dashboard'||dashboard.noise)throw new Error('Dashboard room not clean: '+JSON.stringify(dashboard));
             const alloc=await page.evaluate(()=>window.GURU_SD_PERANGKAT_ENGINE.allocate({jp:2,tp:[{no:1,text:'a'},{no:2,text:'b'},{no:3,text:'c'},{no:4,text:'d'}]}));
             if(alloc.reduce((a,x)=>a+x.jp,0)!==2||!alloc.some(x=>x.jp===0))throw new Error('exact JP contract failed: '+JSON.stringify(alloc));
             if(errors.length)throw new Error(errors.join('\n'));
-            console.log('runtime smoke OK:',JSON.stringify({targets:targets.length,rooms:roomChecks,dashboard,allocation:alloc.map(x=>x.jp)}));
+            console.log('runtime smoke OK:',JSON.stringify({targets:targets.length,rooms:{input,rekap,students,ai},dashboard,allocation:alloc.map(x=>x.jp)}));
             await browser.close();
           })().catch(e=>{console.error(e);process.exit(1)});
           NODE

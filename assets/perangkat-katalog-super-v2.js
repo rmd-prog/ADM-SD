@@ -31,4 +31,24 @@ function mount(){
 }
 window.GURU_SD_KATALOG={source:'BOOK_CATALOG',grades:R,subjects:M,list,data,get:(r,m)=>{const a=list(r,m);return a.map((bab,i)=>({no:i+1,bab}))},ready:()=>!!catalog()};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount);else mount();
+
+/* Canonical reference bridge: the visible reference page must never read legacy BAB. */
+function patchReference(){
+  if(typeof renderReference!=='function'||window.__PKAT_REFERENCE_V3__)return;
+  const canonical=window.GURU_SD_KATALOG;
+  if(!canonical||typeof canonical.list!=='function')return;
+  window.__PKAT_REFERENCE_V3__=1;
+  renderReference=function(){
+    const host=q('babReference');
+    if(!host)return;
+    let html='<h3 style="margin-top:20px">BAB yang tersedia di aplikasi</h3><p class="muted">Daftar berikut membaca satu sumber katalog canonical: BOOK_CATALOG.</p>';
+    R.forEach(r=>M.forEach(m=>{
+      const arr=canonical.list(r,m);
+      if(!arr.length)return;
+      html+='<div style="margin:12px 0"><b>'+esc(m)+'</b><div style="margin-top:5px">Rombel '+esc(r)+': '+arr.map((x,i)=>'<span class="badge" style="margin:2px">'+esc('BAB '+(i+1)+' — '+x)+'</span>').join('')+'</div></div>';
+    }));
+    host.innerHTML=html;
+  };
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(patchReference,0),{once:true});else setTimeout(patchReference,0);
 })();

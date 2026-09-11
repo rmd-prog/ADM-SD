@@ -2,5 +2,7 @@
   "name": "adm-sd",
   "main": "src/secure-worker.js",
   "compatibility_date": "2026-09-06",
-  "account_id": "1059f6c3f94755e9562d95cfd16ff6d1"
+  "account_id": "1059f6c3f94755e9562d95cfd16ff6d1",
+  "keep_vars": true,
+  "keep_bindings": ["d1"]
 }

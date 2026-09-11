@@ -33,23 +33,36 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
           python3 - <<'PY'
-          import json, subprocess, urllib.request
+          import json, urllib.request
           account='${{ env.CLOUDFLARE_ACCOUNT_ID }}'
           token='${{ secrets.CLOUDFLARE_API_TOKEN }}'
           base=f'https://api.cloudflare.com/client/v4/accounts/{account}/workers/scripts/adm-sd'
           def get(url):
               req=urllib.request.Request(url,headers={'Authorization':f'Bearer {token}'})
               with urllib.request.urlopen(req,timeout=20) as r:return json.load(r)
+          def items(obj):
+              if isinstance(obj,list): return obj
+              if isinstance(obj,dict):
+                  for k in ('result','versions','items'):
+                      if k in obj:
+                          x=obj[k]
+                          if isinstance(x,list): return x
+                          if isinstance(x,dict):
+                              y=items(x)
+                              if y:return y
+              return []
           current=json.load(open('wrangler.jsonc'))
           found=None
           try:
-              versions=get(base+'/versions?per_page=50').get('result',[])
+              versions=items(get(base+'/versions?per_page=50').get('result',[]))
+              print('Worker versions inspected:',len(versions))
               for v in versions:
-                  vid=v.get('id')
+                  vid=v.get('id') if isinstance(v,dict) else None
                   if not vid: continue
                   detail=get(base+'/versions/'+vid).get('result',{})
-                  for b in detail.get('resources',{}).get('bindings',[]) or []:
-                      if b.get('type')=='d1' and b.get('name') and b.get('database_id'):
+                  bindings=(detail.get('resources',{}) or {}).get('bindings',[]) if isinstance(detail,dict) else []
+                  for b in bindings or []:
+                      if isinstance(b,dict) and b.get('type')=='d1' and b.get('name') and b.get('database_id'):
                           found={'binding':b['name'],'database_id':b['database_id'],'database_name':b.get('database_name','')}
                           break
                   if found: break
@@ -61,7 +74,6 @@ jobs:
           current.pop('keep_bindings',None)
           current['d1_databases']=[found]
           with open('wrangler.recovered.jsonc','w') as f: json.dump(current,f,indent=2)
-          existing=current.copy(); existing.pop('d1_databases',None)
           repo=json.load(open('wrangler.jsonc'))
           if repo.get('d1_databases') != [found]:
               repo.pop('keep_bindings',None)

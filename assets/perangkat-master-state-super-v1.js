@@ -1,11 +1,11 @@
-/* GURU+ SD — SINGLE SOURCE OF TRUTH V6
- * One canonical state for BAB -> CP -> ATP -> TP -> JP -> Jadwal -> PROTA -> PROMES -> RPM -> LKPD -> Asesmen.
- * UI selectors WRITE to Master only on explicit user change. Generators READ the persisted Master.
- * On page boot, an existing valid Master is restored into the UI instead of being overwritten by stale/default DOM.
+/* GURU+ SD — SINGLE SOURCE OF TRUTH V7
+ * Canonical chain: BAB -> CP -> ATP -> TP -> JP -> Jadwal -> PROTA -> PROMES -> RPM -> LKPD -> Asesmen.
+ * The selected BAB is the only context written from the UI. TP is never regenerated here.
+ * Generators read the persisted Master; no duplicate TP source is created.
  * Local-only. Never touches D1, Worker, students, login, or assessment bridge.
  */
 (function(){'use strict';
-if(window.__GURU_SD_MASTER_STATE_V6__)return;window.__GURU_SD_MASTER_STATE_V6__=1;
+if(window.__GURU_SD_MASTER_STATE_V7__)return;window.__GURU_SD_MASTER_STATE_V7__=1;
 const KEY='guru_sd_pembelajaran_master_v1',LEGACY='guru_sd_perangkat_super_v1';
 const $=id=>document.getElementById(id);
 const read=(k,d=null)=>{try{return JSON.parse(localStorage.getItem(k)||'null')??d}catch(e){return d}};
@@ -18,7 +18,11 @@ function selectedDpl(mapel,old,sameContext){const nodes=[...document.querySelect
 function selectedModel(old,sameContext){const nodes=['modelPembelajaran','model','pkModel','modelPembelajaranSelect'].map($).filter(Boolean);for(const el of nodes){const v=el.value||el.textContent;if(v&&String(v).trim())return String(v).trim()}return sameContext?(old?.modelPembelajaran||'Problem Based Learning'):'Problem Based Learning'}
 function parseBab(){const b=$('pkB');const opt=b?.options?.[b.selectedIndex];const text=(opt?.textContent||'').trim();const bm=text.match(/BAB\s*(\d+)\s*[—-]\s*(.+?)(?:\s*\((\d+)\s*JP\))?$/i);const babNo=bm?Number(bm[1]):Number(b?.value)||0;const material=bm?bm[2].trim():text.replace(/^BAB\s*\d+\s*[—-]\s*/i,'').replace(/\s*\(\d+\s*JP\).*$/i,'').trim();const jp=bm&&bm[3]?Number(bm[3]):2;return {babNo,material,jp};}
 function fallbackTp(material){return Array.from({length:4},(_,i)=>({no:i+1,text:'Peserta didik mampu '+['memahami konsep penting','mengidentifikasi dan menjelaskan informasi','menerapkan konsep dalam aktivitas atau pemecahan masalah','mengomunikasikan hasil dan melakukan refleksi'][i]+' pada materi '+material+'.',jp:0}));}
-function fromDom(){const c=controls();if(!c.rombel||!c.mapel||!c.bab)return null;const p=parseBab();if(!p.material)return null;const old=read(KEY,null);const babId=c.rombel+'|'+c.mapel+'|'+p.babNo;const sameContext=!!old&&old.rombel===c.rombel&&old.mapel===c.mapel&&old.babId===babId;const tp=fallbackTp(p.material);const semester=p.babNo>0?(p.babNo<=3?1:2):(sameContext?Number(old.semester)||1:1);return {source:'GURU_SD_MASTER',rombel:c.rombel,mapel:c.mapel,babId,babNo:p.babNo,material:p.material,semester,jp:p.jp,tp,dpl:selectedDpl(c.mapel,old,sameContext),modelPembelajaran:selectedModel(old,sameContext),fase:phase(c.rombel),tahunPelajaran:'2026/2027',updatedAt:new Date().toISOString()};}
+function fromDom(){const c=controls();if(!c.rombel||!c.mapel||!c.bab)return null;const p=parseBab();if(!p.material)return null;const old=read(KEY,null);const babId=c.rombel+'|'+c.mapel+'|'+p.babNo;const sameContext=!!old&&old.rombel===c.rombel&&old.mapel===c.mapel&&old.babId===babId;
+/* Critical rule: never carry TP from another BAB and never create a second TP generator here. */
+const tp=sameContext&&Array.isArray(old.tp)?old.tp:[];
+const semester=p.babNo>0?(p.babNo<=3?1:2):(sameContext?Number(old.semester)||1:1);
+return {source:'GURU_SD_MASTER',rombel:c.rombel,mapel:c.mapel,babId,babNo:p.babNo,material:p.material,semester,jp:p.jp,tp,dpl:selectedDpl(c.mapel,old,sameContext),modelPembelajaran:selectedModel(old,sameContext),fase:phase(c.rombel),tahunPelajaran:'2026/2027',updatedAt:new Date().toISOString()};}
 function save(x){if(!x)return null;const clean={...x,source:'GURU_SD_MASTER',tp:Array.isArray(x.tp)?x.tp:[],dpl:Array.isArray(x.dpl)?x.dpl:[],updatedAt:x.updatedAt||new Date().toISOString()};const prev=read(KEY,null);const a=JSON.stringify(prev||{}),b=JSON.stringify(clean);if(a===b)return prev;localStorage.setItem(KEY,JSON.stringify(clean));localStorage.setItem(LEGACY,JSON.stringify(clean));window.dispatchEvent(new CustomEvent('guruSdMasterChanged',{detail:clean}));return clean}
 function sync(){const x=fromDom();if(!x)return null;return save(x)}
 function restoreDom(x){if(!x)return;const r=$('pkR'),m=$('pkM'),b=$('pkB');if(r&&x.rombel)r.value=x.rombel;if(m&&x.mapel)m.value=x.mapel;if(b&&x.material){const opts=[...b.options];let i=opts.findIndex(o=>String(o.textContent||'').trim().toLowerCase().includes(String(x.material).trim().toLowerCase()));if(i<0&&x.babNo)i=opts.findIndex(o=>new RegExp('BAB\\s*'+Number(x.babNo)+'\\b','i').test(String(o.textContent||'')));if(i>=0)b.selectedIndex=i;}}

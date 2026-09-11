@@ -4,7 +4,7 @@ on:
     branches: ["feat-perangkat-pembelajaran-super-2026-09-10"]
   workflow_dispatch:
 permissions:
-  contents: write
+  contents: read
 concurrency:
   group: adm-sd-runtime-smoke-${{ github.ref }}
   cancel-in-progress: true
@@ -14,16 +14,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Repair malformed inline exportHtml before smoke test
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          p=Path('index.html'); s=p.read_text(encoding='utf-8')
-          start=s.find('function exportHtml(type){'); end=s.find('function ensureDoc',start)
-          if start>=0 and end>=0:
-              replacement="""function exportHtml(type){const d=docPayload(type);return '<!doctype html><html lang=\"id\"><head><meta charset=\"utf-8\"><title>'+escHtml(d.title)+'</title></head><body><h1>'+escHtml(d.title)+'</h1><p>Tahun Pelajaran 2026/2027</p>'+d.body+'</body></html>'}\n"""
-              p.write_text(s[:start]+replacement+s[end:],encoding='utf-8')
-          PY
       - name: Setup Node
         uses: actions/setup-node@v4
         with: {node-version: 20}
@@ -31,23 +21,25 @@ jobs:
         run: |
           find assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
           node --check guru-mapel-ui.js
-      - name: Validate inline scripts
+      - name: Validate inline scripts from production source
         run: |
           python3 - <<'PY'
           from html.parser import HTMLParser
           from pathlib import Path
           class P(HTMLParser):
-              def __init__(self): super().__init__(); self.on=False; self.buf=[]; self.items=[]
+              def __init__(self): super().__init__(); self.on=False; self.buf=[]; self.typ=''; self.items=[]
               def handle_starttag(self,t,a):
                   if t.lower()=='script': self.on=True; self.buf=[]; self.typ=dict(a).get('type','').lower()
               def handle_data(self,d):
                   if self.on:self.buf.append(d)
               def handle_endtag(self,t):
                   if t.lower()=='script' and self.on:
-                      if ''.join(self.buf).strip() and self.typ not in ('application/ld+json','application/json','importmap'): self.items.append(''.join(self.buf))
+                      x=''.join(self.buf)
+                      if x.strip() and self.typ not in ('application/ld+json','application/json','importmap'): self.items.append(x)
                       self.on=False
           p=P();p.feed(Path('index.html').read_text(encoding='utf-8')); Path('/tmp/inline').mkdir(exist_ok=True)
           for i,t in enumerate(p.items,1):Path(f'/tmp/inline/{i}.js').write_text(t,encoding='utf-8')
+          print('inline scripts:',len(p.items))
           PY
           for f in /tmp/inline/*.js; do node --check "$f"; done
       - name: Install Playwright
@@ -71,19 +63,35 @@ jobs:
             const response=await page.goto('http://127.0.0.1:4173/index.html',{waitUntil:'networkidle',timeout:30000});
             if(!response?.ok())throw new Error('index.html did not load');
             await page.waitForTimeout(2500);
-            const result=await page.evaluate(()=>({login:!!document.querySelector('.login'),app:!!document.querySelector('#app'),nav:document.querySelectorAll('.navbtn').length,pages:document.querySelectorAll('.page').length,feature:!!window.GURU_SD_FEATURE_COMPLETE,master:!!window.GURU_SD_MASTER,chain:!!window.GURU_SD_AUTO_CHAIN,room:!!window.ADM_ROOM_LAYOUT,engine:!!window.GURU_SD_PERANGKAT_ENGINE,runtime:window.GURU_SD_RUNTIME_INTEGRITY||null,assessmentTabs:document.querySelectorAll('#penilaianPro .sg-tab').length,studentPanes:document.querySelectorAll('#studentPaneList,#studentPaneImport,#studentPaneForm').length,aiType:!!document.querySelector('#aiType')}));
+            const result=await page.evaluate(()=>({login:!!document.querySelector('.login'),app:!!document.querySelector('#app'),nav:document.querySelectorAll('.navbtn').length,pages:document.querySelectorAll('.page').length,feature:!!window.GURU_SD_FEATURE_COMPLETE,master:!!window.GURU_SD_MASTER,chain:!!window.GURU_SD_AUTO_CHAIN,room:!!window.ADM_ROOM_LAYOUT,engine:!!window.GURU_SD_PERANGKAT_ENGINE,runtime:window.GURU_SD_RUNTIME_INTEGRITY||null,penilaian:!!document.querySelector('#penilaianPro'),students:!!document.querySelector('#students'),ai:!!document.querySelector('#aiGenerate')}));
             if(!result.login||!result.app||result.nav<1||result.pages<1)throw new Error('app shell missing: '+JSON.stringify(result));
             if(!result.feature||!result.master||!result.chain||!result.room||!result.engine)throw new Error('critical modules missing: '+JSON.stringify(result));
             if(result.runtime&&!result.runtime.ready)throw new Error('runtime integrity failed: '+JSON.stringify(result.runtime));
-            if(result.assessmentTabs<1||result.studentPanes<3||!result.aiType)throw new Error('room DOM contract missing: '+JSON.stringify(result));
             await page.evaluate(()=>{document.querySelector('.login')?.style.setProperty('display','none');document.querySelector('#app')?.style.setProperty('display','block')});
             const aliases={report:'penilaianPro',scores:'penilaianPro'};
             const targets=await page.locator('.navbtn[data-page]').evaluateAll(bs=>[...new Set(bs.map(b=>b.dataset.page).filter(Boolean))]);
-            for(const t of targets){await page.evaluate(x=>{const b=[...document.querySelectorAll('.navbtn[data-page="'+CSS.escape(x)+'"]')].find(y=>y.offsetParent!==null)||document.querySelector('.navbtn[data-page="'+CSS.escape(x)+'"]');b?.click()},t);await page.waitForTimeout(60);const a=await page.locator('.page.active').first().getAttribute('id');if(a!==(aliases[t]||t))throw new Error('navigation failed: '+t+' -> '+a)}
+            for(const t of targets){await page.evaluate(x=>{const bs=[...document.querySelectorAll('.navbtn[data-page]')].filter(b=>b.dataset.page===x);const b=bs.find(y=>y.offsetParent!==null)||bs[0];b?.click()},t);await page.waitForTimeout(120);const a=await page.locator('.page.active').first().getAttribute('id');if(a!==(aliases[t]||t))throw new Error('navigation failed: '+t+' -> '+a)}
+            const roomChecks=await page.evaluate(()=>{
+              const findBtn=(re)=>[...document.querySelectorAll('.navbtn[data-page]')].find(b=>re.test((b.innerText||b.textContent||'').toLowerCase()));
+              const clickBtn=(re)=>{const b=findBtn(re);if(!b)return false;b.click();return true};
+              clickBtn(/input nilai/); const p=document.querySelector('#penilaianPro');
+              const inputRoom=p?.dataset.admRoom||'';
+              const inputActive=!!p&&p.classList.contains('active');
+              clickBtn(/rekap (?:nilai|\/ rapor)/); const rekapRoom=p?.dataset.admRoom||'';
+              const student=clickBtn(/daftar siswa/); const sp=document.querySelector('#students'); const studentRoom=sp?.dataset.admRoom||'';
+              const ai=clickBtn(/generate soal|kisi.?kisi|rubrik|remedial|pengayaan|bahan ajar|asesmen/); const ap=document.querySelector('#aiGenerate'); const aiRoom=ap?.dataset.admRoom||'';
+              return {inputRoom,inputActive,rekapRoom,student,studentRoom,ai,aiRoom};
+            });
+            if(!roomChecks.inputActive||roomChecks.inputRoom!=='assessment:input')throw new Error('Input Nilai room failed: '+JSON.stringify(roomChecks));
+            if(roomChecks.rekapRoom!=='assessment:rekap')throw new Error('Rekap room failed: '+JSON.stringify(roomChecks));
+            if(roomChecks.student&& !/^students:(list|import|form)$/.test(roomChecks.studentRoom))throw new Error('Data Siswa room failed: '+JSON.stringify(roomChecks));
+            if(roomChecks.ai&& !/^(ai:|custom:)/.test(roomChecks.aiRoom))throw new Error('AI room failed: '+JSON.stringify(roomChecks));
+            const dashboard=await page.evaluate(()=>{const b=[...document.querySelectorAll('.navbtn[data-page]')].find(x=>x.dataset.page==='dashboard');b?.click();const p=document.querySelector('.page.active');const text=(p?.innerText||'').toLowerCase();return {id:p?.id||'',noise:/data siswa|ai generate|input nilai|rpm|lkpd/.test(text)};});
+            if(dashboard.id!=='dashboard'||dashboard.noise)throw new Error('Dashboard room not clean: '+JSON.stringify(dashboard));
             const alloc=await page.evaluate(()=>window.GURU_SD_PERANGKAT_ENGINE.allocate({jp:2,tp:[{no:1,text:'a'},{no:2,text:'b'},{no:3,text:'c'},{no:4,text:'d'}]}));
             if(alloc.reduce((a,x)=>a+x.jp,0)!==2||!alloc.some(x=>x.jp===0))throw new Error('exact JP contract failed: '+JSON.stringify(alloc));
             if(errors.length)throw new Error(errors.join('\n'));
-            console.log('runtime smoke OK:',JSON.stringify({targets:targets.length,assessmentTabs:result.assessmentTabs,studentPanes:result.studentPanes,allocation:alloc.map(x=>x.jp)}));
+            console.log('runtime smoke OK:',JSON.stringify({targets:targets.length,rooms:roomChecks,dashboard,allocation:alloc.map(x=>x.jp)}));
             await browser.close();
           })().catch(e=>{console.error(e);process.exit(1)});
           NODE

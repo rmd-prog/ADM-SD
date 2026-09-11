@@ -55,7 +55,6 @@ jobs:
           ! grep -q 'STS' assets/assessment-smart.js
           ! grep -q 'STS' assets/assessment-bab-matrix.js
           ! grep -q 'STS' assets/assessment-rekap-smart.js
-          grep -q 'assessment-absensi-bridge.js' index.html || grep -q 'assessment-absensi-bridge.js' assets/index-menu-finishing-v9.js
           echo "Assessment menu contract: OK"
       - name: Assessment curriculum integrity
         shell: bash

@@ -1,0 +1,60 @@
+name: one-time master chain index consolidation
+
+on:
+  push:
+    branches:
+      - feat-perangkat-pembelajaran-super-2026-09-10
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat-perangkat-pembelajaran-super-2026-09-10
+          fetch-depth: 0
+      - name: Consolidate document context to Master
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          original=s
+          def replace_func(src,name,new):
+              pat=re.compile(r'function '+re.escape(name)+r'\([^)]*\)\{')
+              m=pat.search(src)
+              if not m: raise SystemExit(f'Missing function: {name}')
+              i=m.end(); depth=1; j=i
+              while j<len(src) and depth:
+                  if src[j]=='{': depth+=1
+                  elif src[j]=='}': depth-=1
+                  j+=1
+              if depth: raise SystemExit(f'Unbalanced function: {name}')
+              return src[:m.start()]+new+src[j:]
+          new_set='''function setDocPreview(type,notice){const meta=docMeta(type),master=window.GURU_SD_MASTER?.get?.();if(!master?.rombel||!master?.mapel||!master?.material)return;const k=normalizeRombel(master.rombel),m=String(master.mapel),text=id(meta[3]).value,bab=String(master.material);id(meta[1]).value=k;id(meta[2]).value=m;if(type==='rpm'){const sel=id('rpmBab');if(sel){const opts=[...sel.options];const idx=opts.findIndex(o=>String(o.textContent||'').toLowerCase().includes(bab.toLowerCase()));if(idx>=0)sel.selectedIndex=idx;}}id(meta[4]).innerHTML=renderStructured(meta[0],text,k,m,bab);id(meta[5]).textContent='Generated • '+k+' • '+bab;id(meta[6]).textContent=notice||('Dokumen '+meta[0]+' terikat ke Master BAB '+bab+'.');id(meta[6]).style.display='block';setTimeout(()=>id(meta[6]).style.display='none',2800)}'''
+          new_payload='''function docPayload(type){const meta=docMeta(type),master=window.GURU_SD_MASTER?.get?.();if(!master?.rombel||!master?.mapel||!master?.material)throw new Error('Master pembelajaran belum memiliki BAB aktif.');const k=normalizeRombel(master.rombel),m=String(master.mapel),text=id(meta[3]).value,bab=String(master.material);id(meta[1]).value=k;id(meta[2]).value=m;return {meta,k,m,text,bab,title:meta[0]+' — '+m+' — Rombel '+k+' — '+bab,body:renderStructured(meta[0],text,k,m,bab)}}'''
+          s=replace_func(s,'setDocPreview',new_set)
+          s=replace_func(s,'docPayload',new_payload)
+          if s==original: raise SystemExit('No changes made')
+          p.write_text(s,encoding='utf-8')
+      - name: Verify
+        shell: bash
+        run: |
+          grep -q "Master pembelajaran belum memiliki BAB aktif" index.html
+          grep -q "const master=window.GURU_SD_MASTER?.get?.()" index.html
+          git diff --check
+          git status --short
+      - name: Commit and remove one-time workflow
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html .github/workflows/one-time-master-chain-index-patch.yml
+          git rm .github/workflows/one-time-master-chain-index-patch.yml
+          git commit -m "fix: bind document payload and preview to Master context"
+          git push origin HEAD:feat-perangkat-pembelajaran-super-2026-09-10

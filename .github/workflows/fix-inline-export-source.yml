@@ -1,0 +1,57 @@
+name: Fix Inline Export Source
+on:
+  push:
+    branches: ["feat-perangkat-pembelajaran-super-2026-09-10"]
+permissions:
+  contents: write
+jobs:
+  fix:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Repair malformed export block
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          start=s.find('function exportHtml(type){')
+          end=s.find('function ensureDoc', start)
+          if start<0 or end<0:
+              raise SystemExit('export block not found')
+          replacement="""function exportHtml(type){const d=docPayload(type);return '<!doctype html><html lang=\\\"id\\\"><head><meta charset=\\\"utf-8\\\"><title>'+escHtml(d.title)+'</title><style>body{font-family:Arial,sans-serif;margin:35px;color:#172033}h1{font-size:24px;margin-bottom:4px}h4{margin:18px 0 8px;border-bottom:2px solid #ddd;padding-bottom:6px}.doc-grid{display:flex;gap:10px}.doc-box{border:1px solid #ddd;border-radius:10px;padding:12px;flex:1;margin-bottom:12px}.doc-line{border:1px solid #e2e8f0;border-radius:7px;padding:8px;margin:5px 0;line-height:1.5}.doc-table{width:100%;border-collapse:collapse}.doc-table th,.doc-table td{border:1px solid #ccc;padding:8px;text-align:left;vertical-align:top}.doc-table th{background:#f3f4f6}.doc-note{margin-top:12px;padding:10px;background:#fff7ed}</style></head><body><h1>'+escHtml(d.title)+'</h1><p>Tahun Pelajaran 2026/2027</p>'+d.body+'</body></html>'}\\n"""
+          p.write_text(s[:start]+replacement+s[end:],encoding='utf-8')
+          PY
+      - name: Validate source
+        run: |
+          python3 - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          class P(HTMLParser):
+              def __init__(self): super().__init__(); self.on=False; self.buf=[]; self.typ=''; self.items=[]
+              def handle_starttag(self,t,a):
+                  if t.lower()=='script': self.on=True; self.buf=[]; self.typ=dict(a).get('type','').lower()
+              def handle_data(self,d):
+                  if self.on:self.buf.append(d)
+              def handle_endtag(self,t):
+                  if t.lower()=='script' and self.on:
+                      x=''.join(self.buf)
+                      if x.strip() and self.typ not in ('application/ld+json','application/json','importmap'): self.items.append(x)
+                      self.on=False
+          p=P();p.feed(Path('index.html').read_text(encoding='utf-8'))
+          Path('/tmp/inline').mkdir(exist_ok=True)
+          for i,x in enumerate(p.items,1): Path(f'/tmp/inline/{i}.js').write_text(x,encoding='utf-8')
+          print('inline scripts:',len(p.items))
+          PY
+          for f in /tmp/inline/*.js; do node --check "$f"; done
+          node --check guru-mapel-ui.js
+          find assets -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+      - name: Commit fix
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'fix: repair malformed inline document export block'
+          git push

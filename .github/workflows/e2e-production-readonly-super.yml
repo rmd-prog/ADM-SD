@@ -21,8 +21,8 @@ jobs:
     env:
       E2E_USERNAME: ${{ secrets.E2E_ADMIN_USERNAME }}
       E2E_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
-      BASE_URL: ${{ inputs.base_url || 'https://rmd-prog.github.io/ADM-SD/' }}
-      API_BASE: ${{ inputs.api_base || 'https://adm-sd.adm-sd.workers.dev/api' }}
+      BASE_URL: ${{ inputs.base_url }}
+      API_BASE: ${{ inputs.api_base }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -32,8 +32,8 @@ jobs:
         run: |
           test -n "$E2E_USERNAME"
           test -n "$E2E_PASSWORD"
-          test -n "$BASE_URL"
-          test -n "$API_BASE"
+          BASE_URL="${BASE_URL:-https://rmd-prog.github.io/ADM-SD/}"
+          API_BASE="${API_BASE:-https://adm-sd.adm-sd.workers.dev/api}"
           echo "E2E credentials and production endpoints are present (values are never printed)."
       - name: Install Playwright
         run: |
@@ -42,7 +42,9 @@ jobs:
           npx playwright install --with-deps chromium >/dev/null 2>&1
       - name: Production readonly E2E
         run: |
-          node <<'NODE'
+          BASE="${BASE_URL:-https://rmd-prog.github.io/ADM-SD/}"
+          API="${API_BASE:-https://adm-sd.adm-sd.workers.dev/api}"
+          BASE_URL="$BASE" API_BASE="$API" node <<'NODE'
           const {chromium}=require('playwright');
           (async()=>{
             const b=await chromium.launch({headless:true});
@@ -62,10 +64,11 @@ jobs:
             await p.waitForTimeout(3000);
             const after=await p.evaluate(()=>({loginDisplay:getComputedStyle(document.querySelector('.login')).display,appDisplay:getComputedStyle(document.querySelector('#app')).display,token:!!(localStorage.getItem('siAuthToken')||localStorage.getItem('token')||localStorage.getItem('authToken')),user:!!(localStorage.getItem('siLogin')||localStorage.getItem('currentUser'))}));
             if(after.loginDisplay!=='none'&&!after.token) throw Error('Login produksi tidak terdeteksi: '+JSON.stringify(after));
-            const apiResp=await p.evaluate(async(api)=>{const t=localStorage.getItem('siAuthToken')||localStorage.getItem('token')||localStorage.getItem('authToken')||'';const r=await fetch(api+'/guru',{headers:t?{Authorization:'Bearer '+t}:{}});return {status:r.status}},api);
+            const apiResp=await p.evaluate(async(api)=>{const t=localStorage.getItem('siAuthToken')||localStorage.getItem('token')||localStorage.getItem('authToken')||'';const r=await fetch(api+'/guru',{headers:t?{Authorization:'Bearer '+t}:{}});return {status:r.status,text:(await r.text()).slice(0,500)}},api);
             if(apiResp.status===401||apiResp.status===403) throw Error('Token/session tidak diterima Worker: '+JSON.stringify(apiResp));
             if(apiResp.status>=500) throw Error('Worker production 5xx: '+apiResp.status);
             const state=await p.evaluate(()=>({master:window.GURU_SD_MASTER?.get?.(),chain:!!window.GURU_SD_AUTO_CHAIN?.run?.(),pages:[...document.querySelectorAll('.page')].filter(x=>getComputedStyle(x).display!=='none').map(x=>x.id)}));
+            if(errors.some(e=>/SyntaxError|ReferenceError|TypeError/i.test(e))) throw Error('Runtime JS error: '+errors.join(' | '));
             console.log('PRODUCTION READONLY E2E PASS',JSON.stringify({shell,after,apiStatus:apiResp.status,master:state.master?{rombel:state.master.rombel,mapel:state.master.mapel,material:state.master.material}:null,pages:state.pages,errors}));
             await b.close();
           })().catch(e=>{console.error(e);process.exit(1)});

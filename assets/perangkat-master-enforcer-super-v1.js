@@ -1,11 +1,12 @@
-/* GURU+ SD — MASTER ENFORCER + CHAIN GUARD
+/* GURU+ SD — MASTER ENFORCER + CHAIN GUARD V5
  * Canonical source: guru_sd_pembelajaran_master_v1 / GURU_SD_MASTER.
  * Legacy state is a derived mirror only; reads are redirected to Master at runtime.
- * Blocks stale BAB/unit generators from overriding the active master state.
+ * UI BAB catalogs remain intact so teachers can choose every chapter.
+ * Active document context is always read from the persisted Master.
  * No D1/Worker access.
  */
 (function(){'use strict';
-if(window.__GURU_SD_MASTER_ENFORCER_V4__)return;window.__GURU_SD_MASTER_ENFORCER_V4__=1;
+if(window.__GURU_SD_MASTER_ENFORCER_V5__)return;window.__GURU_SD_MASTER_ENFORCER_V5__=1;
 const KEY='guru_sd_pembelajaran_master_v1',LEGACY='guru_sd_perangkat_super_v1';
 const nativeGet=Storage.prototype.getItem;
 function master(){try{return JSON.parse(nativeGet.call(localStorage,KEY)||'null')}catch(e){return null}}
@@ -24,20 +25,19 @@ function syncDom(x){
   const r=document.getElementById('pkR'),m=document.getElementById('pkM'),b=document.getElementById('pkB');
   if(r&&x.rombel&&r.value!==x.rombel)r.value=x.rombel;
   if(m&&x.mapel&&m.value!==x.mapel)m.value=x.mapel;
-  if(b&&x.material){const opts=[...b.options];let i=opts.findIndex(o=>String(o.textContent||'').toLowerCase().includes(String(x.material).toLowerCase()));if(i<0&&x.babNo)i=opts.findIndex(o=>new RegExp('BAB\\s*'+Number(x.babNo)+'\\b','i').test(String(o.textContent||'')));if(i>=0&&b.selectedIndex!==i)b.selectedIndex=i;}
+  if(b&&x.material){const opts=[...b.options];let i=opts.findIndex(o=>String(o.textContent||'').trim().toLowerCase().includes(String(x.material).trim().toLowerCase()));if(i<0&&x.babNo)i=opts.findIndex(o=>new RegExp('BAB\\s*'+Number(x.babNo)+'\\b','i').test(String(o.textContent||'')));if(i>=0&&b.selectedIndex!==i)b.selectedIndex=i;}
 }
-function guardCatalog(x){if(!x)return;if(typeof window.babList==='function')window.babList=function(){return [x.material]};if(typeof window.unitTitles==='function')window.unitTitles=function(){return [x.material]}}
 function patchDocPayload(){
   if(typeof window.docPayload!=='function')return;const original=window.docPayload;if(original.__MASTER_GUARDED__)return;
-  function guarded(type){const x=master();if(x){syncDom(x);guardCatalog(x)}const out=original.apply(this,arguments)||{};if(x){Object.assign(out,{rombel:x.rombel,mapel:x.mapel,material:x.material,babId:x.babId,babNo:x.babNo,semester:x.semester,jp:x.jp,fase:x.fase,dpl:x.dpl,modelPembelajaran:x.modelPembelajaran,tahunPelajaran:x.tahunPelajaran,tp:x.tp})}return out}
+  function guarded(type){const x=master();if(x)syncDom(x);const out=original.apply(this,arguments)||{};if(x){Object.assign(out,{rombel:x.rombel,mapel:x.mapel,material:x.material,babId:x.babId,babNo:x.babNo,semester:x.semester,jp:x.jp,fase:x.fase,dpl:x.dpl,modelPembelajaran:x.modelPembelajaran,tahunPelajaran:x.tahunPelajaran,tp:x.tp})}return out}
   guarded.__MASTER_GUARDED__=true;window.docPayload=guarded;
 }
 function patchGenerateDoc(){
   if(typeof window.generateDoc!=='function')return;const original=window.generateDoc;if(original.__MASTER_GUARDED__)return;
-  async function guarded(type){const x=master();if(!x||!x.rombel||!x.mapel||!x.babId)throw new Error('MASTER_STATE_NOT_READY');syncDom(x);guardCatalog(x);const rpm=document.getElementById('rpmBab');if(rpm){rpm.innerHTML='<option value="0">BAB '+Number(x.babNo||1)+' — '+String(x.material||'').replace(/[&<>"']/g,'')+'</option>';rpm.value='0'}window.dispatchEvent(new CustomEvent('guruSdMasterBeforeGenerate',{detail:x}));return original.apply(this,arguments)}
+  async function guarded(type){const x=master();if(!x||!x.rombel||!x.mapel||!x.babId)throw new Error('MASTER_STATE_NOT_READY');syncDom(x);const rpm=document.getElementById('rpmBab');if(rpm){const opts=[...rpm.options];if(opts.length){const i=opts.findIndex(o=>String(o.textContent||'').toLowerCase().includes(String(x.material||'').toLowerCase()));if(i>=0)rpm.value=String(i)}}window.dispatchEvent(new CustomEvent('guruSdMasterBeforeGenerate',{detail:x}));return original.apply(this,arguments)}
   guarded.__MASTER_GUARDED__=true;window.generateDoc=guarded;
 }
-function audit(){const x=master();if(!x||!x.babId)return;redirectLegacyReads();mirror(x);syncDom(x);guardCatalog(x);patchDocPayload();patchGenerateDoc();window.__GURU_SD_CHAIN_AUDIT__={source:'GURU_SD_MASTER',babId:x.babId,material:x.material,rombel:x.rombel,mapel:x.mapel,semester:x.semester,jp:x.jp,dpl:x.dpl,modelPembelajaran:x.modelPembelajaran,checkedAt:new Date().toISOString()}}
+function audit(){const x=master();if(!x||!x.babId)return;redirectLegacyReads();mirror(x);syncDom(x);patchDocPayload();patchGenerateDoc();window.__GURU_SD_CHAIN_AUDIT__={source:'GURU_SD_MASTER',babId:x.babId,material:x.material,rombel:x.rombel,mapel:x.mapel,semester:x.semester,jp:x.jp,dpl:x.dpl,modelPembelajaran:x.modelPembelajaran,checkedAt:new Date().toISOString()}}
 function boot(){audit();window.addEventListener('guruSdMasterChanged',e=>{mirror(e.detail);setTimeout(audit,0)});['pkR','pkM','pkB','pkI','rpmBab'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('change',()=>setTimeout(audit,0))});setInterval(audit,2000)}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 })();

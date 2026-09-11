@@ -26,7 +26,8 @@ jobs:
             'assets/perangkat-katalog-super-v2.js','assets/perangkat-binding-super-v1.js',
             'assets/perangkat-jp-super-v1.js','assets/perangkat-pertemuan-super-v1.js',
             'assets/perangkat-audit-super-v1.js','assets/perangkat-kalender-adaptif-v1.js',
-            'assets/perangkat-master-enforcer-super-v1.js','assets/perangkat-chain-audit-super-v2.js']
+            'assets/perangkat-master-enforcer-super-v1.js','assets/perangkat-master-engine-harden-v1.js',
+            'assets/perangkat-chain-audit-super-v2.js']
           legacy=[
             'assets/perangkat-cp-atp-tp-super-v2.js','assets/perangkat-prota-promes-super-v2.js',
             'assets/perangkat-rpm-super-v2.js','assets/perangkat-lkpd-asesmen-super-v1.js',
@@ -51,7 +52,8 @@ jobs:
             'assets/perangkat-katalog-super-v2.js','assets/perangkat-binding-super-v1.js',
             'assets/perangkat-jp-super-v1.js','assets/perangkat-pertemuan-super-v1.js',
             'assets/perangkat-audit-super-v1.js','assets/perangkat-kalender-adaptif-v1.js',
-            'assets/perangkat-master-enforcer-super-v1.js','assets/perangkat-chain-audit-super-v2.js']
+            'assets/perangkat-master-enforcer-super-v1.js','assets/perangkat-master-engine-harden-v1.js',
+            'assets/perangkat-chain-audit-super-v2.js']
           legacy=[
             'assets/perangkat-cp-atp-tp-super-v2.js','assets/perangkat-prota-promes-super-v2.js',
             'assets/perangkat-rpm-super-v2.js','assets/perangkat-lkpd-asesmen-super-v1.js',
@@ -61,7 +63,7 @@ jobs:
             if count(x)!=1: raise SystemExit(f'canonical loader invalid: {x}: {count(x)}')
           for x in legacy:
             if count(x)!=0: raise SystemExit(f'legacy loader still present: {x}: {count(x)}')
-          print('Validated canonical stack: 10 unique loaders; 0 duplicate generator loaders')
+          print('Validated canonical stack: 11 unique loaders; 0 duplicate generator loaders')
           PY
 
       - name: Commit normalized index

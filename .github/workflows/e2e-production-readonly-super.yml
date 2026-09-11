@@ -71,7 +71,16 @@ jobs:
             const b=await chromium.launch({headless:true});
             const p=await b.newPage({viewport:{width:390,height:844},isMobile:true});
             const base=process.env.BASE_URL, api=process.env.API_BASE, errors=[];
+            let loginResponse=null;
             p.on('pageerror',e=>errors.push(e.message));
+            p.on('response',async res=>{
+              if(res.url()===api+'/login'){
+                try{
+                  const text=await res.text();
+                  loginResponse={status:res.status(),ok:res.ok(),body:text.slice(0,300)};
+                }catch(e){loginResponse={status:res.status(),ok:res.ok(),body:'<unreadable>'};}
+              }
+            });
             const r=await p.goto(base,{waitUntil:'networkidle',timeout:45000});
             if(!r||!r.ok()) throw Error('Production page gagal dimuat: '+(r&&r.status()));
             await sleep(2500);
@@ -81,7 +90,9 @@ jobs:
             await inputs[0].fill(process.env.E2E_USERNAME); await inputs[1].fill(process.env.E2E_PASSWORD);
             await p.locator('#loginForm button[type="submit"]').click();
             await sleep(3500);
-            const auth=await p.evaluate(()=>({loginDisplay:getComputedStyle(document.querySelector('.login')).display,appDisplay:getComputedStyle(document.querySelector('#app')).display,token:!!(localStorage.getItem('siAuthToken')||localStorage.getItem('token')||localStorage.getItem('authToken')),user:!!(localStorage.getItem('siLogin')||localStorage.getItem('currentUser'))}));
+            const auth=await p.evaluate(()=>({loginDisplay:getComputedStyle(document.querySelector('.login')).display,appDisplay:getComputedStyle(document.querySelector('#app')).display,token:!!(localStorage.getItem('siAuthToken')||localStorage.getItem('token')||localStorage.getItem('authToken')),user:!!(localStorage.getItem('siLogin')||localStorage.getItem('currentUser')),errorText:(document.querySelector('.login')?.innerText||'').slice(-500)}));
+            console.log('LOGIN RESPONSE DIAGNOSTIC',JSON.stringify(loginResponse));
+            console.log('AUTH STATE',JSON.stringify(auth));
             if(auth.loginDisplay!=='none'||auth.appDisplay==='none'||!auth.token||!auth.user) throw Error('AUTH E2E FAIL: '+JSON.stringify(auth));
             const apiResp=await p.evaluate(async(api)=>{const t=localStorage.getItem('siAuthToken')||localStorage.getItem('token')||localStorage.getItem('authToken')||'';const r=await fetch(api+'/guru',{headers:{Authorization:'Bearer '+t}});return {status:r.status,text:(await r.text()).slice(0,300)}},api);
             if(apiResp.status!==200) throw Error('Worker /guru expected 200, got '+apiResp.status+' '+apiResp.text);

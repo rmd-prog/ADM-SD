@@ -1,0 +1,26 @@
+name: One-time discover D1 binding
+on:
+  workflow_dispatch:
+  push:
+    branches: ["feat-perangkat-pembelajaran-super-2026-09-10"]
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_ACCOUNT_ID: 1059f6c3f94755e9562d95cfd16ff6d1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Discover D1 databases
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          npx --yes wrangler@latest d1 list --json > /tmp/d1.json
+          python3 - <<'PY'
+          import json
+          data=json.load(open('/tmp/d1.json'))
+          for x in data:
+              print(f"D1: name={x.get('name','')} id={x.get('uuid') or x.get('database_id','')}")
+          PY

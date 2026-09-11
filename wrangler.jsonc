@@ -4,5 +4,11 @@
   "compatibility_date": "2026-09-06",
   "account_id": "1059f6c3f94755e9562d95cfd16ff6d1",
   "keep_vars": true,
-  "keep_bindings": ["d1"]
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_id": "20415873-2fac-4d5d-97bc-2ac207ba2109",
+      "database_name": ""
+    }
+  ]
 }

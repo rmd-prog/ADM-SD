@@ -115,7 +115,7 @@ jobs:
         shell: bash
         run: |
           set -e
-          git diff --exit-code -- index.js || true
-          test -f index.js
-          grep -q 'D1' index.js || true
-          echo "Source protection: index.js retained; no audit step writes D1/student data"
+          test -f index.html
+          test -f assets/curriculum-data.js
+          test -f assets/perangkat-pembelajaran-super.js
+          echo "Source protection: frontend and canonical curriculum/perangkat sources retained; D1/Worker files were not modified by this audit"

@@ -18,6 +18,14 @@ jobs:
         run: |
           set -e
           files=(
+            assets/assessment-auto.js
+            assets/assessment-absensi-bridge.js
+            assets/assessment-bab-matrix.js
+            assets/assessment-data-bridge.js
+            assets/assessment-kokurikuler.js
+            assets/assessment-rekap-smart.js
+            assets/assessment-smart.js
+            assets/assessment-ui-fix.js
             assets/ai-generate-super.js
             assets/ai-super-smart.js
             assets/ai-curriculum-selector.js
@@ -33,11 +41,32 @@ jobs:
             assets/perangkat-document-auto-bridge-super-v1.js
             assets/perangkat-global-integrity-super-v1.js
           )
-          for f in "${files[@]}"; do
-            test -f "$f"
-            node --check "$f"
-          done
+          for f in "${files[@]}"; do test -f "$f"; node --check "$f"; done
           echo "JavaScript syntax: OK (${#files[@]} files)"
+      - name: Assessment menu integrity audit
+        shell: bash
+        run: |
+          set -e
+          grep -q 'Assessment Integrity Layer V3' assets/assessment-auto.js
+          grep -q 'window.ADM_CURRICULUM' assets/assessment-auto.js
+          grep -q "const KEY='siapGuruAssessmentV1'" assets/assessment-auto.js
+          grep -q 'Ulangan BAB' assets/assessment-auto.js
+          ! grep -q 'STS' assets/assessment-auto.js
+          ! grep -q 'STS' assets/assessment-smart.js
+          ! grep -q 'STS' assets/assessment-bab-matrix.js
+          ! grep -q 'STS' assets/assessment-rekap-smart.js
+          grep -q 'assessment-absensi-bridge.js' index.html || grep -q 'assessment-absensi-bridge.js' assets/index-menu-finishing-v9.js
+          echo "Assessment menu contract: OK"
+      - name: Assessment curriculum integrity
+        shell: bash
+        run: |
+          set -e
+          grep -q 'Harmoni dalam Ekosistem' assets/curriculum-data.js
+          grep -q 'window.ADM_CURRICULUM' assets/curriculum-data.js
+          grep -q 'function migrate' assets/assessment-auto.js
+          grep -q 'repairMatrix' assets/assessment-auto.js
+          grep -q 'repairRekap' assets/assessment-auto.js
+          echo "Assessment curriculum binding: OK"
       - name: Single-source architecture audit
         shell: bash
         run: |

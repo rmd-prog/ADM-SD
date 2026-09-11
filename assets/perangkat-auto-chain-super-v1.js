@@ -1,0 +1,16 @@
+/* GURU+ SD — AUTO CHAIN SUPER v1
+ * Teacher chooses context once; the whole deterministic Perangkat chain is built automatically.
+ * AI is NOT called here. Outputs are derived locally from GURU_SD_MASTER.
+ * Local-only. Never touches D1, Worker, students, login, or assessment bridge.
+ */
+(function(){'use strict';
+if(window.__GURU_SD_AUTO_CHAIN_SUPER_V1__)return;window.__GURU_SD_AUTO_CHAIN_SUPER_V1__=1;
+const KEY='guru_sd_auto_chain_super_v1';
+const read=k=>{try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){return null}};
+function master(){const x=window.GURU_SD_MASTER?.get?.();return x&&x.rombel&&x.mapel&&x.material?x:null}
+function build(){const x=master(),e=window.GURU_SD_PERANGKAT_ENGINE;if(!x||!e)return null;const types=['CP','ATP','TP','PROTA','PROMES','RPM','LKPD','Asesmen'];const docs={};types.forEach(t=>{try{docs[t]=e.generate(t)}catch(err){docs[t]=null}});const chain={source:'GURU_SD_MASTER',rombel:x.rombel,mapel:x.mapel,babId:x.babId,babNo:x.babNo,material:x.material,semester:x.semester,jp:x.jp,tp:x.tp,dpl:x.dpl,modelPembelajaran:x.modelPembelajaran,fase:x.fase,tahunPelajaran:x.tahunPelajaran,docs,generatedAt:new Date().toISOString()};try{localStorage.setItem(KEY,JSON.stringify(chain))}catch(e){}window.GURU_SD_AUTO_CHAIN_DATA=chain;window.__GURU_SD_AUTO_CHAIN_AUDIT__={ok:true,source:'GURU_SD_MASTER',identity:[x.rombel,x.mapel,x.babId,x.material,x.semester,x.jp].join('|'),documents:Object.keys(docs).filter(k=>!!docs[k]),generatedAt:chain.generatedAt};render(chain);return chain}
+function render(c){const host=document.getElementById('perangkatSuperPanel')||document.getElementById('aiGenerate');if(!host)return;let box=document.getElementById('autoChainSuperBox');if(!box){box=document.createElement('div');box.id='autoChainSuperBox';box.style='margin:14px 0;padding:14px;border:1px solid #bfdbfe;border-radius:16px;background:linear-gradient(135deg,#eff6ff,#fff)';host.appendChild(box)}box.innerHTML='<b>⚡ AI Generate SUPER — AUTO CHAIN</b><div style="margin-top:6px;font-size:12px;color:#475569">'+c.rombel+' • '+c.mapel+' • BAB '+c.babNo+' — '+c.material+' • '+c.jp+' JP</div><div style="margin-top:8px;color:#166534;font-weight:800">✓ CP → ATP → TP → JP → PROTA → PROMES → RPM → LKPD → Asesmen tersambung otomatis</div><div style="margin-top:5px;font-size:12px;color:#64748b">Tidak memakai request AI untuk rantai dasar. AI hanya digunakan bila guru sengaja meminta penyempurnaan.</div>'}
+function boot(){const run=()=>setTimeout(build,120);window.addEventListener('guruSdMasterChanged',run);['pkR','pkM','pkB','pkI','modelPembelajaran','model','pkModel','modelPembelajaranSelect'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('change',run)});setTimeout(build,900);setInterval(()=>{const x=master();const a=window.GURU_SD_AUTO_CHAIN_DATA;if(x&&(!a||a.babId!==x.babId||a.jp!==x.jp||a.modelPembelajaran!==x.modelPembelajaran||JSON.stringify(a.dpl)!==JSON.stringify(x.dpl)))build()},2500)}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
+window.GURU_SD_AUTO_CHAIN={run:build,get:()=>window.GURU_SD_AUTO_CHAIN_DATA||read(KEY)};
+})();

@@ -84,7 +84,7 @@ jobs:
             if(!input.active||!rekap.active||input.room!==''||rekap.room!=='')throw new Error('Assessment room routing failed: '+JSON.stringify({input,rekap}));
             if(students.room!=='students:list')throw new Error('Data Siswa room failed: '+JSON.stringify(students));
             if(!/^(ai:|custom:)/.test(ai.room))throw new Error('AI room failed: '+JSON.stringify(ai));
-            const dashboard=await page.evaluate(()=>{const b=[...document.querySelectorAll('.navbtn[data-page]')].find(x=>x.dataset.page==='dashboard');b?.click();const p=document.querySelector('.page.active');const text=(p?.innerText||'').toLowerCase();return {id:p?.id||'',noise:/data siswa|ai generate|input nilai|rpm|lkpd/.test(text)};});
+            const dashboard=await page.evaluate(()=>{const b=[...document.querySelectorAll('.navbtn[data-page]')].find(x=>x.dataset.page==='dashboard');b?.click();const visible=[...document.querySelectorAll('.page')].filter(p=>{const s=getComputedStyle(p);return s.display!=='none'&&s.visibility!=='hidden'&&p.getBoundingClientRect().height>0}).map(p=>p.id);return {id:document.querySelector('.page.active')?.id||'',visible,noise:visible.length!==1||visible[0]!=='dashboard'};});
             if(dashboard.id!=='dashboard'||dashboard.noise)throw new Error('Dashboard room not clean: '+JSON.stringify(dashboard));
             const alloc=await page.evaluate(()=>window.GURU_SD_PERANGKAT_ENGINE.allocate({jp:2,tp:[{no:1,text:'a'},{no:2,text:'b'},{no:3,text:'c'},{no:4,text:'d'}]}));
             if(alloc.reduce((a,x)=>a+x.jp,0)!==2||!alloc.some(x=>x.jp===0))throw new Error('exact JP contract failed: '+JSON.stringify(alloc));

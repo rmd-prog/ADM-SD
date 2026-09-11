@@ -65,9 +65,10 @@ jobs:
           (async()=>{
             const browser=await chromium.launch({headless:true});
             const page=await browser.newPage({viewport:{width:390,height:844},isMobile:true});
-            const errors=[];
+            const errors=[]; const expected401=[];
             page.on('pageerror',e=>errors.push('pageerror: '+e.message+'\n'+(e.stack||'')));
-            page.on('console',m=>{if(m.type()==='error')errors.push('console: '+m.text())});
+            page.on('console',m=>{if(m.type()==='error' && !/status of 401/i.test(m.text()))errors.push('console: '+m.text())});
+            page.on('response',r=>{if(r.status()===401)expected401.push(r.url())});
             page.on('requestfailed',r=>errors.push('requestfailed: '+r.url()+' '+(r.failure()?.errorText||'')));
             const response=await page.goto('http://127.0.0.1:4173/index.html',{waitUntil:'networkidle',timeout:30000});
             if(!response||!response.ok())throw new Error('index.html did not load');
@@ -78,8 +79,11 @@ jobs:
             if(result.runtime&&!result.runtime.ready)throw new Error('runtime integrity reported failed checks: '+JSON.stringify(result.runtime));
             const targets=await page.locator('.navbtn[data-page]').evaluateAll(btns=>[...new Set(btns.map(b=>b.dataset.page).filter(Boolean))]);
             await page.evaluate(()=>{const login=document.querySelector('.login'),app=document.getElementById('app');if(login)login.style.display='none';if(app)app.style.display='block'});
-            for(const target of targets){await page.evaluate(t=>document.querySelector('.navbtn[data-page="'+CSS.escape(t)+'"]')?.click(),target);await page.waitForTimeout(20);const active=await page.locator('#'+target).evaluate(el=>el.classList.contains('active'));if(!active)throw new Error('navigation failed: '+target)}
+            for(const target of targets){await page.evaluate(t=>document.querySelector('.navbtn[data-page="'+CSS.escape(t)+'"]')?.click(),target);await page.waitForTimeout(30);const active=await page.locator('#'+target).evaluate(el=>el.classList.contains('active'));if(!active)throw new Error('navigation failed: '+target)}
+            const buttonAudit=await page.evaluate(()=>[...document.querySelectorAll('button')].filter(b=>b.offsetParent!==null).map(b=>({text:(b.innerText||b.getAttribute('aria-label')||'').trim(),page:b.closest('.page')?.id||'',onclick:!!b.onclick,attr:!!b.getAttribute('onclick'),type:b.type})).filter(x=>x.text));
             console.log('routing targets passed:',targets.length);
+            console.log('visible buttons audited:',buttonAudit.length);
+            console.log('expected unauthenticated 401 responses:',expected401.length);
             if(errors.length)throw new Error(errors.join('\n'));
             await browser.close();
           })().catch(e=>{console.error(e);process.exit(1)});

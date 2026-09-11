@@ -28,6 +28,21 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Inspect current Worker bindings via Workers API
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          curl -fsSL "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/workers/scripts/adm-sd/settings" \
+            -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" > /tmp/worker-settings.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/worker-settings.json'))
+          if not d.get('success'): raise SystemExit('Workers API settings lookup failed')
+          for b in d.get('result',{}).get('bindings',[]):
+              if b.get('type')=='d1':
+                  print('CURRENT D1 BINDING:',json.dumps({k:b.get(k) for k in ('name','type','database_id') if b.get(k)}))
+          print('CURRENT BINDING TYPES:',sorted(set(b.get('type','') for b in d.get('result',{}).get('bindings',[]))))
+          PY
       - name: Deploy Worker preserving existing production bindings
         uses: cloudflare/wrangler-action@v3
         with:

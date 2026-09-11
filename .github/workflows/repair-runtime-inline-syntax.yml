@@ -8,8 +8,24 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    env:
+      CLOUDFLARE_ACCOUNT_ID: 1059f6c3f94755e9562d95cfd16ff6d1
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Discover production D1 binding
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          npx --yes wrangler@latest d1 list --json > /tmp/d1.json
+          python3 - <<'PY'
+          import json
+          data=json.load(open('/tmp/d1.json'))
+          for x in data:
+              print(f"D1: name={x.get('name','')} id={x.get('uuid') or x.get('database_id','')}")
+          PY
       - name: Repair malformed exportHtml function
         run: |
           python3 - <<'PY'

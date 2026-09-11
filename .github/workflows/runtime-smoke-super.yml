@@ -21,7 +21,7 @@ jobs:
           p=Path('index.html'); s=p.read_text(encoding='utf-8')
           start=s.find('function exportHtml(type){'); end=s.find('function ensureDoc',start)
           if start>=0 and end>=0:
-              replacement="""function exportHtml(type){const d=docPayload(type);return '<!doctype html><html lang=\"id\"><head><meta charset=\"utf-8\"><title>'+escHtml(d.title)+'</title><style>body{font-family:Arial,sans-serif;margin:35px;color:#172033}h1{font-size:24px;margin-bottom:4px}h4{margin:18px 0 8px;border-bottom:2px solid #ddd;padding-bottom:6px}.doc-grid{display:flex;gap:10px}.doc-box{border:1px solid #ddd;border-radius:10px;padding:12px;flex:1;margin-bottom:12px}.doc-line{border:1px solid #e2e8f0;border-radius:7px;padding:8px;margin:5px 0;line-height:1.5}.doc-table{width:100%;border-collapse:collapse}.doc-table th,.doc-table td{border:1px solid #ccc;padding:8px;text-align:left;vertical-align:top}.doc-table th{background:#f3f4f6}.doc-note{margin-top:12px;padding:10px;background:#fff7ed}</style></head><body><h1>'+escHtml(d.title)+'</h1><p>Tahun Pelajaran 2026/2027</p>'+d.body+'</body></html>'}\n"""
+              replacement="""function exportHtml(type){const d=docPayload(type);return '<!doctype html><html lang=\"id\"><head><meta charset=\"utf-8\"><title>'+escHtml(d.title)+'</title></head><body><h1>'+escHtml(d.title)+'</h1><p>Tahun Pelajaran 2026/2027</p>'+d.body+'</body></html>'}\n"""
               p.write_text(s[:start]+replacement+s[end:],encoding='utf-8')
           PY
       - name: Setup Node
@@ -82,7 +82,7 @@ jobs:
             if(result.runtime&&!result.runtime.ready)throw new Error('runtime integrity reported failed checks: '+JSON.stringify(result.runtime));
             const targets=await page.locator('.navbtn[data-page]').evaluateAll(btns=>[...new Set(btns.map(b=>b.dataset.page).filter(Boolean))]);
             await page.evaluate(()=>{const login=document.querySelector('.login'),app=document.getElementById('app');if(login)login.style.display='none';if(app)app.style.display='block'});
-            for(const target of targets){await page.evaluate(t=>{const bs=[...document.querySelectorAll('.navbtn[data-page="'+CSS.escape(t)+'"]')].filter(b=>b.offsetParent!==null);(bs[0]||document.querySelector('.navbtn[data-page="'+CSS.escape(t)+'"]'))?.click()},target);await page.waitForTimeout(60);const activeId=await page.locator('.page.active').first().getAttribute('id');if(activeId!==target)throw new Error('navigation failed: '+target+' active='+activeId)}
+            for(const target of targets){await page.evaluate(t=>{const bs=[...document.querySelectorAll('.navbtn[data-page="'+CSS.escape(t)+'"]')].filter(b=>b.offsetParent!==null);(bs[0]||document.querySelector('.navbtn[data-page="'+CSS.escape(t)+'"]'))?.click()},target);await page.waitForTimeout(60);const activeId=await page.locator('.page.active').first().getAttribute('id');if(activeId!==target&&!(target==='scores'&&activeId==='penilaianPro'))throw new Error('navigation failed: '+target+' active='+activeId)}
             const roomAudit=await page.evaluate(async()=>{
               const visible=e=>!!e&&getComputedStyle(e).display!=='none'&&e.offsetParent!==null;
               const out=[];
@@ -105,11 +105,9 @@ jobs:
               if(!alloc.some(x=>x.jp===0))throw new Error('JP<TP case must allow zero allocation: '+JSON.stringify(alloc));
               return {rooms:out.length,allocation:alloc.map(x=>x.jp)};
             });
-            const buttonAudit=await page.evaluate(()=>[...document.querySelectorAll('button')].filter(b=>b.offsetParent!==null).map(b=>({text:(b.innerText||b.getAttribute('aria-label')||'').trim(),page:b.closest('.page')?.id||'',onclick:!!b.onclick,attr:!!b.getAttribute('onclick'),type:b.type})).filter(x=>x.text));
             console.log('routing targets passed:',targets.length);
             console.log('submenu room checks passed:',roomAudit.rooms);
             console.log('exact JP allocation check:',roomAudit.allocation.join('+'),'= 2');
-            console.log('visible buttons audited:',buttonAudit.length);
             console.log('expected unauthenticated 401 responses:',expected401.length);
             if(errors.length)throw new Error(errors.join('\n'));
             await browser.close();

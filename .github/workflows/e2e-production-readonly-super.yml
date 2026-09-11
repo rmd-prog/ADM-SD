@@ -60,7 +60,7 @@ jobs:
             const inputs=await p.locator('.login input').all();
             await inputs[0].fill(process.env.E2E_USERNAME);
             await inputs[1].fill(process.env.E2E_PASSWORD);
-            await p.locator('.login button').first().click();
+            await p.locator('#loginForm button[type="submit"]').click();
             await p.waitForTimeout(3000);
             const after=await p.evaluate(()=>({loginDisplay:getComputedStyle(document.querySelector('.login')).display,appDisplay:getComputedStyle(document.querySelector('#app')).display,token:!!(localStorage.getItem('siAuthToken')||localStorage.getItem('token')||localStorage.getItem('authToken')),user:!!(localStorage.getItem('siLogin')||localStorage.getItem('currentUser'))}));
             if(after.loginDisplay!=='none'&&!after.token) throw Error('Login produksi tidak terdeteksi: '+JSON.stringify(after));

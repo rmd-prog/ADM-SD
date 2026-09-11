@@ -20,14 +20,13 @@ on:
 permissions:
   contents: read
 jobs:
-  e2e:
+  production-e2e:
     runs-on: ubuntu-latest
     env:
       E2E_USERNAME: ${{ secrets.E2E_ADMIN_USERNAME }}
       E2E_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
       BASE_URL: ${{ inputs.base_url }}
       API_BASE: ${{ inputs.api_base }}
-      CLOUDFLARE_ACCOUNT_ID: 1059f6c3f94755e9562d95cfd16ff6d1
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -38,17 +37,6 @@ jobs:
           test -n "$E2E_USERNAME"
           test -n "$E2E_PASSWORD"
           echo "E2E credentials present; values are never printed."
-      - name: Discover production D1 binding
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: |
-          npx --yes wrangler@latest d1 list --json > /tmp/d1.json
-          python3 - <<'PY'
-          import json
-          data=json.load(open('/tmp/d1.json'))
-          for x in data:
-              print(f"D1: name={x.get('name','')} id={x.get('uuid') or x.get('database_id','')}")
-          PY
       - name: Static source contract audit
         run: |
           python - <<'PY'

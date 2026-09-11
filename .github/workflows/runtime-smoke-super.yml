@@ -49,7 +49,7 @@ jobs:
             await page.waitForTimeout(2500);
             const result=await page.evaluate(()=>({
               title:document.title,
-              login:!!document.querySelector('#login'),
+              login:!!document.querySelector('#login,.login'),
               app:!!document.querySelector('#app'),
               nav:document.querySelectorAll('.navbtn').length,
               pages:document.querySelectorAll('.page').length,

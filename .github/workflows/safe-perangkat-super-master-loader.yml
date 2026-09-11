@@ -8,6 +8,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: adm-sd-safe-perangkat-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   integrate:
     runs-on: ubuntu-latest
@@ -38,9 +42,7 @@ jobs:
           pos=s.rfind('</body>')
           if pos<0: raise SystemExit('final </body> not found')
           s=s[:pos]+'\n'+'\n'.join(f'<script src="{x}"></script>' for x in canonical)+'\n'+s[pos:]
-          # Repair the malformed inline exportHtml string found by browser smoke testing.
-          replacement="""function exportHtml(type){const d=docPayload(type);return '<!doctype html><html lang=\"id\"><head><meta charset=\"utf-8\"><title>'+escHtml(d.title)+'</title><style>body{font-family:Arial,sans-serif;margin:35px;color:#172033}h1{font-size:24px;margin-bottom:4px}h4{margin:18px 0 8px;border-bottom:2px solid #ddd;padding-bottom:6px}.doc-grid{display:flex;gap:10px}.doc-box{border:1px solid #ddd;border-radius:10px;padding:12px;flex:1;margin-bottom:12px}.doc-line{border:1px solid #e2e8f0;border-radius:7px;padding:8px;margin:5px 0;line-height:1.5}.doc-table{width:100%;border-collapse:collapse}.doc-table th,.doc-table td{border:1px solid #ccc;padding:8px;text-align:left;vertical-align:top}.doc-table th{background:#f3f4f6}.doc-note{margin-top:12px;padding:10px;background:#fff7ed}</style></head><body><h1>'+escHtml(d.title)+'</h1><p>Tahun Pelajaran 2026/2027</p>'+d.body+'</body></html>'}
-function ensureDoc"""
+          replacement="""function exportHtml(type){const d=docPayload(type);return '<!doctype html><html lang=\"id\"><head><meta charset=\"utf-8\"><title>'+escHtml(d.title)+'</title><style>body{font-family:Arial,sans-serif;margin:35px;color:#172033}h1{font-size:24px;margin-bottom:4px}h4{margin:18px 0 8px;border-bottom:2px solid #ddd;padding-bottom:6px}.doc-grid{display:flex;gap:10px}.doc-box{border:1px solid #ddd;border-radius:10px;padding:12px;flex:1;margin-bottom:12px}.doc-line{border:1px solid #e2e8f0;border-radius:7px;padding:8px;margin:5px 0;line-height:1.5}.doc-table{width:100%;border-collapse:collapse}.doc-table th,.doc-table td{border:1px solid #ccc;padding:8px;text-align:left;vertical-align:top}.doc-table th{background:#f3f4f6}.doc-note{margin-top:12px;padding:10px;background:#fff7ed}</style></head><body><h1>'+escHtml(d.title)+'</h1><p>Tahun Pelajaran 2026/2027</p>'+d.body+'</body></html>'}\nfunction ensureDoc"""
           s,n=re.subn(r'function exportHtml\(type\)\{.*?\}\nfunction ensureDoc',replacement,s,count=1,flags=re.S)
           print('exportHtml repaired:',n)
           p.write_text(s,encoding='utf-8')

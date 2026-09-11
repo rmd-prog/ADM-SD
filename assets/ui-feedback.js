@@ -22,4 +22,5 @@ window.alert=function(message){const s=String(message||'');let type='info',title
  const bm=document.createElement('script');bm.src='assets/assessment-bab-matrix.js?v=3';bm.async=false;(document.head||document.documentElement).appendChild(bm);
  const g=document.createElement('script');g.src='assets/app-global-integrity-super-v1.js?v=1';g.async=false;(document.head||document.documentElement).appendChild(g);
  const fc=document.createElement('script');fc.src='assets/app-feature-complete-super-v1.js?v=1';fc.async=false;(document.head||document.documentElement).appendChild(fc);
-}catch(e){console.warn('Assessment/global/feature module load:',e)}})();
+ const rt=document.createElement('script');rt.src='assets/app-runtime-integrity-super-v1.js?v=1';rt.async=false;(document.head||document.documentElement).appendChild(rt);
+}catch(e){console.warn('Assessment/global/feature/runtime module load:',e)}})();

@@ -20,4 +20,5 @@ window.alert=function(message){const s=String(message||'');let type='info',title
  const ab=document.createElement('script');ab.src='assets/assessment-absensi-bridge.js?v=3';ab.async=false;(document.head||document.documentElement).appendChild(ab);
  const r=document.createElement('script');r.src='assets/assessment-rekap-smart.js?v=3';r.async=false;(document.head||document.documentElement).appendChild(r);
  const bm=document.createElement('script');bm.src='assets/assessment-bab-matrix.js?v=3';bm.async=false;(document.head||document.documentElement).appendChild(bm);
-}catch(e){console.warn('Assessment module load:',e)}})();
+ const g=document.createElement('script');g.src='assets/app-global-integrity-super-v1.js?v=1';g.async=false;(document.head||document.documentElement).appendChild(g);
+}catch(e){console.warn('Assessment/global module load:',e)}})();

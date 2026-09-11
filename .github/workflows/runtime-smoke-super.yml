@@ -82,7 +82,7 @@ jobs:
             if(result.runtime&&!result.runtime.ready)throw new Error('runtime integrity reported failed checks: '+JSON.stringify(result.runtime));
             const targets=await page.locator('.navbtn[data-page]').evaluateAll(btns=>[...new Set(btns.map(b=>b.dataset.page).filter(Boolean))]);
             await page.evaluate(()=>{const login=document.querySelector('.login'),app=document.getElementById('app');if(login)login.style.display='none';if(app)app.style.display='block'});
-            for(const target of targets){await page.evaluate(t=>{const bs=[...document.querySelectorAll('.navbtn[data-page="'+CSS.escape(t)+'"]')].filter(b=>b.offsetParent!==null);(bs[0]||document.querySelector('.navbtn[data-page="'+CSS.escape(t)+'"]'))?.click()},target);await page.waitForTimeout(60);const active=await page.locator('.page.active').evaluateAll(es=>es.some(el=>el.id===target));if(!active)throw new Error('navigation failed: '+target)}
+            for(const target of targets){await page.evaluate(t=>{const bs=[...document.querySelectorAll('.navbtn[data-page="'+CSS.escape(t)+'"]')].filter(b=>b.offsetParent!==null);(bs[0]||document.querySelector('.navbtn[data-page="'+CSS.escape(t)+'"]'))?.click()},target);await page.waitForTimeout(60);const activeId=await page.locator('.page.active').first().getAttribute('id');if(activeId!==target)throw new Error('navigation failed: '+target+' active='+activeId)}
             const roomAudit=await page.evaluate(async()=>{
               const visible=e=>!!e&&getComputedStyle(e).display!=='none'&&e.offsetParent!==null;
               const out=[];

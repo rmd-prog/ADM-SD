@@ -1,13 +1,13 @@
-/* GURU+ SD — DOCUMENT AUTO BRIDGE SUPER v4
- * Canonical document bridge. Master + Auto Chain are authoritative.
+/* GURU+ SD — DOCUMENT AUTO BRIDGE SUPER v5
+ * Canonical document bridge. Master + deterministic Auto Chain are authoritative.
  * Existing document buttons are intercepted in capture phase so inline AI
- * generateDoc() cannot run when a valid deterministic chain exists.
+ * generateDoc() cannot run when a deterministic chain can be built.
  */
 (function(){'use strict';
-if(window.__GURU_SD_DOCUMENT_AUTO_BRIDGE_V4__)return;window.__GURU_SD_DOCUMENT_AUTO_BRIDGE_V4__=1;
+if(window.__GURU_SD_DOCUMENT_AUTO_BRIDGE_V5__)return;window.__GURU_SD_DOCUMENT_AUTO_BRIDGE_V5__=1;
 const MAP={cp:['cpText','cpPreview'],tp:['tpText','tpPreview'],atp:['atpText','atpPreview'],prota:['protaText','protaPreview'],prosem:['prosemText','prosemPreview'],rpm:['rpmText','rpmPreview']};
 function master(){return window.GURU_SD_MASTER?.get?.()||null}
-function chain(){return window.GURU_SD_AUTO_CHAIN?.get?.()||null}
+function chain(){const a=window.GURU_SD_AUTO_CHAIN;return a?.get?.()||a?.run?.()||null}
 function valid(x,c){return !!(x&&c&&c.source==='GURU_SD_MASTER'&&c.rombel===x.rombel&&c.mapel===x.mapel&&c.babId===x.babId&&c.material===x.material&&String(c.jp)===String(x.jp))}
 function run(type){const x=master(),c=chain();if(!valid(x,c))return false;const ids=MAP[type],text=String(c.docs?.[String(type).toUpperCase()]||'').trim();if(!ids||!text)return false;const field=document.getElementById(ids[0]);if(!field)return false;field.value=text;field.dispatchEvent(new Event('input',{bubbles:true}));const preview=document.getElementById(ids[1]);if(preview){preview.textContent='✓ '+String(type).toUpperCase()+' otomatis • '+x.material+' • '+x.jp+' JP';preview.classList.add('show')}return true}
 function typeFromButton(el){if(!el)return null;const id=String(el.id||'');const m=id.match(/^generate(Cp|Tp|Atp|Prota|Prosem|Rpm)$/i);if(m)return m[1].toLowerCase();return null}

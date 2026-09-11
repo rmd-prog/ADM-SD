@@ -1,134 +1,29 @@
-/* ADM-SD — ROOM LAYOUT SUPER v2
-   Visual room isolation without destructive DOM guessing.
-   Canonical rule: one selected page/submenu owns the visible workspace.
-   Unknown containers are NEVER hidden just because they failed a text match.
+/* ADM-SD — ROOM LAYOUT SUPER v3
+   True submenu rooms: one selected workspace is visible at a time.
+   Handles shared pages (AI Generator/Data Siswa/Penilaian) by activating the exact inner room.
+   Dashboard is a clean landing room. Unknown content is preserved.
    No D1/Worker changes.
 */
-(function(){
-'use strict';
-if(window.__ADM_ROOM_LAYOUT_SUPER)return;
-window.__ADM_ROOM_LAYOUT_SUPER=true;
-
-const norm=s=>String(s||'').toLowerCase().replace(/[^a-z0-9\u00c0-\u024f\s]/gi,' ').replace(/\s+/g,' ').trim();
-const text=e=>norm(e?.innerText||e?.textContent||'');
-const buttons=()=>[...document.querySelectorAll('.navbtn')];
-const pages=()=>[...document.querySelectorAll('.page')];
-const key=s=>norm(s).replace(/\s+/g,'');
-
-const ROOM_GROUPS={
- assessment:['penilaian','input nilai','input penilaian','rekap nilai','rekap penilaian','matriks bab','bab matrix','matrix bab','absensi','kehadiran','kokurikuler'],
- perangkat:['perangkat pembelajaran','cp','atp','tp','prota','promes','rpm','lkpd','asesmen perangkat'],
- ai:['ai generate','ai generator','generator ai','soal sumatif','kisi kisi','kisi-kisi','rubrik','deskripsi hasil','remedial','pengayaan','jurnal','refleksi','bahan ajar'],
- students:['data siswa','siswa','peserta didik'],
- admin:['buku administrasi','surat resmi','dokumen guru','jurnal dan refleksi','jurnal & refleksi','remedial dan pengayaan','remedial & pengayaan'],
- dashboard:['dashboard','beranda','home']
-};
-
-function targetFor(btn){return btn?.getAttribute('data-page')||'';}
-function labelFor(btn){return text(btn);}
-function groupFor(label,pageId){
- const s=norm(label+' '+pageId);
- for(const [g,words] of Object.entries(ROOM_GROUPS))if(words.some(w=>s.includes(norm(w))))return g;
- return '';
-}
-function tokensFor(label,pageId){
- const s=norm(label+' '+pageId);
- const out=new Set([s]);
- Object.values(ROOM_GROUPS).forEach(words=>words.forEach(w=>{if(s.includes(norm(w)))out.add(norm(w));}));
- return [...out].filter(Boolean);
-}
-function meta(el){return norm((el.id||'')+' '+(el.className||'')+' '+(el.getAttribute?.('data-tab')||'')+' '+(el.getAttribute?.('data-panel')||'')+' '+(el.getAttribute?.('data-section')||'')+' '+text(el));}
-function score(el,tokens){
- const m=meta(el), ids=key((el.id||'')+' '+(el.className||''));
- let s=0;
- tokens.forEach(t=>{
-   const n=norm(t), k=key(t);
-   if(!n)return;
-   if(m===n)s+=20;
-   else if(m.includes(n))s+=6;
-   if(k && ids.includes(k))s+=10;
- });
- return s;
-}
-function clearRoom(page){
- if(!page)return;
- page.querySelectorAll('[data-adm-room-hidden]').forEach(el=>{el.style.removeProperty('display');el.removeAttribute('data-adm-room-hidden');});
- page.querySelectorAll('[data-adm-room-dim]').forEach(el=>{el.style.removeProperty('display');el.removeAttribute('data-adm-room-dim');});
- delete page.dataset.admRoom;
-}
-function candidateContainers(page){
- const selectors=[':scope > .panel',':scope > .card',':scope > .doc-hero',':scope > .doc-preview',':scope > .student-pane',':scope > .assessment-pane',':scope > .tab-pane',':scope > [data-tab-panel]',':scope > [data-panel]',':scope > [data-section]',':scope > section'];
- const set=new Set();
- selectors.forEach(sel=>{try{page.querySelectorAll(sel).forEach(e=>set.add(e));}catch(_){}});
- return [...set].filter(e=>e.nodeType===1 && !e.matches('.page-title,.page-head,.breadcrumb'));
-}
-function isolateExplicit(page,tokens){
- const items=candidateContainers(page);
- if(items.length<2)return false;
- const scored=items.map(el=>({el,s:score(el,tokens)}));
- const matches=scored.filter(x=>x.s>=6).sort((a,b)=>b.s-a.s);
- if(!matches.length)return false;
- const best=matches[0].s;
- const winners=matches.filter(x=>x.s===best).map(x=>x.el);
- // Only hide competing containers when there is an explicit, strong match.
- items.forEach(el=>{
-   if(winners.includes(el)){
-     el.style.removeProperty('display');
-     el.removeAttribute('data-adm-room-hidden');
-   }else{
-     el.style.display='none';
-     el.setAttribute('data-adm-room-hidden','1');
-   }
- });
- page.dataset.admRoom=tokens[0]||'room';
- return true;
-}
-function isolateInternalTabs(page,tokens){
- const candidates=[...page.querySelectorAll('[data-tab],[data-panel],[data-section],.student-pane,.assessment-pane,.tab-pane,.submenu-panel')];
- if(candidates.length<2)return false;
- const scored=candidates.map(el=>({el,s:score(el,tokens)})).filter(x=>x.s>=6);
- if(!scored.length)return false;
- const best=Math.max(...scored.map(x=>x.s));
- scored.forEach(x=>{x.el.style.display=x.s===best?'':'none';x.el.dataset.admRoomDim=x.s===best?'0':'1';});
- return true;
-}
-function cleanDashboard(page){
- if(!page)return;
- clearRoom(page);
- const all=[...page.children].filter(e=>e.nodeType===1);
- all.forEach(el=>{
-   const m=meta(el);
-   const isNoise=/data siswa|ai generate|ai generator|perangkat pembelajaran|input nilai|rekap nilai|matriks bab|absensi|kokurikuler|rpm|lkpd|cp atp tp|administrasi|surat resmi|dokumen guru/.test(m);
-   const isDash=/selamat datang|ringkasan|statistik|aktivitas|akses cepat|dashboard|beranda|tahun pelajaran/.test(m);
-   if(isNoise&&!isDash){el.style.display='none';el.dataset.admDashboardHidden='1';}
- });
- page.dataset.admDashboardClean='1';
-}
-function restoreDashboard(page){
- if(!page)return;
- page.querySelectorAll('[data-adm-dashboard-hidden]').forEach(el=>{el.style.removeProperty('display');el.removeAttribute('data-adm-dashboard-hidden');});
- delete page.dataset.admDashboardClean;
-}
-function activate(btn){
- const pageId=targetFor(btn), page=document.getElementById(pageId);
- if(!page)return;
- pages().filter(p=>p!==page).forEach(p=>{if(p.dataset.admDashboardClean)restoreDashboard(p);});
- clearRoom(page);
- const label=labelFor(btn);
- if(/dashboard|beranda|home/.test(norm(label+' '+pageId))){cleanDashboard(page);return;}
- const tokens=tokensFor(label,pageId);
- // Prefer explicit internal panels/tabs. If the page has no explicit match, keep it intact.
- if(isolateExplicit(page,tokens))return;
- isolateInternalTabs(page,tokens);
-}
-function run(){
- const active=document.querySelector('.page.active');
- if(!active)return;
- const btn=buttons().find(b=>targetFor(b)===active.id&&b.classList.contains('active'))||buttons().find(b=>targetFor(b)===active.id);
- if(btn)activate(btn);
-}
-document.addEventListener('click',e=>{const b=e.target.closest?.('.navbtn');if(b)setTimeout(run,50);},true);
-new MutationObserver(()=>{clearTimeout(window.__admRoomTimer);window.__admRoomTimer=setTimeout(run,100)}).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','data-page']});
-window.addEventListener('load',()=>setTimeout(run,300));
-window.ADM_ROOM_LAYOUT={run,activate,clearRoom};
+(function(){'use strict';
+if(window.__ADM_ROOM_LAYOUT_SUPER_V3__)return;
+window.__ADM_ROOM_LAYOUT_SUPER_V3__=true;
+const q=(s,r=document)=>r.querySelector(s),qa=(s,r=document)=>[...r.querySelectorAll(s)];
+const norm=s=>String(s||'').toLowerCase().replace(/\s+/g,' ').trim();
+const label=b=>norm(b?.innerText||b?.textContent||'');
+const page=id=>document.getElementById(id);
+const navs=()=>qa('.navbtn[data-page]');
+const mark=(el,on)=>{if(!el)return;if(on){el.dataset.admRoomHidden='1';el.style.setProperty('display','none','important')}else{el.style.removeProperty('display');el.removeAttribute('data-adm-room-hidden')}};
+function restore(){qa('[data-adm-room-hidden]').forEach(e=>mark(e,false));qa('[data-adm-dashboard-hidden]').forEach(e=>{e.style.removeProperty('display');e.removeAttribute('data-adm-dashboard-hidden')});qa('[data-adm-room-dim]').forEach(e=>{e.style.removeProperty('display');e.removeAttribute('data-adm-room-dim')});}
+function showOnly(list,keep){list.forEach(e=>{if(e===keep){e.style.removeProperty('display');e.removeAttribute('data-adm-room-hidden')}else mark(e,true)});}
+function dashboard(p){restore();qa(':scope > *',p).forEach(e=>{const t=norm(e.innerText||e.textContent||'');if(/akses layanan utama|data siswa|input nilai|ai generate|perangkat pembelajaran|rapor|referensi sibi|ringkasan sistem|alur kerja|mulai ai|kelola siswa/.test(t)&&!/selamat datang|portal administrasi guru/.test(t)){e.dataset.admDashboardHidden='1';e.style.display='none'}});p.dataset.admRoom='dashboard';}
+function studentRoom(p,l){const tabs=qa('.student-tab',p),panes=qa('.student-pane',p);if(!panes.length)return false;let want=/import siswa/.test(l)?'import':/tambah siswa/.test(l)?'form':'list';const tab=tabs.find(x=>norm(x.innerText).includes(want==='import'?'import siswa':want==='form'?'tambah siswa':'daftar siswa'));if(tab){tabs.forEach(x=>x.classList.toggle('active',x===tab));tab.click?.()}const keep=p.querySelector(want==='import'?'#studentPaneImport':want==='form'?'#studentPaneForm':'#studentPaneList');if(keep)showOnly(panes,keep);p.dataset.admRoom='students:'+want;return true;}
+function aiRoom(p,l,btn){const type=q('#aiType',p);if(!type)return false;const map=[[/generate soal/,'soal_sumatif'],[/kisi.?kisi/,'kisi_kisi'],[/rubrik/,'rubrik'],[/analisis hasil/,'deskripsi_hasil'],[/remedial/,'remedial'],[/pengayaan/,'pengayaan'],[/deskripsi hasil/,'deskripsi_hasil'],[/jurnal|refleksi/,'jurnal'],[/bahan ajar|lkpd/,'bahan_ajar'],[/semua generator/,'soal_sumatif'],[/perangkat & materi/,'bahan_ajar'],[/^📝 asesmen$|\basesmen\b/,'soal_sumatif']];let v='';for(const [re,x] of map)if(re.test(l)){v=x;break}if(btn?.dataset.featureCustom&&window.GURU_SD_FEATURE_COMPLETE?.customMode){window.GURU_SD_FEATURE_COMPLETE.customMode(btn.dataset.featureCustom);setTimeout(()=>{const cp=p.querySelector('.card.doc-hero + .doc-preview')||p.querySelector('.doc-preview');const hero=p.querySelector('.doc-hero');if(hero)mark(hero,true);if(cp){cp.style.removeProperty('display');cp.removeAttribute('data-adm-room-hidden')}} ,80);p.dataset.admRoom='custom:'+btn.dataset.featureCustom;return true}if(v&&[...type.options].some(o=>o.value===v)){type.value=v;type.dispatchEvent(new Event('change',{bubbles:true}))}const typeBox=type.closest('.doc-controls')?.querySelector('div');if(typeBox)mark(typeBox,true);const qopt=q('#aiQuestionOptions',p),lk=q('#aiLkpdOptions',p);if(qopt)qopt.style.display=['soal_sumatif','soal_formatif'].includes(type.value)?'block':'none';if(lk)lk.style.display=type.value==='lkpd'?'block':'none';p.dataset.admRoom='ai:'+type.value;return true;}
+function assessmentRoom(p,l){if(!p)return false;const tabs=qa('.sg-tab',p);if(!tabs.length)return false;let want=/rekap/.test(l)?'rekap':/absen/.test(l)?'abs':/sikap/.test(l)?'sikap':/bobot/.test(l)?'bobot':'input';const t=tabs.find(x=>x.dataset.at===want);if(t)t.click();tabs.forEach(x=>x.classList.toggle('active',x===t));p.dataset.admRoom='assessment:'+want;return true;}
+function rerouteAssessment(l){const p=page('penilaianPro');if(!p)return false;p.classList.add('active');qa('.page').filter(x=>x!==p).forEach(x=>x.classList.remove('active'));const b=q('#navPenilaianPro');if(b)b.classList.add('active');setTimeout(()=>assessmentRoom(p,l),80);q('.side')?.classList.remove('open');return true;}
+function activate(btn){restore();const l=label(btn),id=btn?.dataset?.page||'';if(/input nilai/.test(l)&&id==='scores'&&q('#penilaianPro'))return rerouteAssessment(l);if(/rekap \/ rapor|rekap nilai/.test(l)&&q('#penilaianPro'))return rerouteAssessment('rekap nilai');if(/daftar siswa|import siswa|tambah siswa/.test(l)&&id==='students'){const p=page('students');if(p)return studentRoom(p,l)}if(id==='aiGenerate'){const p=page('aiGenerate');if(p)return aiRoom(p,l,btn)}if(id==='penilaianPro')return assessmentRoom(page('penilaianPro'),l);if(id==='kokurikulerPro'){const p=page(id);if(p){p.dataset.admRoom='kokurikuler';return true}}const p=page(id);if(!p)return false;p.dataset.admRoom=id;return true;}
+function run(){const active=q('.page.active');if(!active)return;const b=navs().find(x=>x.classList.contains('active')&&x.dataset.page===active.id)||navs().find(x=>x.dataset.page===active.id);if(b)activate(b);}
+document.addEventListener('click',e=>{const b=e.target.closest?.('.navbtn[data-page]');if(!b)return;setTimeout(()=>activate(b),60)},true);
+new MutationObserver(()=>{clearTimeout(window.__admRoomLayoutTimer);window.__admRoomLayoutTimer=setTimeout(run,120)}).observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['class','data-page']});
+window.addEventListener('load',()=>setTimeout(run,400));
+window.ADM_ROOM_LAYOUT={run,activate,clearRoom:restore};
 })();

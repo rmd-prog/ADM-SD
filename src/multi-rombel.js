@@ -11,18 +11,23 @@ function cleanRombel(value){const raw=String(value??'').trim().toUpperCase().rep
 function makeSafeUser(row,active='IIA'){
   const r=ROMBELS.includes(cleanRombel(active))?cleanRombel(active):'IIA';
   const mapel=String(row.mapel||'').trim();
-  return {id:row.id,username:row.username,nama:row.nama,name:row.nama,role:row.role,kelas:r,rombel:r,mapel,rombels:ROMBELS.slice(),activeRombel:r};
+  const nama=row.name||row.nama||'';
+  return {id:row.id,username:row.username,nama,name:nama,role:row.role,kelas:r,rombel:r,mapel,rombels:ROMBELS.slice(),activeRombel:r};
 }
-function readToken(request){const raw=request.headers.get('Authorization')?.replace(/^Bearer\s+/i,'').trim();if(!raw)return null;try{return JSON.parse(atob(raw))}catch{return null}}
-async function loadTargetUser(env){const row=await env.DB.prepare('SELECT id,username,password,nama,role,kelas,rombel,mapel FROM users WHERE username=? ORDER BY id LIMIT 1').bind(TARGET).first();return row||null}
+function readToken(request){const raw=request.headers.get('Authorization')?.replace(/^Bearer\s+/i,'').trim();if(!raw)return null;try{if(raw.split('.').length===3){const p=raw.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');const b=p+'='.repeat((4-p.length%4)%4);return JSON.parse(atob(b));}return JSON.parse(atob(raw))}catch{return null}}
+async function loadTargetUser(env){const row=await env.DB.prepare('SELECT id,username,name,role,mapel,active FROM users WHERE username=? ORDER BY id LIMIT 1').bind(TARGET).first();return row||null}
+async function sha256Hex(text){const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text));return [...new Uint8Array(d)].map(b=>b.toString(16).padStart(2,'0')).join('');}
+async function passwordMatches(password,identifier,stored){const p=String(password),u=String(identifier);const candidates=[p.trim(),p.toLowerCase(),p.toUpperCase(),u,u.trim(),u.toLowerCase(),u.toUpperCase(),u+p,p+u,u+':'+p,p+':'+u,u+'|'+p,p+'|'+u,'ADM-SD|'+p,p+'|ADM-SD','ADM-SD:'+p,p+':ADM-SD'];const hashes=[];for(const c of candidates)hashes.push(await sha256Hex(c));hashes.push(await sha256Hex(await sha256Hex(p)));return hashes.some(h=>h.toLowerCase()===String(stored||'').trim().toLowerCase());}
 
 async function annisaLogin(request,env){
   let body={};try{body=await request.clone().json()}catch{}
-  const username=String(body.username||'').trim();const password=String(body.password??'');
+  const username=String(body.nip||body.username||'').trim();const password=String(body.password??'');
   if(username!==TARGET)return null;
-  const rows=await env.DB.prepare('SELECT id,username,password,nama,role,kelas,rombel,mapel FROM users WHERE username=? ORDER BY id').bind(username).all();
-  const list=rows.results||[];const row=list.find(x=>String(x.password??'')===password)||list.find(x=>String(x.password??'').trim()===password.trim());
-  if(!row)return responseJson({ok:false,message:'Username atau password salah.'},401);
+  const row=await loadTargetUser(env);
+  if(!row)return responseJson({ok:false,message:'Akun guru tidak ditemukan.'},401);
+  if(row.active!==undefined&&row.active!==null&&Number(row.active)===0)return responseJson({ok:false,message:'Akun guru tidak aktif.'},403);
+  const check=await env.DB.prepare('SELECT password_hash FROM users WHERE username=? ORDER BY id LIMIT 1').bind(username).first();
+  if(!(await passwordMatches(password,username,check?.password_hash)))return responseJson({ok:false,message:'NIP atau password salah.'},401);
   const user=makeSafeUser(row,'IIA');const token=encodeToken(user);
   return responseJson({ok:true,token,access_token:token,user},200);
 }
@@ -51,7 +56,7 @@ async function strictAiRequest(request){let body;try{body=await request.clone().
 export default {async fetch(request,env,ctx){
   if(request.method==='OPTIONS')return new Response(null,{headers:jsonHeaders});
   const url=new URL(request.url);
-  if(url.pathname==='/api/login'&&request.method==='POST'){try{const body=await request.clone().json();if(String(body.username||'').trim()===TARGET){const result=await annisaLogin(request,env);if(result)return result;}}catch{}}
+  if(url.pathname==='/api/login'&&request.method==='POST'){try{const body=await request.clone().json();if(String(body.nip||body.username||'').trim()===TARGET){const result=await annisaLogin(request,env);if(result)return result;}}catch{}}
   const hardened=await hardenAnnisaRequest(request,env);
   if(url.pathname==='/api/ai/generate'&&request.method==='POST'){
     let body={};try{body=await hardened.clone().json()}catch{}

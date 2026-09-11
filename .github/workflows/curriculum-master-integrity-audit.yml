@@ -41,6 +41,7 @@ jobs:
             assets/perangkat-document-auto-bridge-super-v1.js
             assets/perangkat-global-integrity-super-v1.js
             assets/app-global-integrity-super-v1.js
+            assets/app-feature-complete-super-v1.js
           )
           for f in "${files[@]}"; do test -f "$f"; node --check "$f"; done
           echo "JavaScript syntax: OK (${#files[@]} files)"
@@ -87,7 +88,20 @@ jobs:
           grep -q 'BOOK_CATALOG' assets/ai-generate-super.js
           grep -q 'guru_sd_jp_allocation_super_v1' assets/perangkat-global-integrity-super-v1.js
           grep -q 'app-global-integrity-super-v1.js' assets/ui-feedback.js
+          grep -q 'app-feature-complete-super-v1.js' assets/ui-feedback.js
           echo "Single-source architecture: OK"
+      - name: Complete menu/functionality audit
+        shell: bash
+        run: |
+          set -e
+          grep -q 'data-feature-custom="buku_administrasi"' assets/app-feature-complete-super-v1.js
+          grep -q 'data-feature-custom="surat_resmi"' assets/app-feature-complete-super-v1.js
+          grep -q 'data-feature-custom="dokumen_guru"' assets/app-feature-complete-super-v1.js
+          grep -q 'GURU_SD_FEATURE_COMPLETE' assets/app-feature-complete-super-v1.js
+          grep -q 'soal_sumatif' assets/app-feature-complete-super-v1.js
+          grep -q 'kisi_kisi' assets/app-feature-complete-super-v1.js
+          grep -q 'rubrik' assets/app-feature-complete-super-v1.js
+          echo "Remaining menu routing/workspace contract: OK"
       - name: Chain contract audit
         shell: bash
         run: |

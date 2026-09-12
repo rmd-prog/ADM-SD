@@ -24,7 +24,7 @@ jobs:
               sed -i 's/GURU+ SD/SIAP GURU/g' "$file"
               changed=1
             fi
-          done < <(git grep -Ilz 'GURU+ SD' || true)
+          done < <(git grep -Ilz 'GURU+ SD' -- . ':!.github/workflows/*' || true)
           echo "changed=$changed"
 
       - name: Commit brand normalization
@@ -37,6 +37,6 @@ jobs:
             echo 'No legacy brand text remains.'
             exit 0
           fi
-          git add -A
+          git add -A -- ':!.github/workflows/*'
           git commit -m 'chore: normalize app brand to SIAP GURU'
           git push

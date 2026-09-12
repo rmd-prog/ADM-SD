@@ -1,0 +1,23 @@
+name: Sync main into SUPER feature
+on:
+  push:
+    branches: ["feat-perangkat-pembelajaran-super-2026-09-10"]
+permissions:
+  contents: write
+jobs:
+  sync:
+    if: ${{ !startsWith(github.event.head_commit.message, 'chore: sync main into SUPER feature') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout feature
+        uses: actions/checkout@v4
+        with:
+          ref: feat-perangkat-pembelajaran-super-2026-09-10
+          fetch-depth: 0
+      - name: Merge current main, preserve SUPER changes on conflicts
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          git merge --no-edit -X ours origin/main -m "chore: sync main into SUPER feature"
+          git push origin HEAD:feat-perangkat-pembelajaran-super-2026-09-10

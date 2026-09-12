@@ -24,12 +24,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Verify bound D1 schema (read only)
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: |
-          npx --yes wrangler@latest d1 execute 20415873-2fac-4d5d-97bc-2ac207ba2109 --remote --command "SELECT name,type FROM sqlite_master WHERE type IN ('table','view') ORDER BY name" --json
-      - name: Deploy Worker with persistent D1 binding
+      - name: Deploy Worker with persistent production bindings
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: npx --yes wrangler@latest deploy --config wrangler.jsonc --keep-vars

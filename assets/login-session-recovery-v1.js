@@ -1,6 +1,6 @@
 /* ADM-SD login session recovery v1
  * If API auth has already committed a token, never leave the UI stranded on login.
- * Deployment retrigger marker: 2026-09-12.
+ * Production verification trigger: repaired exporter + real body loader.
  */
 (function(){'use strict';
   function recover(){

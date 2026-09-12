@@ -1,5 +1,4 @@
 # Production login smoke: final verification gate
-# Triggered again after auth worker fix.
 name: Production Login Smoke
 on:
   push:
@@ -33,6 +32,11 @@ jobs:
           }
           code=$(login "$E2E_PASSWORD")
           echo "HTTP=$code"
+          python - <<'PY'
+          import json
+          d=json.load(open('/tmp/login.json'))
+          print('SAFE_LOGIN_RESULT ok=',d.get('ok'),'code=',d.get('code'),'message=',d.get('message',''))
+          PY
           if [ "$code" = "200" ] && python - <<'PY'
           import json
           d=json.load(open('/tmp/login.json'))
@@ -48,7 +52,7 @@ jobs:
             python - <<'PY'
           import json
           d=json.load(open('/tmp/login.json'))
-          print('ok=',d.get('ok'),'message=',d.get('message',''))
+          print('SAFE_NIP_RESULT ok=',d.get('ok'),'code=',d.get('code'),'message=',d.get('message',''))
           if not d.get('ok') or not (d.get('token') or d.get('access_token')):
               raise SystemExit('Production API login failed with configured password and NIP-as-password fallback')
           PY

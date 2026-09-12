@@ -2,7 +2,7 @@ import app from './ai-v3-worker.js';
 const encoder=new TextEncoder();
 const TOKEN_TTL=8*60*60;
 const HMAC={name:'HMAC',hash:'SHA-256'};
-// Production binding is preserved by wrangler keep_bindings; do not replace it with a guessed D1 id.
+// Production binding recovery is read-only; deploy must not guess or replace the live D1 database.
 function b64urlBytes(bytes){let s='';for(let i=0;i<bytes.length;i+=0x8000)s+=String.fromCharCode(...bytes.subarray(i,i+0x8000));return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
 function fromB64url(s){const x=String(s||'').replace(/-/g,'+').replace(/_/g,'/');return Uint8Array.from(atob(x+'='.repeat((4-x.length%4)%4)),c=>c.charCodeAt(0));}
 function b64urlText(text){return b64urlBytes(encoder.encode(text));}

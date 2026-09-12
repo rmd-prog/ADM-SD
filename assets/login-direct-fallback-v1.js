@@ -1,48 +1,9 @@
-/* ADM-SD NATIVE UI REPAIR V4: reliable navigation fallback */
+/* ADM-SD UI RECOVERY V5 — native app first, capture navigation second */
 (function(){'use strict';
 const $=id=>document.getElementById(id);
-function unlock(){try{
-  ['welcomeOverlay','admLoadingOverlay'].forEach(id=>{const el=$(id);if(el){el.classList.remove('show','active','open');el.style.display='none';el.style.visibility='hidden';el.style.opacity='0';el.style.pointerEvents='none';el.setAttribute('aria-hidden','true')}});
-  document.body.style.pointerEvents='auto';
-  document.querySelectorAll('.navbtn[data-page]').forEach(b=>{b.style.pointerEvents='auto';b.disabled=false});
-}catch(e){console.warn('ui unlock',e)}}
-function directNavigate(p,b){
-  if(!p)return false;
-  const el=$(p);
-  if(!el)return false;
-  try{
-    if(typeof window.showPage==='function')window.showPage(p);
-  }catch(e){console.warn('showPage failed; using direct navigation',e)}
-  try{
-    /* Always verify and repair the visible page after native routing. */
-    const active=el.classList.contains('active') && getComputedStyle(el).display!=='none';
-    if(!active){
-      document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
-      el.classList.add('active');
-    }
-    document.querySelectorAll('.navbtn[data-page]').forEach(x=>x.classList.toggle('active',x===b||x.dataset.page===p));
-    const side=$('.side');
-    if(side&&innerWidth<=850)side.classList.remove('open');
-    unlock();
-    return true;
-  }catch(e){console.warn('direct navigation failed',e);return false}
-}
-function bindNav(){
-  document.querySelectorAll('.navbtn[data-page]').forEach(b=>{
-    if(b.__nativeRepairV4)return;b.__nativeRepairV4=true;
-    b.addEventListener('click',function(){
-      const p=this.dataset.page;
-      setTimeout(()=>directNavigate(p,this),0);
-    },false);
-  });
-  document.querySelectorAll('.navgroup').forEach(b=>{
-    if(b.__groupRepairV4)return;b.__groupRepairV4=true;
-    b.addEventListener('click',function(){
-      setTimeout(()=>{this.parentElement.classList.toggle('open');unlock()},0);
-    },false);
-  });
-}
-function install(){unlock();bindNav();}
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
-[50,150,300,700,1200,2000,3500,5000].forEach(ms=>setTimeout(install,ms));
+function unlock(){try{['welcomeOverlay','admLoadingOverlay'].forEach(n=>{const e=$(n);if(!e)return;e.classList.remove('show','active','open');e.style.display='none';e.style.visibility='hidden';e.style.opacity='0';e.style.pointerEvents='none';e.setAttribute('aria-hidden','true')});document.body.style.pointerEvents='auto'}catch(e){console.warn('ui unlock',e)}}
+function show(p,b){if(!p)return;const page=$(p);if(!page)return;unlock();try{if(typeof window.showPage==='function')window.showPage(p)}catch(e){console.warn('native showPage error',e)}document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));page.classList.add('active');document.querySelectorAll('.navbtn[data-page]').forEach(x=>x.classList.toggle('active',x===b||x.dataset.page===p));const side=$('sidebar');if(side&&innerWidth<=850)side.classList.remove('open');try{if(p==='students'&&typeof window.renderStudents==='function')window.renderStudents();if(p==='scores'&&typeof window.renderScores==='function')window.renderScores();if(p==='report'&&typeof window.renderReport==='function')window.renderReport();if(p==='teachers'&&typeof window.renderTeachers==='function')window.renderTeachers();if(p==='reference'&&typeof window.renderReference==='function')window.renderReference()}catch(e){console.warn('renderer error',p,e)}}
+function bind(){unlock();document.querySelectorAll('.navbtn[data-page]').forEach(b=>{if(b.__uiV5)return;b.__uiV5=true;b.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();show(this.dataset.page,this)},true)});document.querySelectorAll('.navgroup').forEach(b=>{if(b.__groupV5)return;b.__groupV5=true;b.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();this.parentElement.classList.toggle('open');unlock()},true)});const menu=document.querySelector('[data-menu-toggle],#menuBtn,#menuToggle,.menu-mobile');if(menu&&!menu.__menuV5){menu.__menuV5=true;menu.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();const side=$('sidebar');if(side)side.classList.toggle('open');unlock()},true)}}
+function install(){bind();unlock()}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();[100,300,700,1200,2500,5000].forEach(ms=>setTimeout(install,ms));
 })();

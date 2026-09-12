@@ -1,8 +1,5 @@
 /* SIAP GURU — GLOBAL UI FOUNDATION v10
- * Dashboard remains intentionally empty during rebuild.
- * Each application page is treated as its own room: when one page is opened,
- * other pages and stray legacy UI outside page containers are hidden.
- * Frontend-only. Does not touch D1, Worker, student data, or login backend.
+ * Frontend-only room isolation. No D1, Worker, student data, or auth backend changes.
  */
 (function(){'use strict';
 if(window.__SIAP_GURU_GLOBAL_FOUNDATION_V10__)return;
@@ -13,11 +10,10 @@ const BRAND_NEW='SIAP GURU';
 
 function emptyDashboard(){
  const d=$('dashboard');if(!d)return;
- d.innerHTML='';
+ if(d.children.length)d.innerHTML='';
  d.removeAttribute('style');
  d.setAttribute('data-dashboard-empty','true');
 }
-
 function cleanMenu(){
  const side=$('sidebar');if(!side)return;
  const norm=s=>String(s||'').replace(/\s+/g,' ').trim().toLowerCase();
@@ -31,7 +27,6 @@ function cleanMenu(){
  });
  const title=side.querySelector('.side-title');if(title)title.textContent='MENU UTAMA';
 }
-
 function renameBrand(root=document){
  try{
    if(document.title.includes(BRAND_OLD))document.title=document.title.replaceAll(BRAND_OLD,BRAND_NEW);
@@ -46,24 +41,16 @@ function renameBrand(root=document){
    nodes.forEach(x=>x.nodeValue=x.nodeValue.replaceAll(BRAND_OLD,BRAND_NEW));
  }catch(e){}
 }
-
 function isolateRooms(){
  const root=document.querySelector('main.main, main, .main');
  if(!root)return;
- document.querySelectorAll('.page').forEach(p=>{
-   p.style.removeProperty('z-index');
- });
+ document.querySelectorAll('.page').forEach(p=>p.style.removeProperty('z-index'));
  const active=document.querySelector('.page.active');
- document.querySelectorAll('.page').forEach(p=>{
-   if(p!==active)p.classList.remove('active');
- });
- // Legacy scripts sometimes inject UI directly into <main> instead of a page.
- // Keep the main workspace clean: only an actual .page may occupy the room.
+ document.querySelectorAll('.page').forEach(p=>{if(p!==active)p.classList.remove('active')});
  root.querySelectorAll(':scope > :not(.page)').forEach(el=>{
    if(!el.closest('.login'))el.setAttribute('data-siap-guru-stray','true');
  });
 }
-
 function enforceRoomVisibility(){
  const root=document.querySelector('main.main, main, .main');
  if(!root)return;
@@ -74,7 +61,6 @@ function enforceRoomVisibility(){
    document.head.appendChild(style);
  }
 }
-
 function handleNavigation(){
  document.querySelectorAll('.navbtn').forEach(btn=>{
    if(btn.__siapRoomBound)return;
@@ -85,7 +71,6 @@ function handleNavigation(){
    },0),true);
  });
 }
-
 function boot(){
  emptyDashboard();
  cleanMenu();
@@ -102,12 +87,11 @@ function boot(){
    root.__siapRoomObserver=1;
    new MutationObserver(()=>{
      enforceRoomVisibility();
-     renameBrand(document);
      handleNavigation();
-   }).observe(root,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style','title','aria-label','placeholder','alt']});
+   }).observe(root,{subtree:true,childList:true});
  }
 }
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,100));
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,100),{once:true});
 else setTimeout(boot,100);
 window.SIAP_GURU_UI={emptyDashboard,cleanMainMenu:cleanMenu,isolateRooms,enforceRoomVisibility,renameBrand,canonical:true};
 })();

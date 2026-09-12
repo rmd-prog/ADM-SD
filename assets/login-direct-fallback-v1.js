@@ -1,54 +1,11 @@
-/* final repaired main build verification: direct login fallback active */
+/* final repaired main build verification: direct login fallback + NORMAL UI recovery */
 (function(){'use strict';
-  const API='https://adm-sd.adm-sd.workers.dev/api';
-  function setLoggedIn(user,token){
-    try{localStorage.setItem('siAuthToken',token||'');localStorage.setItem('siLogin',JSON.stringify(user||{}));}catch(e){}
-    try{window.currentTeacher=user||window.currentTeacher||null;}catch(e){}
-    const login=document.getElementById('loginScreen')||document.querySelector('.login');
-    const app=document.getElementById('app');
-    if(login)login.style.display='none'; if(app)app.style.display='block';
-    try{if(typeof window.finishLogin==='function')window.finishLogin(user);}catch(e){console.warn('finishLogin fallback:',e)}
-    try{if(typeof window.updateTeacherProfile==='function')window.updateTeacherProfile();}catch(e){}
-    try{if(typeof window.syncRoleMenu==='function')window.syncRoleMenu();}catch(e){}
-    try{if(typeof window.showPage==='function')window.showPage('dashboard');}catch(e){}
-  }
-  async function directLogin(username,password){
-    const r=await fetch(API+'/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nip:String(username),username:String(username),password:String(password)})});
-    let d=null;try{d=await r.json()}catch(e){d={ok:false,message:'Respons login tidak valid.'}};
-    if(!r.ok||!d.ok)throw Error(d.message||'NIP atau password salah.');
-    const token=String(d.token||d.access_token||'').trim(); if(!token)throw Error('Login berhasil tetapi token tidak diterima.');
-    setLoggedIn(d.user||{username:username},token); return d;
-  }
-  function install(){
-    const form=document.getElementById('loginForm'); if(!form||form.__directLoginFallback)return; form.__directLoginFallback=true;
-    form.addEventListener('submit',async function(ev){
-      ev.preventDefault();ev.stopImmediatePropagation();
-      const inputs=form.querySelectorAll('input');const u=inputs[0],p=inputs[1];const btn=form.querySelector('button[type="submit"]');if(!u||!p)return;
-      if(btn){btn.disabled=true;btn.textContent='MEMERIKSA…';}
-      try{
-        if(typeof window.__ADM_LOGIN==='function'){await window.__ADM_LOGIN(u.value.trim(),p.value);if(localStorage.getItem('siAuthToken')){setLoggedIn(JSON.parse(localStorage.getItem('siLogin')||'{}'),localStorage.getItem('siAuthToken'));return;}}
-        await directLogin(u.value.trim(),p.value);
-      }catch(e){console.error('Direct login fallback:',e);const err=document.querySelector('#loginError,.login-error,.error');if(err){err.textContent=e.message||'Login gagal.';err.style.display='block';}else alert(e.message||'Login gagal.');}
-      finally{if(btn){btn.disabled=false;btn.textContent='MASUK →';}}
-    },true);
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
-  setTimeout(install,500);setTimeout(install,1500);setTimeout(install,3000);
-
-  // NORMAL UI PATCH: the welcome modal was sitting above the entire dashboard
-  // after login. Keep the normal dashboard fully clickable.
-  function unblockDashboard(){
-    const styleId='admNormalUiPatch';
-    if(!document.getElementById(styleId)){
-      const s=document.createElement('style');s.id=styleId;
-      s.textContent='.welcome-overlay{display:none!important;pointer-events:none!important;visibility:hidden!important}.adm-loading-overlay,#admLoadingOverlay{pointer-events:none!important}.adm-loading-overlay.show,#admLoadingOverlay.show{pointer-events:none!important}.adm-loading-card{pointer-events:none!important}';
-      document.head.appendChild(s);
-    }
-    const welcome=document.getElementById('welcomeOverlay');
-    if(welcome){welcome.classList.remove('show');welcome.style.display='none';welcome.style.pointerEvents='none';}
-    const loading=document.getElementById('admLoadingOverlay');
-    if(loading){loading.style.pointerEvents='none';}
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',unblockDashboard,{once:true});else unblockDashboard();
-  setTimeout(unblockDashboard,250);setTimeout(unblockDashboard,1000);setTimeout(unblockDashboard,2500);
+const API='https://adm-sd.adm-sd.workers.dev/api';
+const $=id=>document.getElementById(id);
+function showPageSafe(p){try{document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));const t=$(p);if(t)t.classList.add('active');document.querySelectorAll('.navbtn[data-page]').forEach(x=>x.classList.toggle('active',x.dataset.page===p));$('sidebar')?.classList.remove('open');if(p==='students'&&typeof window.renderStudents==='function')window.renderStudents();if(p==='teachers'&&typeof window.renderTeachers==='function')window.renderTeachers();if(p==='scores'&&typeof window.renderScores==='function')window.renderScores();if(p==='report'&&typeof window.renderReport==='function')window.renderReport();if(p==='reference'&&typeof window.renderReference==='function')window.renderReference();return !!t}catch(e){console.error('showPageSafe',e);return false}}
+function repairUI(){try{document.querySelectorAll('.navbtn[data-page]').forEach(b=>{if(b.__normalUi)return;b.__normalUi=true;b.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();showPageSafe(b.dataset.page)},true)});document.querySelectorAll('.navgroup').forEach(b=>{if(b.__normalGroup)return;b.__normalGroup=true;b.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();b.parentElement.classList.toggle('open')},true)});const w=$('welcomeOverlay');if(w){w.classList.remove('show');w.style.display='none';w.style.pointerEvents='none'}const l=$('admLoadingOverlay');if(l)l.style.pointerEvents='none'}catch(e){console.error('repairUI',e)}}
+function setLoggedIn(user,token){try{localStorage.setItem('siAuthToken',token||'');localStorage.setItem('siLogin',JSON.stringify(user||{}))}catch(e){}try{window.currentTeacher=user||window.currentTeacher||null}catch(e){}const login=$('loginScreen')||document.querySelector('.login'),app=$('app');if(login)login.style.display='none';if(app)app.style.display='block';try{if(typeof window.finishLogin==='function')window.finishLogin(user)}catch(e){}try{if(typeof window.updateTeacherProfile==='function')window.updateTeacherProfile()}catch(e){}try{if(typeof window.syncRoleMenu==='function')window.syncRoleMenu()}catch(e){}showPageSafe('dashboard');repairUI()}
+async function directLogin(username,password){const r=await fetch(API+'/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nip:String(username),username:String(username),password:String(password)})});let d=null;try{d=await r.json()}catch(e){d={ok:false,message:'Respons login tidak valid.'}}if(!r.ok||!d.ok)throw Error(d.message||'NIP atau password salah.');const token=String(d.token||d.access_token||'').trim();if(!token)throw Error('Login berhasil tetapi token tidak diterima.');setLoggedIn(d.user||{username:username},token);return d}
+function install(){repairUI();const form=$('loginForm');if(!form||form.__directLoginFallback)return;form.__directLoginFallback=true;form.addEventListener('submit',async ev=>{ev.preventDefault();ev.stopImmediatePropagation();const inputs=form.querySelectorAll('input'),u=inputs[0],p=inputs[1],btn=form.querySelector('button[type="submit"]');if(!u||!p)return;if(btn){btn.disabled=true;btn.textContent='MEMERIKSA…'}try{if(typeof window.__ADM_LOGIN==='function'){await window.__ADM_LOGIN(u.value.trim(),p.value);if(localStorage.getItem('siAuthToken')){setLoggedIn(JSON.parse(localStorage.getItem('siLogin')||'{}'),localStorage.getItem('siAuthToken'));return}}await directLogin(u.value.trim(),p.value)}catch(e){console.error('Direct login fallback:',e);const err=document.querySelector('#loginError,.login-error,.error');if(err){err.textContent=e.message||'Login gagal.';err.style.display='block'}else alert(e.message||'Login gagal.')}finally{if(btn){btn.disabled=false;btn.textContent='MASUK →'}}},true)}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();setTimeout(install,300);setTimeout(install,1000);setTimeout(install,2000);setTimeout(install,4000);setTimeout(repairUI,800);setTimeout(repairUI,2500);
 })();

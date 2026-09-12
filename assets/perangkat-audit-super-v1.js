@@ -1,19 +1,19 @@
-/* GURU+ SD — DASHBOARD EMPTY RESET v9 — REMOVE LEGACY INJECTIONS */
+/* GURU+ SD — DASHBOARD EMPTY RESET v10 — REMOVE ALL LEGACY INJECTIONS */
 (function(){'use strict';
-if(window.__AUDIT_PERANGKAT_SUPER_V9__)return;window.__AUDIT_PERANGKAT_SUPER_V9__=1;
+if(window.__AUDIT_PERANGKAT_SUPER_V10__)return;window.__AUDIT_PERANGKAT_SUPER_V10__=1;
 const $=id=>document.getElementById(id);
 const ALLOWED=new Set(['dashboard','students']);
 let userNavUntil=0;
 function removeLegacyInjected(){
- ['guruSdAutoChainSuper','kurikulumSuperMultiDay','kurikulumSuperSchedule','auditSuperBox'].forEach(id=>{const e=$(id);if(e)e.remove()});
- document.querySelectorAll('.ksm').forEach(e=>e.remove());
+ ['guruSdAutoChainSuper','kurikulumSuperMultiDay','kurikulumSuperSchedule','promesSuperCalendar','auditSuperBox'].forEach(id=>{const e=$(id);if(e)e.remove()});
+ document.querySelectorAll('.ksm,.ps-panel,.ks-wrap').forEach(e=>e.remove());
 }
 function emptyDashboard(){
  const d=$('dashboard');if(!d)return;
  if(d.children.length)d.innerHTML='';
  d.setAttribute('data-dashboard-empty','true');
  let s=$('dashEmptyStyle');
- if(!s){s=document.createElement('style');s.id='dashEmptyStyle';s.textContent='#dashboard[data-dashboard-empty="true"]{display:block!important;min-height:0!important;padding:0!important;margin:0!important}#dashboard[data-dashboard-empty="true"]>*{display:none!important}#guruSdAutoChainSuper,#kurikulumSuperMultiDay,#kurikulumSuperSchedule,.ksm,#auditSuperBox{display:none!important}';document.head.appendChild(s)}
+ if(!s){s=document.createElement('style');s.id='dashEmptyStyle';s.textContent='#dashboard[data-dashboard-empty="true"]{display:block!important;min-height:0!important;padding:0!important;margin:0!important}#dashboard[data-dashboard-empty="true"]>*{display:none!important}#guruSdAutoChainSuper,#kurikulumSuperMultiDay,#kurikulumSuperSchedule,#promesSuperCalendar,.ksm,.ps-panel,.ks-wrap,#auditSuperBox{display:none!important}';document.head.appendChild(s)}
 }
 function setDashboard(){
  const d=$('dashboard');if(!d)return;
@@ -41,7 +41,7 @@ function boot(){
  const root=document.querySelector('main')||document.body;
  const observer=new MutationObserver(()=>guard());
  observer.observe(root,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style']});
- [100,500,1000,2000,4000,7000,10000].forEach(ms=>setTimeout(guard,ms));
+ [50,100,250,500,1000,2000,4000,7000,10000,15000,20000].forEach(ms=>setTimeout(guard,ms));
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 window.GURU_SD_DASHBOARD_CLEAN={clean:emptyDashboard,force:setDashboard,removeLegacy:removeLegacyInjected};

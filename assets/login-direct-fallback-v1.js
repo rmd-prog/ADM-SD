@@ -1,4 +1,4 @@
-/* final production login E2E trigger: fallback loader is now on real document tail */
+/* final login health verification trigger: real-body fallback remains active */
 (function(){'use strict';
   const API='https://adm-sd.adm-sd.workers.dev/api';
   function setLoggedIn(user,token){

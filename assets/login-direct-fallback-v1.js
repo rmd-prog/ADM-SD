@@ -1,14 +1,21 @@
-/* final repaired main build verification: direct login fallback + NORMAL UI recovery */
+/* ADM-SD UI REPAIR V2: keep native login, make post-login UI deterministic */
 (function(){'use strict';
-const API='https://adm-sd.adm-sd.workers.dev/api';
 const $=id=>document.getElementById(id);
-function disableWelcomeOverlay(){try{const w=$('welcomeOverlay');if(w){w.classList.remove('show');w.style.display='none';w.style.pointerEvents='none';w.setAttribute('aria-hidden','true')}}catch(e){console.error('disableWelcomeOverlay',e)}}
-/* The main build schedules showWelcome() 220ms after successful login. Override that hook here because this fallback is loaded after index.html. */
-try{window.showWelcome=function(){disableWelcomeOverlay()}}catch(e){}
-function showPageSafe(p){try{document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));const t=$(p);if(t)t.classList.add('active');document.querySelectorAll('.navbtn[data-page]').forEach(x=>x.classList.toggle('active',x.dataset.page===p));$('sidebar')?.classList.remove('open');if(p==='students'&&typeof window.renderStudents==='function')window.renderStudents();if(p==='teachers'&&typeof window.renderTeachers==='function')window.renderTeachers();if(p==='scores'&&typeof window.renderScores==='function')window.renderScores();if(p==='report'&&typeof window.renderReport==='function')window.renderReport();if(p==='reference'&&typeof window.renderReference==='function')window.renderReference();return !!t}catch(e){console.error('showPageSafe',e);return false}}
-function repairUI(){try{disableWelcomeOverlay();document.querySelectorAll('.navbtn[data-page]').forEach(b=>{if(b.__normalUi)return;b.__normalUi=true;b.addEventListener('click',e=>{e.preventDefault();showPageSafe(b.dataset.page)},false)});document.querySelectorAll('.navgroup').forEach(b=>{if(b.__normalGroup)return;b.__normalGroup=true;b.addEventListener('click',e=>{e.preventDefault();b.parentElement.classList.toggle('open')},false)});const l=$('admLoadingOverlay');if(l)l.style.pointerEvents='none'}catch(e){console.error('repairUI',e)}}
-function setLoggedIn(user,token){try{localStorage.setItem('siAuthToken',token||'');localStorage.setItem('siLogin',JSON.stringify(user||{}))}catch(e){}try{window.currentTeacher=user||window.currentTeacher||null}catch(e){}const login=$('loginScreen')||document.querySelector('.login'),app=$('app');if(login)login.style.display='none';if(app)app.style.display='block';try{if(typeof window.finishLogin==='function')window.finishLogin(user)}catch(e){console.warn('finishLogin',e)}try{if(typeof window.updateTeacherProfile==='function')window.updateTeacherProfile(user)}catch(e){}try{if(typeof window.syncRoleMenu==='function')window.syncRoleMenu()}catch(e){}showPageSafe('dashboard');disableWelcomeOverlay();repairUI()}
-async function directLogin(username,password){const r=await fetch(API+'/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nip:String(username),username:String(username),password:String(password)})});let d=null;try{d=await r.json()}catch(e){d={ok:false,message:'Respons login tidak valid.'}}if(!r.ok||!d.ok)throw Error(d.message||'NIP atau password salah.');const token=String(d.token||d.access_token||'').trim();if(!token)throw Error('Login berhasil tetapi token tidak diterima.');setLoggedIn(d.user||{username:username},token);return d}
-function install(){repairUI();const form=$('loginForm');if(!form||form.__directLoginFallback)return;form.__directLoginFallback=true;form.addEventListener('submit',async ev=>{ev.preventDefault();ev.stopImmediatePropagation();const inputs=form.querySelectorAll('input'),u=inputs[0],p=inputs[1],btn=form.querySelector('button[type="submit"]');if(!u||!p)return;if(btn){btn.disabled=true;btn.textContent='MEMERIKSA…'}try{if(typeof window.__ADM_LOGIN==='function'){await window.__ADM_LOGIN(u.value.trim(),p.value);if(localStorage.getItem('siAuthToken')){setLoggedIn(JSON.parse(localStorage.getItem('siLogin')||'{}'),localStorage.getItem('siAuthToken'));return}}await directLogin(u.value.trim(),p.value)}catch(e){console.error('Direct login fallback:',e);const err=document.querySelector('#loginError,.login-error,.error');if(err){err.textContent=e.message||'Login gagal.';err.style.display='block'}else alert(e.message||'Login gagal.')}finally{if(btn){btn.disabled=false;btn.textContent='MASUK →'}}},true)}
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();setTimeout(install,300);setTimeout(install,1000);setTimeout(install,2000);setTimeout(install,4000);setTimeout(repairUI,800);setTimeout(repairUI,2500);
+function unlock(){
+  try{
+    ['welcomeOverlay','admLoadingOverlay'].forEach(id=>{const el=$(id);if(el){el.classList.remove('show','active','open');el.style.display='none';el.style.visibility='hidden';el.style.opacity='0';el.style.pointerEvents='none';el.setAttribute('aria-hidden','true')}});
+    document.body.style.pointerEvents='auto';
+    document.querySelectorAll('.navbtn[data-page]').forEach(b=>{b.style.pointerEvents='auto';b.disabled=false});
+  }catch(e){console.warn('ui unlock',e)}
+}
+function page(p){try{const pages=document.querySelectorAll('.page');pages.forEach(x=>x.classList.remove('active'));const el=$(p);if(!el)return false;el.classList.add('active');document.querySelectorAll('.navbtn[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===p));unlock();return true}catch(e){console.error('page',e);return false}}
+function bind(){
+  unlock();
+  document.querySelectorAll('.navbtn[data-page]').forEach(b=>{if(b.__uiRepairV2)return;b.__uiRepairV2=1;b.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();page(this.dataset.page)},true)});
+  document.querySelectorAll('.navgroup').forEach(b=>{if(b.__uiGroupV2)return;b.__uiGroupV2=1;b.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();this.parentElement.classList.toggle('open')},true)});
+}
+function install(){bind();const app=$( 'app');if(app&&app.style.display!=='none'&&getComputedStyle(app).display!=='none')page(document.querySelector('.page.active')?.id||'dashboard')}
+try{window.showWelcome=function(){unlock()}}catch(e){}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
+[100,300,700,1500,2500,4000].forEach(ms=>setTimeout(install,ms));
 })();

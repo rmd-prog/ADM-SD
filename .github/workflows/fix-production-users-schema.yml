@@ -1,0 +1,51 @@
+name: Fix production users schema
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch auth schema
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('src/secure-worker.js')
+          s = p.read_text()
+          s = s.replace("SELECT id,username,password_hash,role FROM users ORDER BY id", "SELECT id,username,password,role FROM users ORDER BY id")
+          s = s.replace("`${x.id}|${x.username}|${x.password_hash}|${x.role}`", "`${x.id}|${x.username}|${x.password}|${x.role}`")
+          s = s.replace("SELECT id,username,password_hash,name,role,active,mapel FROM users WHERE username=? ORDER BY id LIMIT 1", "SELECT id,username,password,nama,role,kelas,rombel,mapel FROM users WHERE username=? ORDER BY id LIMIT 1")
+          s = s.replace("if(user.active!==undefined&&user.active!==null&&Number(user.active)===0)return json({ok:false,message:'Akun guru tidak aktif.'},403);", "")
+          s = s.replace("passwordMatches(password,identifier,user.password_hash,env)", "passwordMatches(password,identifier,user.password,env)")
+          s = s.replace("nama:user.name||'',name:user.name||'',role:user.role||'guru',kelas:'',rombel:'',mapel:user.mapel||'',active:user.active", "nama:user.nama||'',name:user.nama||'',role:user.role||'guru',kelas:user.kelas||'',rombel:user.rombel||'',mapel:user.mapel||''")
+          p.write_text(s)
+
+          p = Path('src/multi-rombel.js')
+          s = p.read_text()
+          s = s.replace("SELECT id,username,name,role,mapel,active FROM users WHERE username=? ORDER BY id LIMIT 1", "SELECT id,username,nama,role,kelas,rombel,mapel FROM users WHERE username=? ORDER BY id LIMIT 1")
+          s = s.replace("const nama=row.name||row.nama||'';", "const nama=row.nama||row.name||'';")
+          s = s.replace("if(row.active!==undefined&&row.active!==null&&Number(row.active)===0)return responseJson({ok:false,message:'Akun guru tidak aktif.'},403);", "")
+          s = s.replace("SELECT password_hash FROM users WHERE username=? ORDER BY id LIMIT 1", "SELECT password FROM users WHERE username=? ORDER BY id LIMIT 1")
+          s = s.replace("check?.password_hash", "check?.password")
+          p.write_text(s)
+
+      - name: Validate source
+        run: |
+          node --check src/secure-worker.js
+          node --check src/multi-rombel.js
+          ! grep -n "password_hash\|SELECT id,username,password_hash\|user\.name" src/secure-worker.js
+          ! grep -n "password_hash\|SELECT id,username,name,role,mapel,active" src/multi-rombel.js
+
+      - name: Commit and push
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/secure-worker.js src/multi-rombel.js
+          git diff --cached --quiet && exit 0
+          git commit -m 'fix: use actual users table columns for auth'
+          git push

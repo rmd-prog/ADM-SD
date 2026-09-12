@@ -1,0 +1,56 @@
+name: Production Login Health
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  login:
+    runs-on: ubuntu-latest
+    env:
+      E2E_USERNAME: ${{ secrets.E2E_ADMIN_USERNAME }}
+      E2E_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check credentials are configured
+        run: test -n "$E2E_USERNAME" && test -n "$E2E_PASSWORD"
+      - name: Install Playwright
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm install --no-save playwright@1.55.0 >/dev/null 2>&1
+          npx playwright install --with-deps chromium >/dev/null 2>&1
+      - name: Verify production login end to end
+        run: |
+          node <<'NODE'
+          const {chromium}=require('playwright');
+          (async()=>{
+            const b=await chromium.launch({headless:true});
+            const p=await b.newPage({viewport:{width:390,height:844},isMobile:true});
+            let loginResponse=null;
+            p.on('response',async r=>{if(r.url()==='https://adm-sd.adm-sd.workers.dev/api/login'){loginResponse={status:r.status(),body:(await r.text()).slice(0,200)}}});
+            await p.goto('https://rmd-prog.github.io/ADM-SD/',{waitUntil:'networkidle',timeout:60000});
+            await p.waitForTimeout(2000);
+            const form=p.locator('#loginForm');
+            if(await form.count()!==1)throw Error('loginForm tidak ditemukan');
+            const inputs=form.locator('input');
+            await inputs.nth(0).fill(process.env.E2E_USERNAME);
+            await inputs.nth(1).fill(process.env.E2E_PASSWORD);
+            await form.locator('button[type="submit"]').click();
+            await p.waitForTimeout(5000);
+            const state=await p.evaluate(()=>({login:getComputedStyle(document.querySelector('#loginScreen')||document.querySelector('.login')).display,app:getComputedStyle(document.querySelector('#app')).display,token:!!localStorage.getItem('siAuthToken'),user:!!localStorage.getItem('siLogin'),errors:window.__e2eErrors||[]}));
+            console.log('LOGIN_RESPONSE',JSON.stringify(loginResponse));
+            console.log('LOGIN_STATE',JSON.stringify(state));
+            if(!loginResponse||loginResponse.status!==200)throw Error('Login API tidak 200: '+JSON.stringify(loginResponse));
+            if(state.login==='none'&&state.app!=='none'&&state.token&&state.user){
+              const token=await p.evaluate(()=>localStorage.getItem('siAuthToken'));
+              const r=await p.evaluate(async t=>{const x=await fetch('https://adm-sd.adm-sd.workers.dev/api/guru',{headers:{Authorization:'Bearer '+t}});return {status:x.status,body:(await x.text()).slice(0,200)}},token);
+              console.log('GURU_RESPONSE',JSON.stringify(r));
+              if(r.status!==200)throw Error('/guru tidak 200: '+JSON.stringify(r));
+            }else throw Error('UI login gagal: '+JSON.stringify(state));
+            await b.close();
+          })().catch(e=>{console.error(e);process.exit(1)});
+          NODE

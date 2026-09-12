@@ -9,7 +9,6 @@ permissions:
 
 jobs:
   normalize-brand:
-    if: ${{ !contains(github.event.head_commit.message, 'normalize app brand to SIAP GURU') }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

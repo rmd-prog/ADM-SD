@@ -20,11 +20,11 @@ jobs:
           set -euo pipefail
           changed=0
           while IFS= read -r -d '' file; do
-            if grep -Iq 'GURU+ SD' "$file"; then
-              sed -i 's/GURU+ SD/SIAP GURU/g' "$file"
+            if grep -Eq 'GURU\+ SD|SIAP GURU V11' "$file"; then
+              sed -i -e 's/GURU+ SD/SIAP GURU/g' -e 's/SIAP GURU V11/SIAP GURU/g' "$file"
               changed=1
             fi
-          done < <(git grep -Ilz 'GURU+ SD' -- . ':!.github/workflows/*' || true)
+          done < <(git grep -Ilz -E 'GURU\+ SD|SIAP GURU V11' -- . ':!.github/workflows/*' || true)
           echo "changed=$changed"
 
       - name: Commit brand normalization
@@ -38,5 +38,5 @@ jobs:
             exit 0
           fi
           git add -A -- ':!.github/workflows/*'
-          git commit -m 'chore: normalize app brand to SIAP GURU'
+          git commit -m 'chore: remove V11 from SIAP GURU branding'
           git push

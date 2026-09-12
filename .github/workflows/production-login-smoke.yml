@@ -1,4 +1,5 @@
 # Production login smoke: final verification gate
+# Triggered again after auth worker fix.
 name: Production Login Smoke
 on:
   push:

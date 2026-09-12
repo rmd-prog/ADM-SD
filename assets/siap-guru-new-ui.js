@@ -93,12 +93,26 @@
     section.appendChild(head); section.appendChild(sub);
     return section;
   }
+  function removeLegacyMenuNodes(side){
+    if(!side) return;
+    var modern=side.querySelector('.sg-modern-menu');
+    var legacyText=/administrasi\s*(?:&|dan)?\s*dokumen|penilaian\s*(?:&|dan)?\s*rekap|kokurikuler|kokulikuler/i;
+    side.querySelectorAll('.navbtn,.navgroup,.menu-group,.submenu,.v13-group,.v13-main-icon,.v13-chevron').forEach(function(el){
+      if(modern && (el===modern || modern.contains(el))) return;
+      el.remove();
+    });
+    Array.prototype.slice.call(side.children).forEach(function(el){
+      if(el===modern || (el.classList && (el.classList.contains('side-title')||el.classList.contains('sidebar-footer')))) return;
+      var text=(el.textContent||'').replace(/\s+/g,' ').trim();
+      if(legacyText.test(text)) el.remove();
+    });
+  }
   function modernMenu(){
     var side=document.getElementById('sidebar');
     if(!side || side.dataset.modernMenu==='2') return;
     side.dataset.modernMenu='2';
     var title=side.querySelector('.side-title');
-    side.querySelectorAll('.navbtn,.menu-group').forEach(function(el){el.remove();});
+    removeLegacyMenuNodes(side);
     if(title) title.textContent='MENU UTAMA';
     var wrap=document.createElement('div');
     wrap.className='sg-modern-menu';
@@ -148,6 +162,9 @@
       wrap.appendChild(section);
     });
     side.appendChild(wrap);
+    removeLegacyMenuNodes(side);
+    var observer=new MutationObserver(function(){removeLegacyMenuNodes(side);});
+    observer.observe(side,{childList:true,subtree:true});
     var style=document.getElementById('siapGuruModernMenuStyle')||document.createElement('style');
     style.id='siapGuruModernMenuStyle';
     style.textContent='\

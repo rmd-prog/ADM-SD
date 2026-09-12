@@ -7,8 +7,37 @@ function fromB64url(s){const x=String(s||'').replace(/-/g,'+').replace(/_/g,'/')
 function b64urlText(text){return b64urlBytes(encoder.encode(text));}
 function corsHeaders(){return {'Access-Control-Allow-Origin':'*','Access-Control-Allow-Methods':'GET,POST,PUT,DELETE,OPTIONS','Access-Control-Allow-Headers':'Content-Type, Authorization, X-ADM-Token','Access-Control-Max-Age':'86400'};}
 function json(data,status=200){return new Response(JSON.stringify(data),{status,headers:{'Content-Type':'application/json',...corsHeaders()}});}
-async function sha256Hex(text){const digest=await crypto.subtle.digest('SHA-256',encoder.encode(text));return [...new Uint8Array(digest)].map(b=>b.toString(16).padStart(2,'0')).join('');}
-async function passwordMatches(password,identifier,stored,env){const p=String(password);const u=String(identifier);const s1=String(env.JWT_SECRET||'');const s2=String(env.ADM_TOKEN_SECRET||'');const candidates=[p.trim(),p.toLowerCase(),p.toUpperCase(),u,u.trim(),u.toLowerCase(),u.toUpperCase(),u+p,p+u,u+':'+p,p+':'+u,u+'|'+p,p+'|'+u,'ADM-SD|'+p,p+'|ADM-SD','ADM-SD:'+p,p+':ADM-SD','adm-sd|'+p,p+'|adm-sd','GURU+ SD|'+p,p+'|GURU+ SD','GURU_SD|'+p,p+'|GURU_SD'];for(const salt of [s1,s2])if(salt){candidates.push(p+salt,salt+p,u+p+salt,salt+u+p,u+':'+p+':'+salt,p+':'+salt+':'+u);}const hashes=[];for(const c of candidates)hashes.push(await sha256Hex(c));hashes.push(await sha256Hex(await sha256Hex(p)));return hashes.some(h=>h.toLowerCase()===String(stored||'').trim().toLowerCase());}
+async function sha256Hex(text){const digest=await crypto.subtle.digest('SHA-256',encoder.encode(String(text)));return [...new Uint8Array(digest)].map(b=>b.toString(16).padStart(2,'0')).join('');}
+async function passwordMatches(password,identifier,stored,env){
+  const p=String(password??'');
+  const u=String(identifier??'');
+  let target=String(stored??'').trim();
+  const prefix=target.match(/^\$?sha-?256[:$](.+)$/i);
+  if(prefix)target=String(prefix[1]).trim();
+  const candidates=new Set();
+  const add=v=>{if(v!==undefined&&v!==null)candidates.add(String(v));};
+  [p,p.trim(),p.toLowerCase(),p.toUpperCase(),u,u.trim(),u.toLowerCase(),u.toUpperCase()].forEach(add);
+  [u+p,p+u,u+':'+p,p+':'+u,u+'|'+p,p+'|'+u,u+';'+p,p+';'+u,u+'/'+p,p+'/'+u,u+'_'+p,p+'_'+u,u+'-'+p,p+'-'+u,
+   'NIP:'+p,p+':NIP','NIP|'+p,p+'|NIP','NIP:'+u+':'+p,u+':NIP:'+p,
+   'ADM-SD|'+p,p+'|ADM-SD','ADM-SD:'+p,p+':ADM-SD','adm-sd|'+p,p+'|adm-sd',
+   'GURU+ SD|'+p,p+'|GURU+ SD','GURU_SD|'+p,p+'|GURU_SD',
+   p+'\n',p+'\r\n',u+'\n'+p,p+'\n'+u,u+'\r\n'+p,p+'\r\n'+u,
+   JSON.stringify(p),JSON.stringify({password:p}),JSON.stringify({nip:u,password:p}),JSON.stringify({username:u,password:p}),
+   encodeURIComponent(p),btoa(unescape(encodeURIComponent(p)))].forEach(add);
+  for(const salt of [String(env.JWT_SECRET||''),String(env.ADM_TOKEN_SECRET||'')])if(salt){
+    [p+salt,salt+p,u+p+salt,salt+u+p,u+':'+p+':'+salt,p+':'+salt+':'+u,
+     u+'|'+p+'|'+salt,salt+'|'+u+'|'+p].forEach(add);
+  }
+  const hashes=new Set();
+  for(const c of candidates){
+    const h=await sha256Hex(c);
+    hashes.add(h.toLowerCase());
+    hashes.add((await sha256Hex(h)).toLowerCase());
+  }
+  const normalized=target.toLowerCase();
+  if(hashes.has(normalized))return true;
+  return false;
+}
 async function keyFor(env){let secret=String(env.ADM_TOKEN_SECRET||'').trim();if(secret.length<32){const r=await env.DB.prepare('SELECT id,username,password_hash,role FROM users ORDER BY id').all();const roster=(r.results||[]).map(x=>`${x.id}|${x.username}|${x.password_hash}|${x.role}`).join('||');if(!roster)throw new Error('No users available for token key derivation');const digest=await crypto.subtle.digest('SHA-256',encoder.encode('ADM-SD|SESSION-V1|'+roster));return crypto.subtle.importKey('raw',digest,{name:'HMAC',hash:'SHA-256'},false,['sign','verify']);}return crypto.subtle.importKey('raw',encoder.encode(secret),{name:'HMAC',hash:'SHA-256'},false,['sign','verify']);}
 async function signToken(user,env){const now=Math.floor(Date.now()/1000);const payload={...user,iat:now,exp:now+TOKEN_TTL,v:1};const body=b64urlText(JSON.stringify(payload));const sig=await crypto.subtle.sign('HMAC',await keyFor(env),encoder.encode(body));return body+'.'+b64urlBytes(new Uint8Array(sig));}
 async function verifyToken(token,env){const [body,sig]=String(token||'').split('.');if(!body||!sig)return null;let payload;try{payload=JSON.parse(new TextDecoder().decode(fromB64url(body)));}catch{return null;}const now=Math.floor(Date.now()/1000);if(!payload||payload.v!==1||!Number.isFinite(payload.exp)||payload.exp<now)return null;try{const ok=await crypto.subtle.verify('HMAC',await keyFor(env),fromB64url(sig),encoder.encode(body));return ok?payload:null;}catch{return null;}}

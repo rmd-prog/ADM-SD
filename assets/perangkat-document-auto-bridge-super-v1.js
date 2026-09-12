@@ -1,4 +1,4 @@
-/* GURU+ SD — DOCUMENT AUTO BRIDGE SUPER v6
+/* SIAP GURU — DOCUMENT AUTO BRIDGE SUPER v6
  * Canonical document bridge. Master + deterministic Auto Chain are authoritative.
  * Also guarantees the canonical LKPD/Asesmen module is loaded even when an older
  * index normalization omitted its script tag.

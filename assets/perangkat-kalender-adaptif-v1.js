@@ -1,4 +1,4 @@
-/* GURU+ SD — KALENDER PERANGKAT ADAPTIF v1 */
+/* SIAP GURU — KALENDER PERANGKAT ADAPTIF v1 */
 (function(){'use strict';if(window.__PK_CALENDAR_ADAPTIF_V1__)return;window.__PK_CALENDAR_ADAPTIF_V1__=1;
 const SK='guru_sd_kurikulum_super_schedule_v2',AK='guru_sd_jp_allocation_super_v1',CK='guru_sd_perangkat_calendar_adaptif_v1';
 const $=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

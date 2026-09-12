@@ -1,4 +1,4 @@
-/* GURU+ SD — CANONICAL CURRICULUM COMPLETION V1
+/* SIAP GURU — CANONICAL CURRICULUM COMPLETION V1
  * Extends the single ADM_CURRICULUM object; does not create a second curriculum store.
  * English units are aligned to the government My Next Words primary books.
  * PAI uses the 2026 CP elements as canonical learning units where textbook chapter identity is not safely verified.

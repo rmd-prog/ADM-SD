@@ -1,4 +1,4 @@
-/* GURU+ SD — LKPD & ASESMEN SUPER v4
+/* SIAP GURU — LKPD & ASESMEN SUPER v4
  * SINGLE SOURCE: GURU_SD_MASTER for curriculum context.
  * Meeting mapping comes only from GURU_SD_PERTEMUAN.
  * Local-only. No D1/Worker/assessment bridge changes.

@@ -1,4 +1,4 @@
-/* GURU+ SD — DASHBOARD EMPTY RESET v10 — REMOVE ALL LEGACY INJECTIONS */
+/* SIAP GURU — DASHBOARD EMPTY RESET v10 — REMOVE ALL LEGACY INJECTIONS */
 (function(){'use strict';
 if(window.__AUDIT_PERANGKAT_SUPER_V10__)return;window.__AUDIT_PERANGKAT_SUPER_V10__=1;
 const $=id=>document.getElementById(id);

@@ -1,4 +1,4 @@
-/* GURU+ SD — KURIKULUM SUPER MULTI-DAY SCHEDULE — DORMANT DURING REBUILD
+/* SIAP GURU — KURIKULUM SUPER MULTI-DAY SCHEDULE — DORMANT DURING REBUILD
  * Kept as a file for the later rebuild. Intentionally does not inject UI.
  */
 (function(){'use strict';

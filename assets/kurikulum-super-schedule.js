@@ -1,4 +1,4 @@
-/* GURU+ SD — KURIKULUM SUPER SCHEDULE ENGINE v2
+/* SIAP GURU — KURIKULUM SUPER SCHEDULE ENGINE v2
  * Jadwal -> tanggal nyata -> PROTA/PROSEM/RPM.
  * PROMES memakai format administrasi sekolah: Minggu Ke-, Tanggal Pelaksanaan,
  * Materi/Pokok Bahasan, Tujuan Pembelajaran, Alokasi Waktu,

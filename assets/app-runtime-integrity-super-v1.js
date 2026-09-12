@@ -1,4 +1,4 @@
-/* GURU+ SD — APP RUNTIME INTEGRITY SUPER V1 */
+/* SIAP GURU — APP RUNTIME INTEGRITY SUPER V1 */
 (function(){
 'use strict';
 if(window.__ADM_RUNTIME_INTEGRITY_V1__)return;window.__ADM_RUNTIME_INTEGRITY_V1__=true;

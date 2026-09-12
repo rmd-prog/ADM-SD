@@ -1,4 +1,4 @@
-/* GURU+ SD — PROTA/PROMES SUPER v1
+/* SIAP GURU — PROTA/PROMES SUPER v1
  * Uses catalog BAB/JP + real schedule dates. Semester I & II.
  */
 (function(){'use strict';if(window.__PROTA_PROMES_SUPER__)return;window.__PROTA_PROMES_SUPER__=1;

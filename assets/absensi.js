@@ -1,4 +1,4 @@
-/* GURU+ SD — ABSENSI V2 */
+/* SIAP GURU — ABSENSI V2 */
 (function(){
 'use strict';
 function base(){return String(window.API_BASE||'https://adm-sd.adm-sd.workers.dev/api').replace(/\/$/,'')}

@@ -1,4 +1,4 @@
-/* GURU+ SD — UI Guru Mapel */
+/* SIAP GURU — UI Guru Mapel */
 (function(){
   'use strict';
   const SUBJECTS=['Pendidikan Agama dan Budi Pekerti','PJOK','Bahasa Inggris'];

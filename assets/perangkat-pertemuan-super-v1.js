@@ -1,4 +1,4 @@
-/* GURU+ SD — TP → Pertemuan SUPER v2
+/* SIAP GURU — TP → Pertemuan SUPER v2
  * SINGLE SOURCE: GURU_SD_MASTER for BAB/TP/JP.
  * Schedule is only the calendar input; curriculum state never comes from legacy keys.
  * Local-only; D1/Worker/assessment bridge untouched.

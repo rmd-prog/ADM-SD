@@ -1,5 +1,5 @@
 /*
- * GURU+ SD — AUTO DOC SUPER
+ * SIAP GURU — AUTO DOC SUPER
  * Template-first document builder. AI is optional and never required.
  * Target: Kurikulum Merdeka / Pembelajaran Mendalam 2026/2027.
  *

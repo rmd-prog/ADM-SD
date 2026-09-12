@@ -8,7 +8,7 @@
 if(window.__SIAP_GURU_GLOBAL_FOUNDATION_V10__)return;
 window.__SIAP_GURU_GLOBAL_FOUNDATION_V10__=1;
 const $=id=>document.getElementById(id);
-const BRAND_OLD='GURU+ SD';
+const BRAND_OLD='SIAP GURU';
 const BRAND_NEW='SIAP GURU';
 
 function emptyDashboard(){

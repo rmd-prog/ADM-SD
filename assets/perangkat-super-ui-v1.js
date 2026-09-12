@@ -1,4 +1,4 @@
-/* GURU+ SD — PERANGKAT PEMBELAJARAN SUPER UI V2
+/* SIAP GURU — PERANGKAT PEMBELAJARAN SUPER UI V2
  * Restores the missing canonical Master controls used by the SUPER chain.
  * Local-only. Does not touch D1, Worker, students, login, or scores.
  */

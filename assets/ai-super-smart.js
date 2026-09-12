@@ -1,4 +1,4 @@
-/* GURU+ SD — AI SUPER SMART V2
+/* SIAP GURU — AI SUPER SMART V2
  * Adapter only. The old private 1-6 catalog is removed.
  * Canonical source is the inline BOOK_CATALOG + GURU_SD_MASTER.
  * This layer only keeps AI SUPER controls synchronized and chooses DPL defaults.

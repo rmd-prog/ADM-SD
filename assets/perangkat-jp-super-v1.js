@@ -1,4 +1,4 @@
-/* GURU+ SD — JP allocator SUPER v1
+/* SIAP GURU — JP allocator SUPER v1
  * Local-only. Does not touch D1, Worker, students, or assessment bridge.
  * Allocates BAB JP across TP and actual meeting slots.
  */

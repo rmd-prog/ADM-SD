@@ -1,4 +1,4 @@
-/* GURU+ SD — RPM SUPER v1
+/* SIAP GURU — RPM SUPER v1
  * Builds RPM per real date/meeting from saved schedule + TP/JP allocation.
  * Local-first; no D1/Worker changes.
  */

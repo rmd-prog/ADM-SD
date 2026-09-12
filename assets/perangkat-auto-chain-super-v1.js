@@ -1,4 +1,4 @@
-/* GURU+ SD — AUTO CHAIN SUPER — DORMANT DURING DASHBOARD REBUILD
+/* SIAP GURU — AUTO CHAIN SUPER — DORMANT DURING DASHBOARD REBUILD
  * Kept as a file for the later rebuild. Intentionally does not inject UI.
  */
 (function(){'use strict';

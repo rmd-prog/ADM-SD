@@ -1,4 +1,4 @@
-/* GURU+ SD — KATALOG BAB SUPER v4
+/* SIAP GURU — KATALOG BAB SUPER v4
  * Canonical catalog reader: BOOK_CATALOG from index.html.
  * This module is VIEW-ONLY: it must never create duplicate pkR/pkM/pkB controls,
  * invent TP, or overwrite the Master state.

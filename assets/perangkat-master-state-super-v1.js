@@ -1,4 +1,4 @@
-/* GURU+ SD — SINGLE SOURCE OF TRUTH V10
+/* SIAP GURU — SINGLE SOURCE OF TRUTH V10
  * Canonical chain: BAB -> CP -> ATP -> TP -> JP -> Jadwal -> PROTA -> PROMES -> RPM -> LKPD -> Asesmen.
  * Master owns selected BAB and the only deterministic TP resolver.
  * BAB identity is material-safe so stale content cannot survive a chapter switch.

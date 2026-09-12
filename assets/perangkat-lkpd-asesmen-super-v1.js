@@ -1,4 +1,4 @@
-/* GURU+ SD — LKPD & ASESMEN SUPER v2
+/* SIAP GURU — LKPD & ASESMEN SUPER v2
  * Canonical source: GURU_SD_MASTER / guru_sd_pembelajaran_master_v1.
  * This UI module is VIEW/OUTPUT only; it never creates another BAB/TP source.
  * Does not touch D1, Worker, student data, login, or assessment bridge.

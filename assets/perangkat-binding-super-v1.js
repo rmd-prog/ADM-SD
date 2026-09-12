@@ -1,4 +1,4 @@
-/* GURU+ SD — Binding adapter
+/* SIAP GURU — Binding adapter
  * SINGLE SOURCE: GURU_SD_MASTER.
  * This file only exposes compatibility hooks; it does not own curriculum state.
  * Local-only. Does not touch D1, Worker, students, or assessment bridge.

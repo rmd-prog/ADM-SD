@@ -1,4 +1,4 @@
-/* GURU+ SD — DASHBOARD CLEAN V1
+/* SIAP GURU — DASHBOARD CLEAN V1
  * Replaces the legacy crowded dashboard presentation with a minimal base.
  * Frontend-only. No D1/Worker/student/login changes.
  */
@@ -11,7 +11,7 @@ function clean(){
   d.innerHTML=`
     <div class="dash-clean">
       <div class="dash-clean-hero">
-        <div class="dash-clean-kicker">GURU+ SD • 2026/2027</div>
+        <div class="dash-clean-kicker">SIAP GURU • 2026/2027</div>
         <h2>Selamat datang 👋</h2>
         <p>Portal sederhana untuk mengelola kegiatan guru.</p>
       </div>

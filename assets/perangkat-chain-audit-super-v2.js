@@ -1,4 +1,4 @@
-/* GURU+ SD — STRICT CHAIN AUDIT SUPER v3
+/* SIAP GURU — STRICT CHAIN AUDIT SUPER v3
  * Canonical source: GURU_SD_MASTER.
  * Runtime guard for BAB/TP/JP/DPL/model identity across the document chain.
  * Legacy state is never written back.

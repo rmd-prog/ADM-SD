@@ -1,4 +1,4 @@
-/* GURU+ SD — MASTER ENGINE HARDEN v2
+/* SIAP GURU — MASTER ENGINE HARDEN v2
  * Persisted Master is authoritative. DOM is only a write source on explicit selector change.
  * No D1/Worker access.
  */

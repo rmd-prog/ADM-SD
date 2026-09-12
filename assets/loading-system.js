@@ -1,4 +1,4 @@
-/* ADM-SD / GURU+ SD — Global Premium Loading & Feedback UI */
+/* ADM-SD / SIAP GURU — Global Premium Loading & Feedback UI */
 (function(){
 'use strict';
 if(window.__ADM_LOADING_SYSTEM)return;
@@ -67,7 +67,7 @@ let progressTimer=null;
 function iconSvg(kind){return '<svg viewBox="0 0 24 24">'+(ICONS[kind]||ICONS.default)+'</svg>'}
 function mount(){
  if(document.getElementById('admLoadingOverlay'))return;
- const el=document.createElement('div');el.id='admLoadingOverlay';el.setAttribute('aria-live','polite');el.innerHTML='<div class="adm-loading-card" id="admLoadingCard"><div class="adm-brand"><span class="adm-brand-badge">'+iconSvg('generate')+'</span>GURU+ SD</div><div class="adm-loading-icon" id="admLoadingIcon">'+iconSvg('default')+'</div><p class="adm-loading-title" id="admLoadingTitle">Sedang memproses</p><p class="adm-loading-text" id="admLoadingText">Mohon tunggu<span class="adm-loading-dots"></span></p><div class="adm-loading-progress" id="admLoadingProgress"><div class="adm-loading-progress-bar" id="admLoadingProgressBar"></div></div><div class="adm-loading-percent" id="admLoadingPercent">0%</div></div>';
+ const el=document.createElement('div');el.id='admLoadingOverlay';el.setAttribute('aria-live','polite');el.innerHTML='<div class="adm-loading-card" id="admLoadingCard"><div class="adm-brand"><span class="adm-brand-badge">'+iconSvg('generate')+'</span>SIAP GURU</div><div class="adm-loading-icon" id="admLoadingIcon">'+iconSvg('default')+'</div><p class="adm-loading-title" id="admLoadingTitle">Sedang memproses</p><p class="adm-loading-text" id="admLoadingText">Mohon tunggu<span class="adm-loading-dots"></span></p><div class="adm-loading-progress" id="admLoadingProgress"><div class="adm-loading-progress-bar" id="admLoadingProgressBar"></div></div><div class="adm-loading-percent" id="admLoadingPercent">0%</div></div>';
  (document.body||document.documentElement).appendChild(el);
 }
 function setProgress(value){

@@ -1,4 +1,4 @@
-/* GURU+ SD — MASTER ENFORCER + CHAIN GUARD V8
+/* SIAP GURU — MASTER ENFORCER + CHAIN GUARD V8
  * Canonical source: guru_sd_pembelajaran_master_v1 / GURU_SD_MASTER.
  * Legacy state is a derived mirror only; reads are redirected to Master at runtime.
  * UI BAB catalogs remain intact for teacher selection, but RPM/AI selectors are mirrors only.

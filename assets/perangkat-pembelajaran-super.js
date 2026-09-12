@@ -1,4 +1,4 @@
-/* GURU+ SD — PERANGKAT PEMBELAJARAN SUPER V5
+/* SIAP GURU — PERANGKAT PEMBELAJARAN SUPER V5
  * Deterministic engine. GURU_SD_MASTER is the only source of truth.
  * BAB -> CP -> ATP -> TP -> JP -> PROTA -> PROMES -> RPM -> LKPD -> Asesmen.
  * Exact JP allocation: total allocated JP always equals Master JP, including JP < TP count.

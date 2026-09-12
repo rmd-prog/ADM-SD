@@ -1,4 +1,4 @@
-/* GURU+ SD — APP FEATURE COMPLETENESS BRIDGE V1
+/* SIAP GURU — APP FEATURE COMPLETENESS BRIDGE V1
    Finishes menu routing and adds deterministic local document workspaces.
    No D1/Worker mutation. Canonical Perangkat remains GURU_SD_MASTER.
 */

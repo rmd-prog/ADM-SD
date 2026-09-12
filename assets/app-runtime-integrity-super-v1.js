@@ -1,13 +1,18 @@
-/* GURU+ SD — APP RUNTIME INTEGRITY SUPER V1 */
+/* GURU+ SD — APP RUNTIME INTEGRITY SUPER V2 */
 (function(){
 'use strict';
 if(window.__ADM_RUNTIME_INTEGRITY_V1__)return;window.__ADM_RUNTIME_INTEGRITY_V1__=true;
 const state={startedAt:new Date().toISOString(),errors:[],warnings:[],checks:{},ready:false};
-const q=(s,r=document)=>r.querySelector(s), qa=(s,r=document)=>[...r.querySelectorAll(s)];
+const q=(s,r=document)=>r.querySelector(s),qa=(s,r=document)=>[...r.querySelectorAll(s)];
 function check(name,ok,detail){state.checks[name]={ok:!!ok,detail:detail||''};return !!ok}
 function master(){try{return window.GURU_SD_MASTER?.get?.()||{}}catch{return {}}}
-function repairButtons(){qa('button:not([type])').forEach(b=>{if(!/submit|reset/i.test(b.textContent||''))b.type='button'})}
-/* Navigation is owned by the native app. This integrity layer must not install a second click router. */
+function repairButtons(){
+ qa('button:not([type])').forEach(b=>{
+  const form=b.closest('form');
+  const isLogin=!!(form&&(['loginForm','login'].includes(form.id)||form.matches('.login-form')));
+  b.type=isLogin?'submit':'button';
+ });
+}
 function audit(){
  repairButtons();
  const login=q('#login,.login');

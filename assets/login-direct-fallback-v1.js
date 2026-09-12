@@ -1,4 +1,4 @@
-/* ADM-SD UI RECOVERY V7 — restore navigation + global actions without touching native rendering */
+/* ADM-SD UI RECOVERY V8 — non-invasive fallback only */
 (function(){'use strict';
   const $=id=>document.getElementById(id);
 
@@ -12,22 +12,15 @@
       e.style.pointerEvents='none';
       e.setAttribute('aria-hidden','true');
     });
-    document.body.style.pointerEvents='auto';
   }
 
-  function nativeNavigate(p,btn){
-    hideOverlays();
-    try{
-      if(typeof window.showPage==='function'){
-        window.showPage(p);
-        return true;
-      }
-    }catch(e){console.warn('native navigation error',e)}
-    return false;
-  }
-
-  function fallbackNavigate(p,btn){
-    const page=$(p); if(!page)return;
+  function fallbackNav(btn){
+    const p=btn&&btn.dataset&&btn.dataset.page;
+    const page=p&&$(p);
+    if(!page)return;
+    if(typeof window.showPage==='function'){
+      try{ window.showPage(p); return; }catch(e){ console.warn('showPage fallback:',e); }
+    }
     document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
     page.classList.add('active');
     document.querySelectorAll('.navbtn[data-page]').forEach(x=>x.classList.toggle('active',x===btn));
@@ -35,23 +28,11 @@
     if(side&&innerWidth<=850)side.classList.remove('open');
   }
 
-  function navigate(p,btn){
-    if(!nativeNavigate(p,btn))fallbackNavigate(p,btn);
-  }
-
-  function doLogout(){
-    hideOverlays();
-    try{
-      if(typeof window.logout==='function' && !window.logout.__uiRecoveryWrapped){
-        return window.logout();
-      }
-    }catch(e){console.warn('native logout error',e)}
-    try{
-      ['siAuthToken','siLogin','authToken','token','currentUser','userSession','sessionUser'].forEach(k=>{
-        try{localStorage.removeItem(k)}catch(e){}
-        try{sessionStorage.removeItem(k)}catch(e){}
-      });
-    }catch(e){}
+  function fallbackLogout(){
+    ['siAuthToken','siLogin','authToken','token','currentUser','userSession','sessionUser'].forEach(k=>{
+      try{localStorage.removeItem(k)}catch(e){}
+      try{sessionStorage.removeItem(k)}catch(e){}
+    });
     const app=$('app'),login=$('loginScreen');
     if(app){app.style.display='none';app.classList.remove('active','show')}
     if(login){login.style.display='grid';login.classList.add('active')}
@@ -62,61 +43,30 @@
   function bind(){
     hideOverlays();
 
-    document.querySelectorAll('.navbtn[data-page]').forEach(b=>{
-      if(b.__uiRecoveryV7)return;
-      b.__uiRecoveryV7=true;
-      b.addEventListener('click',function(e){
-        e.preventDefault();
-        e.stopPropagation();
-        navigate(this.dataset.page,this);
-      },true);
-    });
+    /* Native handlers own navigation. This listener is bubble-phase only and never
+       cancels the event. It repairs navigation only when the native handler did not. */
+    if(!document.__uiRecoveryV8){
+      document.__uiRecoveryV8=true;
+      document.addEventListener('click',function(e){
+        const nav=e.target.closest&&e.target.closest('.navbtn[data-page]');
+        if(nav){
+          const p=nav.dataset.page;
+          setTimeout(function(){
+            const page=$(p);
+            if(page && !page.classList.contains('active')) fallbackNav(nav);
+          },0);
+          return;
+        }
 
-    document.querySelectorAll('.navgroup').forEach(b=>{
-      if(b.__uiGroupV7)return;
-      b.__uiGroupV7=true;
-      b.addEventListener('click',function(e){
-        e.preventDefault();
-        e.stopPropagation();
-        this.parentElement.classList.toggle('open');
-        hideOverlays();
-      },true);
-    });
-
-    const menu=document.querySelector('[data-menu-toggle],#menuBtn,#menuToggle,.menu-mobile');
-    if(menu&&!menu.__uiMenuV7){
-      menu.__uiMenuV7=true;
-      menu.addEventListener('click',function(e){
-        e.preventDefault();
-        e.stopPropagation();
-        const side=$('sidebar');
-        if(side)side.classList.toggle('open');
-        hideOverlays();
-      },true);
+        const logout=e.target.closest&&e.target.closest('#logoutBtn,[data-action="logout"]');
+        if(logout && typeof window.logout!=='function'){
+          setTimeout(fallbackLogout,0);
+        }
+      },false);
     }
-
-    const logout=$('logoutBtn') || document.querySelector('[data-action="logout"]');
-    if(logout&&!logout.__uiLogoutV7){
-      logout.__uiLogoutV7=true;
-      logout.addEventListener('click',function(e){
-        e.preventDefault();
-        e.stopImmediatePropagation();
-        doLogout();
-      },true);
-    }
-
-    /* Keep ordinary controls clickable. This only repairs accidental pointer blocking;
-       it does not replace their native handlers. */
-    document.querySelectorAll('button,input,select,textarea,a').forEach(el=>{
-      if(el.closest('#welcomeOverlay,#admLoadingOverlay'))return;
-      if(el.__uiPointerV7)return;
-      el.__uiPointerV7=true;
-      el.style.pointerEvents='auto';
-      el.style.touchAction='manipulation';
-    });
   }
 
   function install(){bind();hideOverlays()}
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
-  [100,300,700,1200,2500,5000].forEach(ms=>setTimeout(install,ms));
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});
+  else install();
 })();

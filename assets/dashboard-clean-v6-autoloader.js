@@ -1,0 +1,2 @@
+/* GURU+ SD — dashboard-only cleanup */
+(function(){'use strict';function run(){var d=document.getElementById('dashboard');if(!d)return;d.innerHTML='<div style="max-width:760px;margin:28px auto;padding:24px;text-align:center"><h2 style="margin:0 0 8px">Selamat datang 👋</h2><p style="margin:0 0 20px;color:#64748b">GURU+ SD • 2026/2027</p><button data-v10-page="students" style="border:0;border-radius:14px;padding:14px 22px;background:#2563eb;color:white;font-weight:800">👥 Data Siswa</button></div>'}run();setTimeout(run,250);setTimeout(run,800);})();

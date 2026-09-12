@@ -33,12 +33,8 @@ body,body.v10-app{background:var(--sg-bg)!important;color:var(--sg-ink)}
 @media(max-width:850px){.top{height:62px!important;padding:0 12px!important}.layout{min-height:calc(100vh - 62px)!important}.main{padding:14px 12px 28px!important}.side{top:62px!important;min-height:calc(100vh - 62px)!important;box-shadow:12px 0 30px rgba(25,45,75,.13)!important}.sg-action-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.sg-action-grid-simple{grid-template-columns:repeat(2,minmax(0,1fr))!important}.sg-action{min-height:94px;padding:12px!important}#dashboard .v10-hero{padding:21px!important}}
 @media(max-width:520px){.top{height:58px!important}.main{padding:11px 9px 22px!important}.side{top:58px!important;min-height:calc(100vh - 58px)!important}.sg-action-grid,.sg-action-grid-simple{grid-template-columns:1fr 1fr!important}.sg-action{border-radius:14px!important;min-height:88px}.sg-action-icon{width:34px;height:34px;font-size:18px}.sg-action b{font-size:12px}.sg-action small{font-size:9px}#dashboard .v10-hero h2{font-size:22px!important}#dashboard .v10-hero{border-radius:16px!important;padding:19px!important}.card,.panel,.stat,.doc-box{border-radius:14px!important}.teacher-profile{max-width:180px}}
 
-/* ===== BERANDA SIMPLE TRIAL =====
-   Visual-only trial. Existing dashboard data/functions remain intact. */
-#dashboard .v10-services,
-#dashboard .v10-stat-grid,
-#dashboard .v10-workflow,
-#dashboard .v10-quick{display:none!important}
+/* BERANDA SIMPLE TRIAL — visual only */
+#dashboard .v10-services,#dashboard .v10-stat-grid,#dashboard .v10-workflow,#dashboard .v10-quick{display:none!important}
 #dashboard .v10-section-title{display:none!important}
 #dashboard #teacherClassBox{margin:0 0 18px!important;padding:14px 16px!important;border-radius:15px!important;background:#fff!important;border:1px solid #e5ebf2!important;box-shadow:0 5px 18px rgba(25,45,75,.04)!important}
 #dashboard #teacherClassTitle{font-size:13px!important;color:#526174!important}

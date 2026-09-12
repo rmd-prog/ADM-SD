@@ -1,82 +1,85 @@
 name: Safe Perangkat SUPER Master Loader
+
 on:
   push:
     branches: [feat-perangkat-pembelajaran-super-2026-09-10]
+  workflow_dispatch:
+
 permissions:
   contents: write
+
+concurrency:
+  group: adm-sd-safe-perangkat-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   integrate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Safely append master loaders before final body
+
+      - name: Normalize canonical Perangkat SUPER script stack
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
-          p=Path('index.html')
-          s=p.read_text(encoding='utf-8')
-          loaders=[
-            'assets/perangkat-pembelajaran-super.js',
-            'assets/perangkat-katalog-super-v2.js',
-            'assets/perangkat-cp-atp-tp-super-v2.js',
-            'assets/perangkat-binding-super-v1.js',
-            'assets/perangkat-jp-super-v1.js',
-            'assets/perangkat-pertemuan-super-v1.js',
-            'assets/perangkat-prota-promes-super-v2.js',
-            'assets/perangkat-rpm-super-v2.js',
-            'assets/perangkat-lkpd-asesmen-super-v1.js',
-            'assets/perangkat-lkpd-asesmen-super-v2.js',
-            'assets/perangkat-audit-super-v1.js',
-            'assets/perangkat-kalender-adaptif-v1.js',
-          ]
+          import re
+          p=Path('index.html'); s=p.read_text(encoding='utf-8')
+          canonical=[
+            'assets/perangkat-master-state-super-v1.js','assets/perangkat-pembelajaran-super.js',
+            'assets/perangkat-katalog-super-v2.js','assets/perangkat-binding-super-v1.js',
+            'assets/perangkat-jp-super-v1.js','assets/perangkat-pertemuan-super-v1.js',
+            'assets/perangkat-audit-super-v1.js','assets/perangkat-kalender-adaptif-v1.js',
+            'assets/perangkat-master-enforcer-super-v1.js','assets/perangkat-master-engine-harden-v1.js',
+            'assets/perangkat-chain-audit-super-v2.js','assets/perangkat-auto-chain-super-v1.js',
+            'assets/perangkat-document-auto-bridge-super-v1.js','assets/perangkat-global-integrity-super-v1.js']
+          legacy=[
+            'assets/perangkat-cp-atp-tp-super-v2.js','assets/perangkat-prota-promes-super-v2.js',
+            'assets/perangkat-rpm-super-v2.js','assets/perangkat-lkpd-asesmen-super-v1.js',
+            'assets/perangkat-lkpd-asesmen-super-v2.js']
+          for src in canonical+legacy:
+            s=re.sub(r'\s*<script\s+src=["\']'+re.escape(src)+r'["\']\s*>\s*</script>\s*','\n',s,flags=re.I)
           pos=s.rfind('</body>')
-          if pos < 0: raise SystemExit('final </body> not found')
-          tail=s[:pos]
-          # Tags inside exportHtml() strings are not document loaders.
-          final_script=s.rfind('</script>',0,pos)
-          final_area=s[final_script+9:pos] if final_script>=0 else s[:pos]
-          missing=[x for x in loaders if f'<script src="{x}"></script>' not in final_area]
-          if not missing:
-              print('All master loaders already present in final document')
-              raise SystemExit(0)
-          block='\n'.join(f'<script src="{x}"></script>' for x in missing)+'\n'
-          s=s[:pos]+block+s[pos:]
+          if pos<0: raise SystemExit('final </body> not found')
+          s=s[:pos]+'\n'+'\n'.join(f'<script src="{x}"></script>' for x in canonical)+'\n'+s[pos:]
+          replacement="""function exportHtml(type){const d=docPayload(type);return '<!doctype html><html lang=\"id\"><head><meta charset=\"utf-8\"><title>'+escHtml(d.title)+'</title><style>body{font-family:Arial,sans-serif;margin:35px;color:#172033}h1{font-size:24px;margin-bottom:4px}h4{margin:18px 0 8px;border-bottom:2px solid #ddd;padding-bottom:6px}.doc-grid{display:flex;gap:10px}.doc-box{border:1px solid #ddd;border-radius:10px;padding:12px;flex:1;margin-bottom:12px}.doc-line{border:1px solid #e2e8f0;border-radius:7px;padding:8px;margin:5px 0;line-height:1.5}.doc-table{width:100%;border-collapse:collapse}.doc-table th,.doc-table td{border:1px solid #ccc;padding:8px;text-align:left;vertical-align:top}.doc-table th{background:#f3f4f6}.doc-note{margin-top:12px;padding:10px;background:#fff7ed}</style></head><body><h1>'+escHtml(d.title)+'</h1><p>Tahun Pelajaran 2026/2027</p>'+d.body+'</body></html>'}\nfunction ensureDoc"""
+          s,n=re.subn(r'function exportHtml\(type\)\{.*?\}\nfunction ensureDoc',replacement,s,count=1,flags=re.S)
+          print('exportHtml repaired:',n)
           p.write_text(s,encoding='utf-8')
-          print('Inserted',len(missing),'master loaders')
           PY
-      - name: Validate master stack
+
+      - name: Validate canonical Perangkat SUPER stack globally
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
+          import re
           s=Path('index.html').read_text(encoding='utf-8')
-          loaders=[
-            'assets/perangkat-pembelajaran-super.js',
-            'assets/perangkat-katalog-super-v2.js',
-            'assets/perangkat-cp-atp-tp-super-v2.js',
-            'assets/perangkat-binding-super-v1.js',
-            'assets/perangkat-jp-super-v1.js',
-            'assets/perangkat-pertemuan-super-v1.js',
-            'assets/perangkat-prota-promes-super-v2.js',
-            'assets/perangkat-rpm-super-v2.js',
-            'assets/perangkat-lkpd-asesmen-super-v1.js',
-            'assets/perangkat-lkpd-asesmen-super-v2.js',
-            'assets/perangkat-audit-super-v1.js',
-            'assets/perangkat-kalender-adaptif-v1.js',
-          ]
-          pos=s.rfind('</body>'); final_script=s.rfind('</script>',0,pos)
-          area=s[final_script+9:pos]
-          for x in loaders:
-              tag=f'<script src="{x}"></script>'
-              if area.count(tag)!=1: raise SystemExit(f'final loader invalid: {x}: {area.count(tag)}')
-          print('Validated',len(loaders),'Perangkat SUPER loaders in the real document body')
+          canonical=[
+            'assets/perangkat-master-state-super-v1.js','assets/perangkat-pembelajaran-super.js',
+            'assets/perangkat-katalog-super-v2.js','assets/perangkat-binding-super-v1.js',
+            'assets/perangkat-jp-super-v1.js','assets/perangkat-pertemuan-super-v1.js',
+            'assets/perangkat-audit-super-v1.js','assets/perangkat-kalender-adaptif-v1.js',
+            'assets/perangkat-master-enforcer-super-v1.js','assets/perangkat-master-engine-harden-v1.js',
+            'assets/perangkat-chain-audit-super-v2.js','assets/perangkat-auto-chain-super-v1.js',
+            'assets/perangkat-document-auto-bridge-super-v1.js','assets/perangkat-global-integrity-super-v1.js']
+          legacy=[
+            'assets/perangkat-cp-atp-tp-super-v2.js','assets/perangkat-prota-promes-super-v2.js',
+            'assets/perangkat-rpm-super-v2.js','assets/perangkat-lkpd-asesmen-super-v1.js',
+            'assets/perangkat-lkpd-asesmen-super-v2.js']
+          def count(src): return len(re.findall(r'<script\s+src=["\']'+re.escape(src)+r'["\']\s*>\s*</script>',s,re.I))
+          for x in canonical:
+            if count(x)!=1: raise SystemExit(f'canonical loader invalid: {x}: {count(x)}')
+          for x in legacy:
+            if count(x)!=0: raise SystemExit(f'legacy loader still present: {x}: {count(x)}')
+          print('Validated canonical stack: 14 unique loaders; 0 duplicate generator loaders')
           PY
-      - name: Commit
+
+      - name: Commit normalized index
         shell: bash
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add index.html
-          git diff --cached --quiet || git commit -m "ci: load Perangkat Pembelajaran SUPER master stack"
+          git diff --cached --quiet || git commit -m "ci: normalize runtime export and canonical loader stack"
           git push

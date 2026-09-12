@@ -198,10 +198,14 @@ export default {
           ? "COALESCE(NULLIF(TRIM(rombel), ''), TRIM(kelas)) AS rombel"
           : "TRIM(kelas) AS rombel";
         const mapelExpr = c.has("mapel") ? "TRIM(COALESCE(mapel, '')) AS mapel" : "'' AS mapel";
-        const user = await env.DB.prepare(
+        const loginWhere = c.has("nip") ? "WHERE username = ? OR nip = ?" : "WHERE username = ?";
+        const loginStmt = env.DB.prepare(
           `SELECT id, username, password, nama, role, kelas, ${rombelExpr}, ${mapelExpr}
-           FROM users WHERE username = ?`
-        ).bind(username).first();
+           FROM users ${loginWhere}`
+        );
+        const user = c.has("nip")
+          ? await loginStmt.bind(username, username).first()
+          : await loginStmt.bind(username).first();
         if (!user || user.password !== password) {
           return json({ ok: false, message: "Username atau password salah." }, 401);
         }

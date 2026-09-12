@@ -1,0 +1,17 @@
+/* GURU+ SD — MASTER ENGINE HARDEN v3
+ * Persisted Master is authoritative. DOM is only a write source on explicit selector change.
+ * No D1/Worker access. Exact JP contract is preserved even when JP < TP count.
+ */
+(function(){'use strict';
+if(window.__GURU_SD_MASTER_ENGINE_HARDEN_V3__)return;window.__GURU_SD_MASTER_ENGINE_HARDEN_V3__=1;
+const KEY='guru_sd_pembelajaran_master_v1',JPKEY='guru_sd_jp_allocation_super_v1';
+const nativeGet=Storage.prototype.getItem;
+const read=(k,d=null)=>{try{return JSON.parse(nativeGet.call(localStorage,k)||'null')??d}catch(e){return d}};
+function master(){const x=read(KEY,null)||window.GURU_SD_MASTER?.get?.();if(!x||!x.rombel||!x.mapel||!x.material)return null;return {...x,tp:Array.isArray(x.tp)?x.tp:[],dpl:Array.isArray(x.dpl)?x.dpl:[]}}
+function allocate(x){const list=x.tp.map((t,i)=>({no:Number(t.no)||i+1,text:String(t.text||t||'').trim(),jp:Math.max(0,Number(t.jp)||0)}));if(!list.length)return[];const total=Math.max(0,Number(x.jp)||0);const explicit=list.reduce((n,t)=>n+t.jp,0);if(explicit===total)return list;const base=Math.floor(total/list.length),rem=total%list.length;return list.map((t,i)=>({...t,jp:base+(i<rem?1:0)}))}
+function patch(){const x=master();if(!x)return;const a=allocate(x),out={...x,tp:a,totalJP:a.reduce((n,t)=>n+t.jp,0),chainSource:'GURU_SD_MASTER'};try{localStorage.setItem(JPKEY,JSON.stringify({rombel:x.rombel,mapel:x.mapel,bab:x.material,babNo:x.babNo,semester:x.semester,totalJP:out.totalJP,tp:a,updatedAt:new Date().toISOString(),source:'GURU_SD_MASTER'}))}catch(e){}if(window.GURU_SD_BINDING){window.GURU_SD_BINDING.getStored=()=>master();window.GURU_SD_BINDING.get=()=>master()}window.GURU_SD_CHAIN_DATA=out;window.__GURU_SD_DETERMINISTIC_CHAIN__={ok:true,source:'GURU_SD_MASTER',rombel:x.rombel,mapel:x.mapel,babId:x.babId,material:x.material,semester:x.semester,jp:x.jp,tp:a,dpl:x.dpl,modelPembelajaran:x.modelPembelajaran,fase:x.fase,tahunPelajaran:x.tahunPelajaran,checkedAt:new Date().toISOString()}}
+function patchPayload(){if(typeof window.docPayload!=='function'||window.__GURU_SD_MASTER_ENGINE_PAYLOAD__)return;const old=window.docPayload;if(old.__masterEngineWrapped)return;const wrapped=function(type){const p=old.apply(this,arguments)||{},x=master();if(!x)return p;return Object.assign(p,{source:'GURU_SD_MASTER',rombel:x.rombel,mapel:x.mapel,babId:x.babId,babNo:x.babNo,material:x.material,semester:x.semester,jp:x.jp,tp:x.tp,dpl:x.dpl,modelPembelajaran:x.modelPembelajaran,fase:x.fase,tahunPelajaran:x.tahunPelajaran})};wrapped.__masterEngineWrapped=true;window.docPayload=wrapped;window.__GURU_SD_MASTER_ENGINE_PAYLOAD__=true}
+function audit(){patch();patchPayload();const x=master();if(x)window.__GURU_SD_ENGINE_AUDIT__={ok:true,source:'GURU_SD_MASTER',identity:[x.rombel,x.mapel,x.babId,x.material,x.semester,x.jp,x.modelPembelajaran].join('|'),tpCount:x.tp.length,dplCount:x.dpl.length,checkedAt:new Date().toISOString()}}
+function boot(){audit();window.addEventListener('guruSdMasterChanged',audit);document.addEventListener('change',e=>{if(['pkR','pkM','pkB','pkI','rpmBab','modelPembelajaran','model','pkModel','modelPembelajaranSelect'].includes(e.target.id||e.target.name))setTimeout(audit,0)},true);setInterval(audit,2000)}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
+})();

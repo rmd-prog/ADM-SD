@@ -1,20 +1,63 @@
-/* GURU+ SD — KATALOG MATERI SUPER v3
- * Materi/BAB dipilih otomatis berdasarkan Kelas + Mapel.
- * Local-only; no D1/Worker/login/assessment bridge changes.
+/* GURU+ SD — KATALOG BAB SUPER v4
+ * Canonical catalog reader: BOOK_CATALOG from index.html.
+ * This module is VIEW-ONLY: it must never create duplicate pkR/pkM/pkB controls,
+ * invent TP, or overwrite the Master state.
+ * Local only; no D1/Worker access.
  */
-(function(){'use strict';if(window.__PKAT_V3__)return;window.__PKAT_V3__=1;
-const R=['IA','IB','IIA','IIB','IIIA','IIIB','IVA','IVB','V','VI'],M=['Bahasa Indonesia','Pendidikan Pancasila','Matematika','IPAS','PJOK','Seni Rupa','Seni Musik','Seni Tari','Seni Teater','Bahasa Inggris','Pendidikan Agama dan Budi Pekerti'];
-const N={IA:1,IB:1,IIA:2,IIB:2,IIIA:3,IIIB:3,IVA:4,IVB:4,V:5,VI:6},F=n=>n<=2?'A':n<=4?'B':'C';
-const C={
-'Bahasa Indonesia':{1:['Aku dan Namaku','Tubuh dan Pancaindra','Keluargaku','Lingkungan Rumah','Teman dan Sekolah','Cerita Sederhana'],2:['Keluargaku Unik','Bermain dan Berteman','Hidup Bersih','Cerita Pengalaman','Petunjuk Sederhana','Kegemaranku'],3:['Aku Belajar dari Lingkungan','Teks Deskripsi','Teks Prosedur','Cerita dan Tokoh','Informasi dari Teks','Presentasi Sederhana'],4:['Lihat Sekitar','Bertukar atau Membayar','Meliuk dan Menerjang','Bergerak Bersama','Menjadi Bagian Dunia','Karya dan Presentasi'],5:['Aku yang Unik','Buku Jendela Dunia','Ekspresi Diri melalui Hobi','Belajar dari Lingkungan','Bergerak Bersama','Berita dan Informasi'],6:['Bangga Menjadi Pembelajar','Teks Eksplanasi','Teks Argumentasi','Literasi Informasi','Karya Sastra','Presentasi dan Proyek']},
-'Pendidikan Pancasila':{1:['Identitas Diri','Aturan di Rumah','Aturan di Sekolah','Hidup Rukun','Simbol Pancasila','Menjaga Lingkungan'],2:['Keluarga dan Aturan','Gotong Royong','Keberagaman Teman','Lingkungan Sekitar','Hak dan Kewajiban','Tanggung Jawab'],3:['Aku Warga Sekolah','Aturan dan Kesepakatan','Kerja Sama','Keberagaman Budaya','Hak dan Kewajiban','Tanggung Jawab Lingkungan'],4:['Pancasila dan Kehidupan','Norma dan Aturan','Identitas dan Keberagaman','Hak dan Kewajiban','Musyawarah','Gotong Royong'],5:['Pancasila dalam Keseharian','Norma dan Aturan Bersama','Keberagaman Indonesia','Hak dan Kewajiban Warga','Musyawarah dan Keputusan','Menjaga Persatuan'],6:['Nilai Pancasila','Konstitusi dan Aturan','Kebinekaan Global','Demokrasi dan Musyawarah','Persatuan Indonesia','Proyek Kewargaan']},
-'Matematika':{1:['Bilangan sampai 10','Bilangan sampai 20','Penjumlahan','Pengurangan','Bentuk dan Pola','Pengukuran Sederhana'],2:['Bilangan sampai 100','Penjumlahan dan Pengurangan','Perkalian','Pembagian','Bangun dan Pengukuran','Data Sederhana'],3:['Bilangan sampai Ribuan','Operasi Hitung','Pecahan Sederhana','Pengukuran','Bangun Datar','Penyajian Data'],4:['Bilangan Cacah Besar','Faktor dan Kelipatan','Pecahan','Pengukuran dan Sudut','Bangun Datar','Data dan Diagram'],5:['Bilangan dan Operasi','Pecahan dan Desimal','KPK dan FPB','Pengukuran dan Bangun','Perbandingan','Data dan Peluang Sederhana'],6:['Bilangan Bulat dan Pecahan','Rasio dan Proporsi','Bangun Ruang','Luas dan Volume','Data dan Peluang','Pemecahan Masalah Terpadu']},
-'IPAS':{1:['Aku Tumbuh','Pancaindra','Keluargaku','Rumahku','Sekolahku','Lingkunganku'],2:['Tubuh dan Kesehatan','Hewan dan Tumbuhan','Benda di Sekitar','Cuaca','Lingkungan Rumah','Peran Anggota Keluarga'],3:['Ciri Makhluk Hidup','Siklus Hidup','Perubahan Wujud','Gaya dan Gerak','Lingkungan dan Sumber Daya','Kegiatan Ekonomi Sekitar'],4:['Tumbuhan dan Fungsinya','Wujud Zat','Gaya dan Energi','Siklus Air','Keragaman Budaya','Kegiatan Ekonomi'],5:['Organ Tubuh dan Kesehatan','Ekosistem','Energi dan Perubahannya','Bumi dan Perubahan Lingkungan','Indonesia dan Keragamannya','Kegiatan Ekonomi'],6:['Sistem Tubuh','Ekosistem dan Keseimbangan','Energi dan Teknologi','Tata Surya dan Bumi','Indonesia dalam Perubahan','Proyek Lingkungan']},
-'PJOK':{1:['Gerak Lokomotor','Gerak Nonlokomotor','Gerak Manipulatif','Permainan Sederhana','Kebugaran Dasar','Hidup Sehat'],2:['Gerak Berpindah','Gerak di Tempat','Permainan Bola Sederhana','Senam','Kebugaran','Pola Hidup Sehat'],3:['Variasi Gerak','Permainan Bola','Atletik Dasar','Senam Lantai','Kebugaran','Kesehatan Diri'],4:['Permainan Bola Besar','Permainan Bola Kecil','Atletik','Senam','Kebugaran','Kesehatan dan Keselamatan'],5:['Permainan Bola','Atletik','Senam','Aktivitas Ritmik','Kebugaran dan Kesehatan','Keselamatan dan Sportivitas'],6:['Permainan dan Strategi','Atletik','Senam dan Kebugaran','Aktivitas Ritmik','Kesehatan Diri','Keselamatan dan Sportivitas']}};
-const BASE={'Seni Rupa':['Garis, Bentuk dan Warna','Tekstur dan Pola','Menggambar dari Lingkungan','Karya Dua Dimensi','Karya Tiga Dimensi','Apresiasi dan Pameran'],'Seni Musik':['Bunyi dan Suara','Irama dan Tempo','Melodi dan Lagu','Bermain Musik Bersama','Karya Musik Sederhana','Apresiasi Pertunjukan'],'Seni Tari':['Gerak Tubuh','Ruang dan Arah','Waktu dan Tenaga','Rangkaian Gerak','Tari Kreasi','Apresiasi dan Pertunjukan'],'Seni Teater':['Tubuh dan Ekspresi','Suara dan Dialog','Tokoh dan Karakter','Improvisasi','Adegan dan Naskah','Pementasan Sederhana'],'Bahasa Inggris':['Greetings and Introductions','My Family and Friends','Things Around Me','Daily Activities','Food, Places and Hobbies','Stories and Simple Projects'],'Pendidikan Agama dan Budi Pekerti':['Berbuat Baik','Kebersihan dan Pembiasaan','Ibadah dan Syukur','Akhlak dan Tanggung Jawab','Kisah Teladan','Penerapan Ajaran dalam Kehidupan']};
-const focus={'Bahasa Indonesia':'literasi dan komunikasi','Pendidikan Pancasila':'nilai Pancasila dan kewargaan','Matematika':'konsep, penalaran dan pemecahan masalah','IPAS':'pengamatan dan penyelidikan sains-sosial','PJOK':'gerak, kebugaran dan kesehatan','Seni Rupa':'eksplorasi visual dan berkarya','Seni Musik':'bunyi, ritme, melodi dan ekspresi','Seni Tari':'gerak, ruang, waktu dan ekspresi','Seni Teater':'tubuh, suara, karakter dan pementasan','Bahasa Inggris':'komunikasi bahasa Inggris','Pendidikan Agama dan Budi Pekerti':'pemahaman ajaran dan akhlak'};
-const list=(r,m)=>{const n=N[r];const a=C[m]?.[n];return (a||BASE[m]||['Unit Pembelajaran 1','Unit Pembelajaran 2','Unit Pembelajaran 3','Unit Pembelajaran 4','Unit Pembelajaran 5','Unit Pembelajaran 6']).map((b,i)=>({no:i+1,bab:b,semester:i<3?1:2,jp:[4,6,6,6,8,6][i],tp:[0,1,2].map(j=>`Peserta didik mampu ${['mengidentifikasi','menjelaskan','menerapkan'][j]} ${b} melalui pengalaman belajar yang aktif, kontekstual, bermakna, dan sesuai tahap perkembangan Kelas ${n}.`)}));};
-const $=id=>document.getElementById(id);
-function renderInfo(){const a=list($('pkR')?.value||'V',$('pkM')?.value||'IPAS'),x=a.find(z=>String(z.no)===$('pkB')?.value),i=$('pkI');if(!i)return;if(!x){i.innerHTML='<span style="color:#64748b">Pilih materi/BAB dari daftar otomatis.</span>';return}i.innerHTML=`<b>BAB ${x.no} — ${x.bab}</b><br>${x.jp} JP • Semester ${x.semester}<ol>${x.tp.map(t=>`<li>${t}</li>`).join('')}</ol>`}
-function mount(){let p=$('perangkatSuperPanel');if(!p)return setTimeout(mount,500);let box=$('pkatV2');if(!box){box=document.createElement('div');box.id='pkatV2';box.style='margin-top:14px;padding:14px;border:1px solid #dbe4f0;border-radius:14px;background:#f8fafc';p.appendChild(box)}box.innerHTML=`<b>🧠 Katalog Materi/BAB Otomatis</b><div style="font-size:12px;color:#475569;margin:4px 0 10px">Pilih Kelas + Mapel → materi/BAB muncul otomatis. Tidak perlu mengetik materi manual.</div><div style="display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr))"><label>Kelas<select id="pkR" style="width:100%;padding:9px">${R.map(x=>`<option>${x}</option>`).join('')}</select></label><label>Mapel<select id="pkM" style="width:100%;padding:9px">${M.map(x=>`<option>${x}</option>`).join('')}</select></label><label>Materi / BAB<select id="pkB" style="width:100%;padding:9px"></select></label></div><div id="pkI" style="margin-top:10px;padding:10px;background:#fff;border-radius:10px"></div><small style="display:block;margin-top:8px;color:#64748b">Katalog adaptif. Judul yang belum diverifikasi terhadap buku SIBI resmi adalah katalog kerja, bukan kutipan resmi.</small>`;const rb=()=>{const a=list($('pkR').value,$('pkM').value),b=$('pkB');b.innerHTML=a.map(x=>`<option value="${x.no}">BAB ${x.no} — ${x.bab} (${x.jp} JP)</option>`).join('');renderInfo();document.dispatchEvent(new Event('guruSdMaterialChanged'))};$('pkR').onchange=rb;$('pkM').onchange=rb;$('pkB').onchange=renderInfo;rb();window.GURU_SD_KATALOG_SUPER={list,data:list,subjects:M,classes:R,phase:F};}
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount);else mount();})();
+(function(){'use strict';
+if(window.__PKAT_V4__)return;window.__PKAT_V4__=1;
+const R=['IA','IB','IIA','IIB','IIIA','IIIB','IVA','IVB','V','VI'];
+const M=['Bahasa Indonesia','Pendidikan Pancasila','Matematika','IPAS','PJOK','Seni Rupa','Seni Musik','Seni Tari','Seni Teater','Bahasa Inggris','Pendidikan Agama dan Budi Pekerti'];
+const N={IA:1,IB:1,IIA:2,IIB:2,IIIA:3,IIIB:3,IVA:4,IVB:4,V:5,VI:6};
+function catalog(){
+  try{return typeof BOOK_CATALOG!=='undefined'&&BOOK_CATALOG&&typeof BOOK_CATALOG==='object'?BOOK_CATALOG:null}catch(e){return null}
+}
+function list(r,m){
+  const g=N[r],book=catalog()?.[m]?.[g];
+  return Array.isArray(book?.chapters)?book.chapters.slice():[];
+}
+function data(r,m){
+  return list(r,m).map((bab,i)=>({no:i+1,bab,semester:i<Math.ceil(list(r,m).length/2)?1:2}));
+}
+function q(id){return document.getElementById(id)}
+function mount(){
+  const p=q('perangkatSuperPanel');
+  if(!p)return setTimeout(mount,500);
+  if(q('pkatV4'))return;
+  const r=q('pkR'),m=q('pkM'),b=q('pkB');
+  if(!r||!m||!b)return setTimeout(mount,500);
+  const box=document.createElement('div');
+  box.id='pkatV4';
+  box.style='margin-top:14px;padding:14px;border:1px solid #dbe4f0;border-radius:14px;background:#f8fafc';
+  box.innerHTML='<b>🧠 Katalog BAB SUPER</b><div id="pkI" style="margin-top:10px;padding:10px;background:#fff;border-radius:10px"></div><small style="display:block;margin-top:8px;color:#64748b">Sumber BAB tunggal: BOOK_CATALOG. Kontrol Kelas/Mapel/BAB memakai kontrol Perangkat utama; tidak dibuat ulang di sini.</small>';
+  p.appendChild(box);
+  function ri(){
+    const arr=data(r.value,m.value),x=arr.find(z=>String(z.no)===String(b.value)),i=q('pkI');
+    if(!i)return;
+    if(!x){i.textContent='Pilih BAB untuk melihat konteks katalog.';return}
+    i.innerHTML='<b>BAB '+x.no+' — '+esc(x.bab)+'</b><br>Semester '+x.semester+' • TP/JP mengikuti Master Perangkat SUPER.';
+  }
+  r.addEventListener('change',ri);m.addEventListener('change',ri);b.addEventListener('change',ri);ri();
+}
+window.GURU_SD_KATALOG={source:'BOOK_CATALOG',grades:R,subjects:M,list,data,get:(r,m)=>list(r,m).map((bab,i)=>({no:i+1,bab})),ready:()=>!!catalog()};
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount);else mount();
+
+/* Canonical reference bridge: the visible reference page must never read legacy BAB. */
+function patchReference(){
+  if(typeof renderReference!=='function'||window.__PKAT_REFERENCE_V4__)return;
+  const canonical=window.GURU_SD_KATALOG;
+  if(!canonical||typeof canonical.list!=='function')return;
+  window.__PKAT_REFERENCE_V4__=1;
+  renderReference=function(){
+    const host=q('babReference');
+    if(!host)return;
+    let html='<h3 style="margin-top:20px">BAB yang tersedia di aplikasi</h3><p class="muted">Daftar berikut membaca satu sumber katalog canonical: BOOK_CATALOG.</p>';
+    R.forEach(r=>M.forEach(m=>{
+      const arr=canonical.list(r,m);if(!arr.length)return;
+      html+='<div style="margin:12px 0"><b>'+esc(m)+'</b><div style="margin-top:5px">Rombel '+esc(r)+': '+arr.map((x,i)=>'<span class="badge" style="margin:2px">'+esc('BAB '+(i+1)+' — '+x)+'</span>').join('')+'</div></div>';
+    }));
+    host.innerHTML=html;
+  };
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(patchReference,0),{once:true});else setTimeout(patchReference,0);
+})();

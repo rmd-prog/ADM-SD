@@ -11,10 +11,6 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: adm-sd-worker-deploy-${{ github.ref }}
-  cancel-in-progress: true
-
 env:
   CLOUDFLARE_ACCOUNT_ID: 1059f6c3f94755e9562d95cfd16ff6d1
 

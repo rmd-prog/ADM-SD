@@ -38,6 +38,7 @@ jobs:
           raise SystemExit(0 if d.get('ok') and (d.get('token') or d.get('access_token')) else 1)
           PY
           then
+            export SMOKE_PASSWORD="$E2E_PASSWORD"
             echo 'Credentialed API login PASS'
           else
             echo 'Configured E2E password did not authenticate; testing NIP-as-password compatibility without exposing credentials.'
@@ -50,8 +51,10 @@ jobs:
           if not d.get('ok') or not (d.get('token') or d.get('access_token')):
               raise SystemExit('Production API login failed with configured password and NIP-as-password fallback')
           PY
+            export SMOKE_PASSWORD="$E2E_USERNAME"
             echo 'NIP-as-password API login PASS'
           fi
+          printf '%s' "$SMOKE_PASSWORD" > /tmp/smoke-password
       - name: Install Playwright
         shell: bash
         run: |
@@ -61,6 +64,7 @@ jobs:
       - name: Browser login and dashboard smoke
         shell: bash
         run: |
+          export SMOKE_PASSWORD="$(cat /tmp/smoke-password)"
           cat > /tmp/smoke.mjs <<'JS'
           import { chromium } from 'playwright';
           const browser = await chromium.launch({headless:true});
@@ -70,7 +74,7 @@ jobs:
           page.on('console',m=>{if(m.type()==='error') failures.push('console: '+m.text())});
           await page.goto(process.env.BASE_URL,{waitUntil:'networkidle',timeout:60000});
           await page.locator('#loginForm input').nth(0).fill(process.env.E2E_USERNAME);
-          await page.locator('#loginForm input').nth(1).fill(process.env.E2E_PASSWORD);
+          await page.locator('#loginForm input').nth(1).fill(process.env.SMOKE_PASSWORD);
           await page.locator('#loginForm button[type="submit"]').click();
           await page.waitForFunction(()=>getComputedStyle(document.querySelector('#loginScreen')).display==='none' && getComputedStyle(document.querySelector('#app')).display!=='none',{timeout:20000});
           await page.waitForFunction(()=>!!localStorage.getItem('siAuthToken'),{timeout:10000});

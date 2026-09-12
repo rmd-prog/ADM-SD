@@ -14,7 +14,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Replace legacy visible brand text
+      - name: Normalize visible brand and load cleanup
         shell: bash
         run: |
           set -euo pipefail
@@ -25,6 +25,12 @@ jobs:
               changed=1
             fi
           done < <(git grep -Ilz -E 'GURU\+ SD|SIAP GURU V11' -- . ':!.github/workflows/*' || true)
+
+          if [ -f index.html ] && ! grep -q 'assets/siap-guru-brand-cleanup.js' index.html; then
+            sed -i '/<\/body>/i <script src="assets/siap-guru-brand-cleanup.js"></script>' index.html
+            changed=1
+          fi
+
           echo "changed=$changed"
 
       - name: Commit brand normalization
@@ -34,9 +40,9 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           if git diff --quiet; then
-            echo 'No legacy brand text remains.'
+            echo 'No brand cleanup changes needed.'
             exit 0
           fi
           git add -A -- ':!.github/workflows/*'
-          git commit -m 'chore: remove V11 from SIAP GURU branding'
+          git commit -m 'chore: clean SIAP GURU branding'
           git push

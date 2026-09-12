@@ -1,4 +1,4 @@
-name: Load SIAP GURU login UI v2
+name: Load SIAP GURU login UI v4
 
 on:
   push:
@@ -14,12 +14,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Load login UI asset
+      - name: Ensure latest login UI asset
         shell: bash
         run: |
           set -euo pipefail
-          if ! grep -q "assets/siap-guru-login-ui-v2.js" index.html; then
-            sed -i "/<\/body>/i <script src=\"assets/siap-guru-login-ui-v2.js\"></script>" index.html
+          if grep -q 'assets/siap-guru-login-ui-v2.js' index.html; then
+            sed -i 's#assets/siap-guru-login-ui-v2.js[^" ]*#assets/siap-guru-login-ui-v2.js?v=4#g' index.html
+          else
+            sed -i "/<\/body>/i <script src=\"assets/siap-guru-login-ui-v2.js?v=4\"></script>" index.html
           fi
 
       - name: Commit loader
@@ -29,9 +31,9 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           if git diff --quiet; then
-            echo 'Login UI loader already present.'
+            echo 'Latest login UI loader already present.'
             exit 0
           fi
           git add index.html
-          git commit -m 'feat: load SIAP GURU login UI v2'
+          git commit -m 'fix: cache bust SIAP GURU login UI v4'
           git push

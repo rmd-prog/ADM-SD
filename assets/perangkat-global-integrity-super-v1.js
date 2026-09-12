@@ -1,10 +1,11 @@
-/* GURU+ SD — GLOBAL INTEGRITY SUPER V7
- * Canonical runtime bootstrap: Master -> Catalog/Curriculum -> Engine -> Auto Chain -> Bridge -> Audit.
- * Legacy storage remains compatibility-only. No D1/Worker/student/login changes.
- * V7 keeps only Dashboard, Penilaian and Data Siswa in the live sidebar.
+/* GURU+ SD — GLOBAL INTEGRITY SUPER V8
+ * Canonical runtime bootstrap. Legacy storage compatibility only.
+ * V8 keeps only Dashboard and Data Siswa in the live sidebar.
+ * Penilaian and all other menus are removed from the live UI.
+ * Never touches D1, Worker, student data or login.
  */
 (function(){'use strict';
-if(window.__GURU_SD_GLOBAL_INTEGRITY_V7__)return;window.__GURU_SD_GLOBAL_INTEGRITY_V7__=1;
+if(window.__GURU_SD_GLOBAL_INTEGRITY_V8__)return;window.__GURU_SD_GLOBAL_INTEGRITY_V8__=1;
 const KEY='guru_sd_pembelajaran_master_v1';
 const LEGACY=['guru_sd_perangkat_super_v1','guru_sd_cp_atp_tp_super_v1','guru_sd_rpm_super_v2','guru_sd_prota_promes_super_v2','guru_sd_lkpd_asesmen_super_v1','guru_sd_lkpd_asesmen_super_v2','guru_sd_jp_allocation_super_v1','guru_plus_sd_ai_super_v1'];
 const $=id=>document.getElementById(id);
@@ -18,38 +19,22 @@ function audit(){const x=master();if(!x?.babId)return {ok:false,reason:'MASTER_E
 function cleanMainMenu(){
   const side=document.getElementById('sidebar');if(!side)return;
   const norm=s=>String(s||'').replace(/\s+/g,' ').trim().toLowerCase();
-  const keepGroup=t=>t.includes('penilaian')||t.includes('data siswa');
   side.querySelectorAll('.menu-group').forEach(g=>{
-    const h=g.querySelector('.navgroup');
-    if(!h)return;
-    if(!keepGroup(norm(h.textContent)))g.remove();
+    const h=g.querySelector('.navgroup');if(!h)return;
+    const t=norm(h.textContent);
+    if(!t.includes('data siswa'))g.remove();
   });
   side.querySelectorAll('.navbtn').forEach(b=>{
     const page=String(b.getAttribute('data-page')||'');
     const t=norm(b.textContent);
-    const direct=page==='dashboard'||page==='scores'||page==='students';
-    const allowed=direct||t==='dashboard'||t.includes('daftar siswa');
-    if(t.includes('import siswa'))b.remove();
+    const allowed=page==='dashboard'||page==='students'||t==='dashboard'||t.includes('daftar siswa');
+    if(t.includes('penilaian')||t.includes('import siswa'))b.remove();
     else if(!b.closest('.menu-group')&&!allowed)b.remove();
   });
   const title=side.querySelector('.side-title');if(title)title.textContent='MENU UTAMA';
 }
 function guardGenerate(){if(window.__GURU_SD_AUTO_GENERATE_GUARD__)return;window.__GURU_SD_AUTO_GENERATE_GUARD__=1;document.addEventListener('click',e=>{const b=e.target?.closest?.('#aiSuperGenerate');if(!b)return;setTimeout(()=>{const x=master();if(x?.babId)window.GURU_SD_AUTO_CHAIN?.run?.()},0)},true)}
 const wanted=[['curriculum','curriculum-complete-super-v1.js'],['ui','perangkat-super-ui-v1.js'],['audit','perangkat-audit-super-v1.js']];
-function load(src,key){return new Promise(resolve=>{if([...document.scripts].some(s=>String(s.src).includes(src))){resolve();return}const s=document.createElement('script');s.src='assets/'+src+'?v=20260912-super7';s.setAttribute('data-super-'+key,'1');s.async=false;s.onload=resolve;s.onerror=resolve;(document.head||document.body).appendChild(s)})}
-async function boot(){
-  for(const [key,src] of wanted)await load(src,key);
-  try{window.GURU_SD_MASTER?.sync?.()}catch(e){}
-  try{window.GURU_SD_AUTO_CHAIN?.build?.()}catch(e){}
-  try{window.GURU_SD_AUTO_CHAIN?.render?.()}catch(e){}
-  try{window.GURU_SD_DOCUMENT_AUTO_BRIDGE?.refresh?.()}catch(e){}
-  audit();
-  cleanMainMenu();
-  setTimeout(cleanMainMenu,300);
-  setTimeout(cleanMainMenu,1200);
-  window.dispatchEvent(new CustomEvent('guruSdSuperReady'));
-}
-patchStorage();guardGenerate();
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,100));else setTimeout(boot,100);
-window.GURU_SD_GLOBAL_INTEGRITY={audit,master,cleanMainMenu,legacyKeys:LEGACY.slice(),canonical:true};
-})();
+function load(src,key){return new Promise(resolve=>{if([...document.scripts].some(s=>String(s.src).includes(src))){resolve();return}const s=document.createElement('script');s.src='assets/'+src+'?v=20260912-super8';s.setAttribute('data-super-'+key,'1');s.async=false;s.onload=resolve;s.onerror=resolve;(document.head||document.body).appendChild(s)})}
+async function boot(){for(const [key,src] of wanted)await load(src,key);try{window.GURU_SD_MASTER?.sync?.()}catch(e){}try{window.GURU_SD_AUTO_CHAIN?.build?.()}catch(e){}try{window.GURU_SD_AUTO_CHAIN?.render?.()}catch(e){}try{window.GURU_SD_DOCUMENT_AUTO_BRIDGE?.refresh?.()}catch(e){}audit();cleanMainMenu();setTimeout(cleanMainMenu,300);setTimeout(cleanMainMenu,1200);window.dispatchEvent(new CustomEvent('guruSdSuperReady'))}
+patchStorage();guardGenerate();if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,100));else setTimeout(boot,100);window.GURU_SD_GLOBAL_INTEGRITY={audit,master,cleanMainMenu,legacyKeys:LEGACY.slice(),canonical:true};})();

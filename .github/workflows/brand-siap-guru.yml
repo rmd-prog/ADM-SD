@@ -1,0 +1,43 @@
+name: Normalize SIAP GURU brand
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  normalize-brand:
+    if: ${{ !contains(github.event.head_commit.message, 'normalize app brand to SIAP GURU') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Replace legacy visible brand text
+        shell: bash
+        run: |
+          set -euo pipefail
+          changed=0
+          while IFS= read -r -d '' file; do
+            if grep -Iq 'GURU+ SD' "$file"; then
+              sed -i 's/GURU+ SD/SIAP GURU/g' "$file"
+              changed=1
+            fi
+          done < <(git grep -Ilz 'GURU+ SD' || true)
+          echo "changed=$changed"
+
+      - name: Commit brand normalization
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          if git diff --quiet; then
+            echo 'No legacy brand text remains.'
+            exit 0
+          fi
+          git add -A
+          git commit -m 'chore: normalize app brand to SIAP GURU'
+          git push

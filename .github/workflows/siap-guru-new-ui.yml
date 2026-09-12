@@ -1,0 +1,24 @@
+name: Load SIAP GURU clean room UI
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  install-ui:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add UI loader
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -f index.html ] && ! grep -q 'assets/siap-guru-new-ui.js' index.html; then
+            sed -i '/<\/body>/i <script src="assets/siap-guru-new-ui.js"></script>' index.html
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          if git diff --quiet; then exit 0; fi
+          git add index.html
+          git commit -m 'chore: load SIAP GURU new UI'
+          git push

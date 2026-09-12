@@ -1,3 +1,4 @@
+# Production login smoke: final verification gate
 name: Production Login Smoke
 on:
   push:

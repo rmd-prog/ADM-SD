@@ -41,29 +41,37 @@ jobs:
           head, tail = block.rsplit('</script>', 1)
           safe_head = head.replace('</script>', '<\\/script>')
           safe_block = safe_head + '</script>' + tail
-
           safe_block = safe_block.replace("+d.body+'<script src=\\\"guru-mapel-ui.js\\\"><\\/script>\\\n</body></html>'", "+d.body+'</body></html>'")
 
-          # Prevent the V12 safety handler from sending the user back to login
-          # when authentication already committed a valid token and only a
-          # non-auth UI step throws afterward.
           old_login = """try{if(typeof window.__ADM_LOGIN!=='function')throw Error('Modul login belum siap. Muat ulang halaman.');await window.__ADM_LOGIN(u.value.trim(),p.value)}catch(x){console.error(x);$('#loginScreen').style.display='grid';$('#app').style.display='none';error(x.message||'Login gagal. Periksa akun dan Worker.')}finally{if(b){b.disabled=false;b.textContent='MASUK KE SISTEM'}}"""
           new_login = """let authCommitted=false;try{if(typeof window.__ADM_LOGIN!=='function')throw Error('Modul login belum siap. Muat ulang halaman.');await window.__ADM_LOGIN(u.value.trim(),p.value);authCommitted=!!String(localStorage.getItem('siAuthToken')||'').trim()}catch(x){console.error(x);const tokenNow=String(localStorage.getItem('siAuthToken')||'').trim();if(!tokenNow&&!authCommitted){$('#loginScreen').style.display='grid';$('#app').style.display='none';error(x.message||'Login gagal. Periksa akun dan Worker.')}else{console.warn('Login berhasil tetapi ada error UI pasca-auth; sesi dipertahankan.',x)}}finally{if(b){b.disabled=false;b.textContent='MASUK KE SISTEM'}}"""
           if old_login in safe_block:
               safe_block = safe_block.replace(old_login, new_login, 1)
-              print('Patched V12 login rollback guard.')
 
           old_restore = """try{const saved=JSON.parse(localStorage.getItem('siLogin')||'null');const token=localStorage.getItem('siAuthToken');if(saved&&saved.username&&token){if(saved.role==='guru'&&!ROMBELS.includes(normalizeRombel(saved.rombel||saved.kelas||''))){localStorage.removeItem('siLogin');localStorage.removeItem('siAuthToken')}else finishLogin(saved)}}catch(e){localStorage.removeItem('siLogin');localStorage.removeItem('siAuthToken')}"""
           new_restore = """try{const saved=JSON.parse(localStorage.getItem('siLogin')||'null');const token=localStorage.getItem('siAuthToken');if(saved&&saved.username&&token){if(saved.role==='guru'&&!ROMBELS.includes(normalizeRombel(saved.rombel||saved.kelas||''))){localStorage.removeItem('siLogin');localStorage.removeItem('siAuthToken')}else finishLogin(saved)}}catch(e){console.warn('Pemulihan sesi gagal pada UI, token dipertahankan:',e);if(!localStorage.getItem('siAuthToken')){localStorage.removeItem('siLogin')}}"""
           if old_restore in safe_block:
               safe_block = safe_block.replace(old_restore, new_restore, 1)
-              print('Patched session restore guard.')
 
           if safe_block != block:
               p.write_text(s[:start] + safe_block + s[end:], encoding='utf-8')
-              print('Updated index.html safely.')
+
+      - name: Ensure authenticated session recovery script
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          tag='<script src="assets/login-session-recovery-v1.js"></script>'
+          if tag not in s:
+              marker='</body>'
+              if marker not in s:
+                  raise SystemExit('Cannot locate body end for session recovery script.')
+              s=s.replace(marker,tag+'\n'+marker,1)
+              p.write_text(s,encoding='utf-8')
+              print('Session recovery script wired.')
           else:
-              print('No repair needed.')
+              print('Session recovery script already wired.')
 
       - name: Validate HTML script boundaries
         shell: python
@@ -96,5 +104,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html
-          git commit -m "fix: prevent authenticated session rollback"
+          git commit -m "fix: wire authenticated session recovery"
           git push

@@ -12,12 +12,17 @@ window.ADM_UI={toast,success:(m,t)=>toast(m,'success',t),error:(m,t)=>toast(m,'e
 window.alert=function(message){const s=String(message||'');let type='info',title='Informasi';if(/berhasil|sudah disinkronkan|sukses|tersimpan|selesai/i.test(s)){type='success';title='Berhasil'}else if(/gagal|error|tidak ditemukan|tidak valid|belum login/i.test(s)){type='error';title='Gagal'}else if(/perhatian|silakan|wajib|harus/i.test(s)){type='warning';title='Perhatian'}toast(s,type,title)}
 })();
 (function(){try{
- const b=document.createElement('script');b.src='assets/assessment-data-bridge.js?v=6';b.async=false;(document.head||document.documentElement).appendChild(b);
- const s=document.createElement('script');s.src='assets/assessment-kokurikuler.js?v=6';s.async=false;(document.head||document.documentElement).appendChild(s);
- const f=document.createElement('script');f.src='assets/assessment-ui-fix.js?v=4';f.async=false;(document.head||document.documentElement).appendChild(f);
- const z=document.createElement('script');z.src='assets/assessment-smart.js?v=3';z.async=false;(document.head||document.documentElement).appendChild(z);
- const a=document.createElement('script');a.src='assets/assessment-auto.js?v=2';a.async=false;(document.head||document.documentElement).appendChild(a);
- const ab=document.createElement('script');ab.src='assets/assessment-absensi-bridge.js?v=3';ab.async=false;(document.head||document.documentElement).appendChild(ab);
- const r=document.createElement('script');r.src='assets/assessment-rekap-smart.js?v=3';r.async=false;(document.head||document.documentElement).appendChild(r);
- const bm=document.createElement('script');bm.src='assets/assessment-bab-matrix.js?v=3';bm.async=false;(document.head||document.documentElement).appendChild(bm);
-}catch(e){console.warn('Assessment module load:',e)}})();
+ const cc=document.createElement('script');cc.src='assets/curriculum-complete-super-v1.js?v=1';cc.async=false;(document.head||document.documentElement).appendChild(cc);
+ const b=document.createElement('script');b.src='assets/assessment-data-bridge.js?v=8';b.async=false;(document.head||document.documentElement).appendChild(b);
+ const s=document.createElement('script');s.src='assets/assessment-kokurikuler.js?v=8';s.async=false;(document.head||document.documentElement).appendChild(s);
+ const f=document.createElement('script');f.src='assets/assessment-ui-fix.js?v=6';f.async=false;(document.head||document.documentElement).appendChild(f);
+ const z=document.createElement('script');z.src='assets/assessment-smart.js?v=5';z.async=false;(document.head||document.documentElement).appendChild(z);
+ const a=document.createElement('script');a.src='assets/assessment-auto.js?v=5';a.async=false;(document.head||document.documentElement).appendChild(a);
+ const ab=document.createElement('script');ab.src='assets/assessment-absensi-bridge.js?v=5';ab.async=false;(document.head||document.documentElement).appendChild(ab);
+ const r=document.createElement('script');r.src='assets/assessment-rekap-smart.js?v=5';r.async=false;(document.head||document.documentElement).appendChild(r);
+ const bm=document.createElement('script');bm.src='assets/assessment-bab-matrix.js?v=5';bm.async=false;(document.head||document.documentElement).appendChild(bm);
+ const g=document.createElement('script');g.src='assets/app-global-integrity-super-v1.js?v=3';g.async=false;(document.head||document.documentElement).appendChild(g);
+ const fc=document.createElement('script');fc.src='assets/app-feature-complete-super-v1.js?v=3';fc.async=false;(document.head||document.documentElement).appendChild(fc);
+ const rt=document.createElement('script');rt.src='assets/app-runtime-integrity-super-v1.js?v=3';rt.async=false;(document.head||document.documentElement).appendChild(rt);
+ const room=document.createElement('script');room.src='assets/app-room-layout-super-v1.js?v=4';room.async=false;(document.head||document.documentElement).appendChild(room);
+}catch(e){console.warn('Assessment/global/feature/runtime/room/curriculum module load:',e)}})();

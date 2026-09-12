@@ -34,4 +34,21 @@
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
   setTimeout(install,500);setTimeout(install,1500);setTimeout(install,3000);
+
+  // NORMAL UI PATCH: the welcome modal was sitting above the entire dashboard
+  // after login. Keep the normal dashboard fully clickable.
+  function unblockDashboard(){
+    const styleId='admNormalUiPatch';
+    if(!document.getElementById(styleId)){
+      const s=document.createElement('style');s.id=styleId;
+      s.textContent='.welcome-overlay{display:none!important;pointer-events:none!important;visibility:hidden!important}.adm-loading-overlay,#admLoadingOverlay{pointer-events:none!important}.adm-loading-overlay.show,#admLoadingOverlay.show{pointer-events:none!important}.adm-loading-card{pointer-events:none!important}';
+      document.head.appendChild(s);
+    }
+    const welcome=document.getElementById('welcomeOverlay');
+    if(welcome){welcome.classList.remove('show');welcome.style.display='none';welcome.style.pointerEvents='none';}
+    const loading=document.getElementById('admLoadingOverlay');
+    if(loading){loading.style.pointerEvents='none';}
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',unblockDashboard,{once:true});else unblockDashboard();
+  setTimeout(unblockDashboard,250);setTimeout(unblockDashboard,1000);setTimeout(unblockDashboard,2500);
 })();

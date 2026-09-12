@@ -1,7 +1,7 @@
 /* SIAP GURU — GLOBAL UI FOUNDATION v10
  * SAFE COMPATIBILITY PATCH
- * Keeps existing room/navigation state intact. No DOM clearing, menu deletion,
- * forced page hiding, or MutationObserver. No D1, Worker, student data, or auth changes.
+ * Keeps existing room/navigation state intact. No D1, Worker, student data, or auth changes.
+ * Also recovers #dashboard if an older cached UI script emptied it before this file ran.
  */
 (function(){
   'use strict';
@@ -17,10 +17,7 @@
     d.removeAttribute('data-dashboard-empty');
   }
 
-  function cleanMenu(){
-    /* Compatibility only: the approved menu is owned by siap-guru-new-ui.js. */
-    return;
-  }
+  function cleanMenu(){ return; }
 
   function renameBrand(root=document){
     try{
@@ -37,28 +34,39 @@
     }catch(e){}
   }
 
-  function isolateRooms(){
-    /* Navigation engine remains the single source of truth for .page.active. */
-    return;
-  }
+  function isolateRooms(){ return; }
+  function enforceRoomVisibility(){ return; }
+  function handleNavigation(){ return; }
 
-  function enforceRoomVisibility(){
-    /* Base CSS already controls .page visibility. Do not inject competing rules. */
-    return;
-  }
-
-  function handleNavigation(){
-    /* Existing navigation handlers remain untouched. */
-    return;
+  async function recoverDashboard(){
+    const d=document.getElementById('dashboard');
+    if(!d)return;
+    d.removeAttribute('data-dashboard-empty');
+    if(d.children.length)return;
+    try{
+      const res=await fetch(location.href,{cache:'no-store',credentials:'same-origin'});
+      if(!res.ok)return;
+      const html=await res.text();
+      const doc=new DOMParser().parseFromString(html,'text/html');
+      const source=doc.getElementById('dashboard');
+      if(source&&source.children.length){
+        d.innerHTML=source.innerHTML;
+        d.className=source.className||'page active';
+        d.classList.add('page','active');
+        d.removeAttribute('data-dashboard-empty');
+        renameBrand(d);
+      }
+    }catch(e){ console.warn('Dashboard recovery skipped:',e); }
   }
 
   function boot(){
     emptyDashboard();
     renameBrand(document);
+    recoverDashboard();
   }
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});
   else boot();
 
-  window.SIAP_GURU_UI={emptyDashboard,cleanMainMenu:cleanMenu,isolateRooms,enforceRoomVisibility,renameBrand,canonical:true};
+  window.SIAP_GURU_UI={emptyDashboard,cleanMainMenu:cleanMenu,isolateRooms,enforceRoomVisibility,renameBrand,canonical:true,recoverDashboard};
 })();

@@ -7,9 +7,9 @@ const q=(s,r=document)=>r.querySelector(s), qa=(s,r=document)=>[...r.querySelect
 function check(name,ok,detail){state.checks[name]={ok:!!ok,detail:detail||''};return !!ok}
 function master(){try{return window.GURU_SD_MASTER?.get?.()||{}}catch{return {}}}
 function repairButtons(){qa('button:not([type])').forEach(b=>{if(!/submit|reset/i.test(b.textContent||''))b.type='button'})}
-function repairNav(){qa('.navbtn').forEach(b=>{if(b.dataset.runtimeBound)return;b.dataset.runtimeBound='1';b.addEventListener('click',()=>setTimeout(()=>{const target=b.dataset.page;if(target){const p=document.getElementById(target);if(p){qa('.page').forEach(x=>x.classList.remove('active'));p.classList.add('active');qa('.navbtn').forEach(x=>x.classList.remove('active'));b.classList.add('active')}}const side=q('.side');if(side&&innerWidth<=850)side.classList.remove('open')},0),true)})}
+/* Navigation is owned by the native app. This integrity layer must not install a second click router. */
 function audit(){
- repairButtons();repairNav();
+ repairButtons();
  const login=q('#login,.login');
  check('loginPage',!!login,!!login?'ok':'missing login shell');
  check('appShell',!!q('#app'),!!q('#app')?'ok':'missing #app');

@@ -5,9 +5,9 @@ if(window.__ADM_LOADING_SYSTEM)return;
 window.__ADM_LOADING_SYSTEM=true;
 
 const CSS=`
-#admLoadingOverlay{position:fixed;inset:0;z-index:999999;display:none;align-items:center;justify-content:center;background:rgba(7,14,30,.58);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding:18px}
-#admLoadingOverlay.show{display:flex;animation:admFadeIn .18s ease}
-.adm-loading-card{position:relative;width:min(390px,94vw);background:linear-gradient(145deg,rgba(255,255,255,.985),rgba(247,250,255,.985));border-radius:26px;padding:25px 23px 22px;text-align:center;box-shadow:0 28px 90px rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.9);overflow:hidden}
+#admLoadingOverlay{position:fixed;inset:0;z-index:999999;display:none;align-items:center;justify-content:center;background:rgba(7,14,30,.58);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding:18px;pointer-events:none}
+#admLoadingOverlay.show{display:flex;animation:admFadeIn .18s ease;pointer-events:none}
+.adm-loading-card{position:relative;width:min(390px,94vw);background:linear-gradient(145deg,rgba(255,255,255,.985),rgba(247,250,255,.985));border-radius:26px;padding:25px 23px 22px;text-align:center;box-shadow:0 28px 90px rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.9);overflow:hidden;pointer-events:none}
 .adm-loading-card:before{content:'';position:absolute;inset:0 0 auto;height:4px;background:var(--adm-accent,#2563eb);opacity:.9}
 .adm-brand{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:15px;font:800 11px/1 system-ui,-apple-system,Segoe UI,sans-serif;letter-spacing:.08em;color:#64748b;text-transform:uppercase}
 .adm-brand-badge{width:27px;height:27px;border-radius:9px;display:grid;place-items:center;background:var(--adm-accent,#2563eb);color:#fff;box-shadow:0 6px 18px rgba(37,99,235,.25)}

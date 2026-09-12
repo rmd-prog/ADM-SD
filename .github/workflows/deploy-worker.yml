@@ -24,6 +24,34 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Recover live Worker binding metadata (read only)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        shell: bash
+        run: |
+          python - <<'PY'
+          import os, json, urllib.request
+          account=os.environ['CLOUDFLARE_ACCOUNT_ID']; token=os.environ['CLOUDFLARE_API_TOKEN']
+          urls=[
+            f'https://api.cloudflare.com/client/v4/accounts/{account}/workers/scripts/adm-sd/settings',
+            f'https://api.cloudflare.com/client/v4/accounts/{account}/workers/scripts/adm-sd'
+          ]
+          for u in urls:
+            req=urllib.request.Request(u,headers={'Authorization':'Bearer '+token})
+            try:
+              with urllib.request.urlopen(req,timeout=20) as r: data=json.load(r)
+              print('CF_ENDPOINT',u,'HTTP',r.status)
+              def walk(x,path=''):
+                if isinstance(x,dict):
+                  for k,v in x.items():
+                    if k.lower() in ('database_id','databaseid') and isinstance(v,str): print('D1_DATABASE_ID',v)
+                    elif k.lower() in ('binding','bindings','d1_bindings'): walk(v,path+'/'+k)
+                    else: walk(v,path+'/'+k)
+                elif isinstance(x,list):
+                  for v in x: walk(v,path+'[]')
+              walk(data)
+            except Exception as e: print('CF_ENDPOINT_ERROR',u,str(e)[:160])
+          PY
       - name: Deploy Worker with persistent production bindings
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

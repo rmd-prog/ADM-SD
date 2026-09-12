@@ -22,33 +22,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Recover historical D1 binding (read only)
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        shell: bash
-        run: |
-          python - <<'PY'
-          import os,json,urllib.request
-          a=os.environ['CLOUDFLARE_ACCOUNT_ID'];t=os.environ['CLOUDFLARE_API_TOKEN']
-          base=f'https://api.cloudflare.com/client/v4/accounts/{a}/workers/scripts/adm-sd'
-          def get(path):
-            req=urllib.request.Request(base+path,headers={'Authorization':'Bearer '+t})
-            with urllib.request.urlopen(req,timeout=20) as r:return json.load(r)
-          try:
-            vs=get('/versions').get('result',[])
-            print('VERSION_COUNT',len(vs))
-            for v in vs[:20]:
-              vid=v.get('id') or v.get('version_id')
-              if not vid: continue
-              try:
-                d=get('/versions/'+str(vid)).get('result',{})
-                blob=json.dumps(d)
-                if 'd1' in blob.lower() or 'database_id' in blob.lower() or 'database_id' in blob:
-                  print('HISTORICAL_D1_META',vid,blob[:12000])
-              except Exception as e: print('VERSION_ERROR',vid,str(e)[:120])
-          except Exception as e: print('VERSIONS_ERROR',str(e)[:200])
-          PY
-      - name: Deploy Worker
+      - name: Deploy Worker with production D1
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: npx --yes wrangler@latest deploy --config wrangler.jsonc --keep-vars

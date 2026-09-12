@@ -1,11 +1,11 @@
-/* GURU+ SD — GLOBAL INTEGRITY SUPER V3
+/* GURU+ SD — GLOBAL INTEGRITY SUPER V4
  * One curriculum source: GURU_SD_MASTER.
  * All legacy curriculum storage is compatibility/cache only.
  * AI SUPER, old AI controls, JP/RPM/LKPD caches and document bridges cannot become a second source.
  * Local-only. Never touches D1, Worker, students, login, or assessment bridge.
  */
 (function(){'use strict';
-if(window.__GURU_SD_GLOBAL_INTEGRITY_V3__)return;window.__GURU_SD_GLOBAL_INTEGRITY_V3__=1;
+if(window.__GURU_SD_GLOBAL_INTEGRITY_V4__)return;window.__GURU_SD_GLOBAL_INTEGRITY_V4__=1;
 const KEY='guru_sd_pembelajaran_master_v1';
 const LEGACY=['guru_sd_perangkat_super_v1','guru_sd_cp_atp_tp_super_v1','guru_sd_rpm_super_v2','guru_sd_prota_promes_super_v2','guru_sd_lkpd_asesmen_super_v1','guru_sd_lkpd_asesmen_super_v2','guru_sd_jp_allocation_super_v1','guru_plus_sd_ai_super_v1'];
 const $=id=>document.getElementById(id);
@@ -17,9 +17,9 @@ function syncAi(x){if(!x)return;const ids=[['aiSuperRombel',x.rombel],['aiSuperM
 function syncLegacyAi(x){if(!x)return;const r=$('aiKelas'),m=$('aiMapel'),b=$('aiBabSelector');if(r)r.value=x.rombel;if(m)m.value=x.mapel;if(b){const i=[...b.options].findIndex(o=>String(o.textContent||'').trim().toLowerCase()===String(x.material||'').trim().toLowerCase());if(i>=0)b.selectedIndex=i}}
 function audit(){const x=master();if(!x?.babId)return {ok:false,reason:'MASTER_EMPTY'};syncAi(x);syncLegacyAi(x);return {ok:true,source:'GURU_SD_MASTER',context:x.babId,material:x.material,rombel:x.rombel,mapel:x.mapel,jp:x.jp,tpCount:Array.isArray(x.tp)?x.tp.length:0,dplCount:Array.isArray(x.dpl)?x.dpl.length:0,model:x.modelPembelajaran||''}}
 function guardGenerate(){if(window.__GURU_SD_AUTO_GENERATE_GUARD__)return;window.__GURU_SD_AUTO_GENERATE_GUARD__=1;document.addEventListener('click',e=>{const b=e.target?.closest?.('#aiSuperGenerate');if(!b)return;setTimeout(()=>{const x=master();if(x?.babId)window.GURU_SD_AUTO_CHAIN?.run?.()},0)},true)}
+function loadScript(src,attr,onload){if(document.querySelector('script['+attr+']')){onload?.();return}const s=document.createElement('script');s.src=src;s.setAttribute(attr,'1');s.async=false;s.onload=()=>onload?.();(document.body||document.head).appendChild(s)}
 function loadSuperUI(){
-  if(window.__PB_SUPER_UI_V1__||document.querySelector('script[data-pb-super-ui]'))return;
-  const s=document.createElement('script');s.src='assets/perangkat-super-ui-v1.js';s.dataset.pbSuperUi='1';s.async=false;s.onload=()=>window.dispatchEvent(new CustomEvent('perangkatSuperUIReady'));(document.body||document.head).appendChild(s);
+  loadScript('assets/curriculum-complete-super-v1.js','data-curriculum-complete-super',()=>loadScript('assets/perangkat-super-ui-v1.js','data-pb-super-ui'));
 }
 patchStorage();guardGenerate();loadSuperUI();window.GURU_SD_GLOBAL_INTEGRITY={audit,master,legacyKeys:LEGACY.slice()};
 function boot(){loadSuperUI();audit();window.addEventListener('guruSdMasterChanged',()=>setTimeout(audit,0));document.addEventListener('change',e=>{if(['pkR','pkM','pkB'].includes(e.target?.id))setTimeout(()=>{window.GURU_SD_MASTER?.sync?.();audit()},0)},true);setInterval(audit,1200)}

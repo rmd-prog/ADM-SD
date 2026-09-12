@@ -76,10 +76,9 @@
       s.textContent=css;
       document.head.appendChild(s);
     }
-    document.querySelectorAll('.login-brand-title').forEach(e=>e.textContent='SIAP GURU');
-    document.querySelectorAll('.login-brand-ver').forEach(e=>e.textContent='TA 2026/2027');
+    document.querySelectorAll('.login-brand-title').forEach(e=>{if(e.textContent!=='SIAP GURU')e.textContent='SIAP GURU'});
+    document.querySelectorAll('.login-brand-ver').forEach(e=>{if(e.textContent!=='TA 2026/2027')e.textContent='TA 2026/2027'});
     document.querySelectorAll('.login-brand-logo').forEach(e=>e.remove());
   }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else boot();
-  new MutationObserver(boot).observe(document.documentElement,{subtree:true,childList:true});
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot,{once:true}); else boot();
 })();

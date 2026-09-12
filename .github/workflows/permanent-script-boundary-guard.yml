@@ -20,46 +20,51 @@ jobs:
         shell: python
         run: |
           from pathlib import Path
+          import re
           p=Path('index.html'); s=p.read_text(encoding='utf-8')
           start=s.find("<script>\n(function(){\n'use strict';")
           end=s.find('<script src="assets/absensi.js"',start)
           if start<0 or end<0: raise SystemExit('Main inline app script markers not found.')
 
-          # Repair the accidental recovery tag that may have been inserted
-          # inside exportHtml() instead of the real page body.
-          bad="+d.body+'<script src=\"assets/login-session-recovery-v1.js\"></script>\\n+</body></html>'"
-          s=s.replace(bad,"+d.body+'</body></html>'")
-          bad2="+d.body+'<script src=\"assets/login-session-recovery-v1.js\"></script>\\n</body></html>'"
-          s=s.replace(bad2,"+d.body+'</body></html>'")
-
+          # Restore the document exporter to a clean implementation. This also
+          # removes any recovery-loader text accidentally injected into its HTML string.
+          clean_export="""function exportHtml(type){const d=docPayload(type);return '<!doctype html><html lang=\\\"id\\\"><head><meta charset=\\\"utf-8\\\"><title>'+escHtml(d.title)+'</title><style>body{font-family:Arial,sans-serif;margin:35px;color:#172033}h1{font-size:24px;margin-bottom:4px}h4{margin:18px 0 8px;border-bottom:2px solid #ddd;padding-bottom:6px}.doc-grid{display:flex;gap:10px}.doc-box{border:1px solid #ddd;border-radius:10px;padding:12px;flex:1;margin-bottom:12px}.doc-line{border:1px solid #e2e8f0;border-radius:7px;padding:8px;margin:5px 0;line-height:1.5}.doc-table{width:100%;border-collapse:collapse}.doc-table th,.doc-table td{border:1px solid #ccc;padding:8px;text-align:left;vertical-align:top}.doc-table th{background:#f3f4f6}.doc-note{margin-top:12px;padding:10px;background:#fff7ed}</style></head><body><h1>'+escHtml(d.title)+'</h1><p>Tahun Pelajaran 2026/2027</p>'+d.body+'</body></html>'}\\n """
           block=s[start:end]
-          # Escape every raw script-close literal inside the inline JS while
-          # preserving the actual HTML closing boundary immediately before absensi.js.
-          pos=end; boundary=-1
-          while True:
-              pos=s.rfind('</script>',start,pos)
-              if pos<0: break
-              if s[pos+9:end].strip()=='': boundary=pos; break
-              pos-=1
-          if boundary<0: raise SystemExit('Actual inline app closing boundary not found.')
-          block=s[start:end]; close=boundary-start
-          safe_block=block[:close].replace('</script>','<\\/script>')+block[close:]
+          pattern=r"function exportHtml\(type\)\{.*?\}\n function ensureDoc"
+          if re.search(pattern,block,re.S):
+              block=re.sub(pattern,clean_export+'function ensureDoc',block,count=1,flags=re.S)
+          else:
+              raise SystemExit('exportHtml function marker not found; aborting safely.')
 
+          # Patch login rollback and session restore guards.
           old_login="""try{if(typeof window.__ADM_LOGIN!=='function')throw Error('Modul login belum siap. Muat ulang halaman.');await window.__ADM_LOGIN(u.value.trim(),p.value)}catch(x){console.error(x);$('#loginScreen').style.display='grid';$('#app').style.display='none';error(x.message||'Login gagal. Periksa akun dan Worker.')}finally{if(b){b.disabled=false;b.textContent='MASUK KE SISTEM'}}"""
           new_login="""let authCommitted=false;try{if(typeof window.__ADM_LOGIN!=='function')throw Error('Modul login belum siap. Muat ulang halaman.');await window.__ADM_LOGIN(u.value.trim(),p.value);authCommitted=!!String(localStorage.getItem('siAuthToken')||'').trim()}catch(x){console.error(x);const tokenNow=String(localStorage.getItem('siAuthToken')||'').trim();if(!tokenNow&&!authCommitted){$('#loginScreen').style.display='grid';$('#app').style.display='none';error(x.message||'Login gagal. Periksa akun dan Worker.')}else{console.warn('Login berhasil tetapi ada error UI pasca-auth; sesi dipertahankan.',x)}}finally{if(b){b.disabled=false;b.textContent='MASUK KE SISTEM'}}"""
-          if old_login in safe_block: safe_block=safe_block.replace(old_login,new_login,1)
+          if old_login in block: block=block.replace(old_login,new_login,1)
           old_restore="""try{const saved=JSON.parse(localStorage.getItem('siLogin')||'null');const token=localStorage.getItem('siAuthToken');if(saved&&saved.username&&token){if(saved.role==='guru'&&!ROMBELS.includes(normalizeRombel(saved.rombel||saved.kelas||''))){localStorage.removeItem('siLogin');localStorage.removeItem('siAuthToken')}else finishLogin(saved)}}catch(e){localStorage.removeItem('siLogin');localStorage.removeItem('siAuthToken')}"""
           new_restore="""try{const saved=JSON.parse(localStorage.getItem('siLogin')||'null');const token=localStorage.getItem('siAuthToken');if(saved&&saved.username&&token){if(saved.role==='guru'&&!ROMBELS.includes(normalizeRombel(saved.rombel||saved.kelas||''))){localStorage.removeItem('siLogin');localStorage.removeItem('siAuthToken')}else finishLogin(saved)}}catch(e){console.warn('Pemulihan sesi gagal pada UI, token dipertahankan:',e);if(!localStorage.getItem('siAuthToken')){localStorage.removeItem('siLogin')}}"""
-          if old_restore in safe_block: safe_block=safe_block.replace(old_restore,new_restore,1)
-          s=s[:start]+safe_block+s[end:]
+          if old_restore in block: block=block.replace(old_restore,new_restore,1)
 
-          # Insert recovery loader only at the final real </body>, never inside JS strings.
+          # Escape raw script closes inside JS, preserving only the real inline boundary.
+          s2=s[:start]+block+s[end:]
+          start=s2.find("<script>\n(function(){\n'use strict';"); end=s2.find('<script src="assets/absensi.js"',start)
+          pos=end; boundary=-1
+          while True:
+              pos=s2.rfind('</script>',start,pos)
+              if pos<0: break
+              if s2[pos+9:end].strip()=='': boundary=pos; break
+              pos-=1
+          if boundary<0: raise SystemExit('Actual inline app closing boundary not found.')
+          block=s2[start:end]; close=boundary-start
+          block=block[:close].replace('</script>','<\\/script>')+block[close:]
+          s2=s2[:start]+block+s2[end:]
+
+          # Recovery loader must be outside all inline strings and immediately before real </body>.
           tag='<script src="assets/login-session-recovery-v1.js"></script>'
-          s=s.replace(tag,'')
-          body=s.rfind('</body>')
+          s2=s2.replace(tag,'')
+          body=s2.rfind('</body>')
           if body<0: raise SystemExit('Real document body closing tag not found.')
-          s=s[:body]+tag+'\n'+s[body:]
-          p.write_text(s,encoding='utf-8')
+          s2=s2[:body]+tag+'\n'+s2[body:]
+          p.write_text(s2,encoding='utf-8')
 
       - name: Validate runtime HTML boundaries
         shell: python
@@ -74,12 +79,13 @@ jobs:
               if pos<0: break
               if s[pos+9:end].strip()=='': boundary=pos; break
               pos-=1
-          if boundary<0: raise SystemExit('Cannot locate actual main inline app closing boundary.')
-          if '</script>' in s[start:boundary]: raise SystemExit('UNSAFE: raw </script> remains inside main inline script.')
-          # Ensure the recovery loader is in the real document tail, not a JS string.
+          if boundary<0 or '</script>' in s[start:boundary]: raise SystemExit('UNSAFE: raw </script> remains inside main inline script.')
           body=s.rfind('</body>'); tag='<script src="assets/login-session-recovery-v1.js"></script>'
           if body<0 or s.rfind(tag,0,body)<0: raise SystemExit('Recovery loader is not wired before the real body close.')
-          print('PASS: login recovery loader and inline script boundaries are safe.')
+          # The recovery loader must not occur inside exportHtml().
+          ex=s.find('function exportHtml(type)'); en=s.find('function ensureDoc',ex)
+          if ex<0 or en<0 or tag in s[ex:en]: raise SystemExit('Recovery loader leaked into exportHtml().')
+          print('PASS: login recovery loader, exporter, and inline boundaries are safe.')
 
       - name: Commit repair if needed
         shell: bash
@@ -88,5 +94,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html
-          git commit -m "fix: place login recovery loader outside app strings"
+          git commit -m "fix: restore clean exporter and login recovery loader"
           git push

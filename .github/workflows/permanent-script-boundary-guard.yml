@@ -23,24 +23,27 @@ jobs:
 
           p = Path('index.html')
           s = p.read_text(encoding='utf-8')
-
           start_marker = "<script>\n(function(){\n'use strict';"
           start = s.find(start_marker)
           if start < 0:
               raise SystemExit('Main inline app script marker not found; aborting safely.')
-
           end_marker = '<script src="assets/absensi.js"'
           end = s.find(end_marker, start)
           if end < 0:
               raise SystemExit('Main inline app script end marker not found; aborting safely.')
 
-          block = s[start:end]
-          if block.count('</script>') == 0:
-              raise SystemExit('Main inline app script has no closing boundary; aborting safely.')
+          boundary = s.rfind('</script>', start, end)
+          if boundary < 0:
+              raise SystemExit('Main inline app script closing boundary not found.')
 
-          head, tail = block.rsplit('</script>', 1)
+          block = s[start:end]
+          close = block.rfind('</script>')
+          if close < 0:
+              raise SystemExit('Main inline app script closing boundary not found in block.')
+          head = block[:close]
+          tail = block[close:]
           safe_head = head.replace('</script>', '<\\/script>')
-          safe_block = safe_head + '</script>' + tail
+          safe_block = safe_head + tail
           safe_block = safe_block.replace("+d.body+'<script src=\\\"guru-mapel-ui.js\\\"><\\/script>\\\n</body></html>'", "+d.body+'</body></html>'")
 
           old_login = """try{if(typeof window.__ADM_LOGIN!=='function')throw Error('Modul login belum siap. Muat ulang halaman.');await window.__ADM_LOGIN(u.value.trim(),p.value)}catch(x){console.error(x);$('#loginScreen').style.display='grid';$('#app').style.display='none';error(x.message||'Login gagal. Periksa akun dan Worker.')}finally{if(b){b.disabled=false;b.textContent='MASUK KE SISTEM'}}"""
@@ -77,21 +80,18 @@ jobs:
         shell: python
         run: |
           from pathlib import Path
-          import re
-
           s = Path('index.html').read_text(encoding='utf-8')
           start_marker = "<script>\n(function(){\n'use strict';"
           start = s.find(start_marker)
           end = s.find('<script src="assets/absensi.js"', start)
           if start < 0 or end < 0:
               raise SystemExit('Cannot locate main inline app script.')
-          block = s[start:end]
-          if re.search(r'</script>', block[:-9]):
+          boundary = s.rfind('</script>', start, end)
+          if boundary < 0:
+              raise SystemExit('Cannot locate main inline app closing boundary.')
+          block = s[start:boundary]
+          if '</script>' in block:
               raise SystemExit('UNSAFE: raw </script> remains inside the main inline script.')
-          if block.count('</script>') != 1:
-              raise SystemExit('UNSAFE: main inline script must have exactly one closing boundary.')
-          if '<\\/script>' in block:
-              print('Escaped script literals detected: safe.')
           print('PASS: inline script boundary is safe.')
 
       - name: Commit repair if needed

@@ -23,7 +23,7 @@
       timeline:'<path d="M4 6h16M4 12h12M4 18h8"/><circle cx="20" cy="6" r="1"/><circle cx="16" cy="12" r="1"/><circle cx="12" cy="18" r="1"/>',
       flag:'<path d="M5 21V4"/><path d="M5 5c5-4 9 4 14 0v9c-5 4-9-4-14 0"/>',
       tool:'<path d="m14.5 6.5 3-3a4 4 0 0 1-5.2 5.2L6 15a2.8 2.8 0 1 0 4 4l6.3-6.3a4 4 0 0 1 5.2-5.2l-3 3"/>',
-      brain:'<path d="M9 4a3 3 0 0 0-5 2 3 3 0 0 0 1 5.5A3.5 3.5 0 0 0 7 18a3 3 0 0 0 5 1V5a3 3 0 0 0-3-1z"/><path d="M15 4a3 3 0 0 1 5 2 3 3 0 0 1-1 5.5A3.5 3.5 0 0 1 17 18a3 3 0 0 1-5 1V5a3 3 0 0 0 3-1zM6 8h3M15 8h3M7 13h2M15 13h2"/>',
+      brain:'<path d="M9 4a3 3 0 0 0-5 2 3 3 0 0 0 1 5.5A3.5 3.5 0 0 0 7 18a3 3 0 0 0 5 1V5a3 3 0 0 0-3-1z"/><path d="M15 4a3 3 0 0 1 5 2 3 3 0 0 1-1 5.5A3.5 3.5 0 0 1 17 18a3.5 3.5 0 0 1-5 1V5a3 3 0 0 1 3-1zM6 8h3M15 8h3M7 13h2M15 13h2"/>',
       note:'<path d="M6 3h9l4 4v14H6z"/><path d="M15 3v5h4M9 12h6M9 16h5"/>',
       booksmall:'<path d="M5 4h13a2 2 0 0 1 2 2v14H7a2 2 0 0 0-2-2z"/><path d="M5 4v14a2 2 0 0 0 2 2M9 8h7M9 12h6"/>',
       sparkles:'<path d="m12 3 1.2 3.8L17 8l-3.8 1.2L12 13l-1.2-3.8L7 8l3.8-1.2z"/><path d="m19 13 .7 2.3L22 16l-2.3.7L19 19l-.7-2.3L16 16l2.3-.7z"/><path d="m5 15 .6 1.9L7.5 18l-1.9.6L5 20.5l-.6-1.9L2.5 18l1.9-.6z"/>',
@@ -60,132 +60,16 @@
       '<button class="sg-action" data-sg-page="scores"><span class="sg-action-icon">'+icon('checklist')+'</span><span><b>Penilaian</b><small>Input & kelola nilai</small></span><i>›</i></button>'+ 
       '</div>';
     hero.insertAdjacentElement('afterend',box);
-    box.addEventListener('click',function(e){
-      var b=e.target.closest('[data-sg-page]'); if(!b) return;
-      go(b.getAttribute('data-sg-page'));
-    });
+    box.addEventListener('click',function(e){var b=e.target.closest('[data-sg-page]');if(!b)return;go(b.getAttribute('data-sg-page'));});
   }
-  function makeLeaf(label,page,iconName){
-    var b=document.createElement('button');
-    b.type='button'; b.className='sg-modern-item';
-    b.innerHTML='<span class="sg-item-main"><span class="sg-sub-icon">'+icon(iconName)+'</span><span>'+label+'</span></span>';
-    if(page){
-      b.addEventListener('click',function(){go(page);});
-    }
-    return b;
-  }
-  function makeNested(label,iconName,items,open){
-    var section=document.createElement('div');
-    section.className='sg-modern-group nested'+(open?' open':'');
-    var head=document.createElement('button');
-    head.type='button'; head.className='sg-modern-head nested-head';
-    head.innerHTML='<span class="sg-head-main"><span class="sg-menu-icon">'+icon(iconName)+'</span><span>'+label+'</span></span><span class="sg-chevron">'+icon('chevron')+'</span>';
-    var sub=document.createElement('div'); sub.className='sg-modern-sub nested-sub';
-    items.forEach(function(item){
-      if(item.children){
-        sub.appendChild(makeNested(item.label,item.icon,item.children,false));
-      }else{
-        sub.appendChild(makeLeaf(item.label,item.page,item.icon));
-      }
-    });
-    head.addEventListener('click',function(){section.classList.toggle('open');});
-    section.appendChild(head); section.appendChild(sub);
-    return section;
-  }
-  function modernMenu(){
-    var side=document.getElementById('sidebar');
-    if(!side || side.dataset.modernMenu==='2') return;
-    side.dataset.modernMenu='2';
-    var title=side.querySelector('.side-title');
-    side.querySelectorAll('.navbtn,.menu-group').forEach(function(el){el.remove();});
-    if(title) title.textContent='MENU UTAMA';
-    var wrap=document.createElement('div');
-    wrap.className='sg-modern-menu';
-    var home=document.createElement('button');
-    home.type='button'; home.className='sg-modern-home active';
-    home.innerHTML='<span class="sg-menu-icon">'+icon('dashboard')+'</span><span>Beranda</span>';
-    home.addEventListener('click',function(){go('dashboard');setActive(home,wrap);});
-    wrap.appendChild(home);
-    var structure=[
-      {label:'Pembelajaran',icon:'book',open:true,items:[
-        {label:'Perencanaan',icon:'route',children:[
-          {label:'CP',page:'cp',icon:'target'},
-          {label:'ATP',page:'atp',icon:'timeline'},
-          {label:'TP',page:'tp',icon:'flag'}
-        ]},
-        {label:'Perangkat',page:'rpm',icon:'tool'},
-        {label:'RPM Deep Learning',page:'rpm',icon:'brain'},
-        {label:'LKPD',page:'lkpd',icon:'note'},
-        {label:'Materi',page:'materi',icon:'booksmall'},
-        {label:'AI Generate',page:'aiGenerate',icon:'sparkles'}
-      ]},
-      {label:'Asesmen',icon:'clipboard',items:[
-        {label:'Penilaian',page:'scores',icon:'checklist'},
-        {label:'Penilaian per Bab',page:'scores',icon:'list'},
-        {label:'Ulangan Semester',page:'scores',icon:'calendar'},
-        {label:'Akhir Semester',page:'scores',icon:'certificate'},
-        {label:'Rekap Nilai',page:'report',icon:'chart'},
-        {label:'Analisis',page:'aiGenerate',icon:'chartdots'}
-      ]},
-      {label:'Peserta Didik',icon:'users',items:[
-        {label:'Data Siswa',page:'students',icon:'database'},
-        {label:'Rombel',page:'students',icon:'group'},
-        {label:'Profil',page:'students',icon:'user'},
-        {label:'Perkembangan',page:'students',icon:'trend'}
-      ]},
-      {label:'Dokumen',icon:'files',items:[
-        {label:'Draft',page:'report',icon:'fileedit'},
-        {label:'Selesai',page:'report',icon:'filecheck'},
-        {label:'Template',page:'report',icon:'template'},
-        {label:'Riwayat',page:'report',icon:'history'}
-      ]}
-    ];
-    structure.forEach(function(group){
-      var section=makeNested(group.label,group.icon,group.items,!!group.open);
-      section.classList.remove('nested');
-      section.querySelector('.nested-head').classList.remove('nested-head');
-      wrap.appendChild(section);
-    });
-    side.appendChild(wrap);
-    var style=document.getElementById('siapGuruModernMenuStyle')||document.createElement('style');
-    style.id='siapGuruModernMenuStyle';
-    style.textContent='\
-      .sg-modern-menu{display:grid;gap:4px;margin-top:4px}\
-      .sg-modern-home,.sg-modern-head,.sg-modern-item{font:inherit;color:#526174;border:0;background:transparent;width:100%;text-align:left;cursor:pointer}\
-      .sg-modern-home{display:flex;align-items:center;gap:10px;min-height:42px;padding:9px 11px;border-radius:10px;font-weight:800}\
-      .sg-modern-home.active,.sg-modern-item.active{background:#edf6ff;color:#1767c5}\
-      .sg-modern-home:hover,.sg-modern-head:hover,.sg-modern-item:hover{background:#f5f8fc;color:#1767c5}\
-      .sg-modern-head{display:flex;align-items:center;justify-content:space-between;min-height:42px;padding:9px 11px;border-radius:10px;font-weight:800}\
-      .sg-head-main,.sg-item-main{display:flex;align-items:center;gap:9px;min-width:0}\
-      .sg-menu-icon{width:19px;height:19px;display:inline-grid;place-items:center;flex:none}\
-      .sg-menu-icon svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}\
-      .sg-sub-icon{width:17px;height:17px;display:inline-grid;place-items:center;flex:none;color:#8491a3}\
-      .sg-sub-icon svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}\
-      .sg-chevron{display:grid;transition:transform .18s ease;color:#9aa6b5}.sg-chevron svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}\
-      .sg-modern-group.open>.sg-modern-head>.sg-chevron{transform:rotate(90deg)}\
-      .sg-modern-sub{display:none;padding:2px 0 5px 29px}.sg-modern-group.open>.sg-modern-sub{display:grid;gap:1px}\
-      .sg-modern-item{display:flex;align-items:center;gap:8px;padding:8px 9px;border-radius:8px;font-size:12.5px;line-height:1.25}\
-      .sg-modern-group.nested{padding-left:0}.sg-modern-group.nested>.sg-modern-sub{padding-left:27px}\
-      .sg-modern-group.nested .sg-modern-head{font-weight:700;font-size:12.5px;min-height:36px;padding:7px 8px}\
-      @media(max-width:850px){.sg-modern-menu{padding-bottom:20px}.sg-modern-item{font-size:13px}}\
-    ';
-    document.head.appendChild(style);
-  }
-  function setActive(active,root){
-    root.querySelectorAll('.sg-modern-home,.sg-modern-item').forEach(function(x){x.classList.remove('active');});
-    active.classList.add('active');
-  }
+  function makeLeaf(label,page,iconName){var b=document.createElement('button');b.type='button';b.className='sg-modern-item';b.innerHTML='<span class="sg-item-main"><span class="sg-sub-icon">'+icon(iconName)+'</span><span>'+label+'</span></span>';if(page)b.addEventListener('click',function(){go(page);});return b;}
+  function makeNested(label,iconName,items,open){var section=document.createElement('div');section.className='sg-modern-group nested'+(open?' open':'');var head=document.createElement('button');head.type='button';head.className='sg-modern-head nested-head';head.innerHTML='<span class="sg-head-main"><span class="sg-menu-icon">'+icon(iconName)+'</span><span>'+label+'</span></span><span class="sg-chevron">'+icon('chevron')+'</span>';var sub=document.createElement('div');sub.className='sg-modern-sub nested-sub';items.forEach(function(item){sub.appendChild(item.children?makeNested(item.label,item.icon,item.children,false):makeLeaf(item.label,item.page,item.icon));});head.addEventListener('click',function(){section.classList.toggle('open');});section.appendChild(head);section.appendChild(sub);return section;}
+  function modernMenu(){var side=document.getElementById('sidebar');if(!side||side.dataset.modernMenu==='2')return;side.dataset.modernMenu='2';var title=side.querySelector('.side-title');side.querySelectorAll('.navbtn,.menu-group').forEach(function(el){el.remove();});if(title)title.textContent='MENU UTAMA';var wrap=document.createElement('div');wrap.className='sg-modern-menu';var home=document.createElement('button');home.type='button';home.className='sg-modern-home active';home.innerHTML='<span class="sg-menu-icon">'+icon('dashboard')+'</span><span>Beranda</span>';home.addEventListener('click',function(){go('dashboard');setActive(home,wrap);});wrap.appendChild(home);var structure=[{label:'Pembelajaran',icon:'book',open:true,items:[{label:'Perencanaan',icon:'route',children:[{label:'CP',page:'cp',icon:'target'},{label:'ATP',page:'atp',icon:'timeline'},{label:'TP',page:'tp',icon:'flag'}]},{label:'Perangkat',page:'rpm',icon:'tool'},{label:'RPM Deep Learning',page:'rpm',icon:'brain'},{label:'LKPD',page:'lkpd',icon:'note'},{label:'Materi',page:'materi',icon:'booksmall'},{label:'AI Generate',page:'aiGenerate',icon:'sparkles'}]},{label:'Asesmen',icon:'clipboard',items:[{label:'Penilaian',page:'scores',icon:'checklist'},{label:'Penilaian per Bab',page:'scores',icon:'list'},{label:'Ulangan Semester',page:'scores',icon:'calendar'},{label:'Akhir Semester',page:'scores',icon:'certificate'},{label:'Rekap Nilai',page:'report',icon:'chart'},{label:'Analisis',page:'aiGenerate',icon:'chartdots'}]},{label:'Peserta Didik',icon:'users',items:[{label:'Data Siswa',page:'students',icon:'database'},{label:'Rombel',page:'students',icon:'group'},{label:'Profil',page:'students',icon:'user'},{label:'Perkembangan',page:'students',icon:'trend'}]},{label:'Dokumen',icon:'files',items:[{label:'Draft',page:'report',icon:'fileedit'},{label:'Selesai',page:'report',icon:'filecheck'},{label:'Template',page:'report',icon:'template'},{label:'Riwayat',page:'report',icon:'history'}]}];structure.forEach(function(group){var section=makeNested(group.label,group.icon,group.items,!!group.open);section.classList.remove('nested');section.querySelector('.nested-head').classList.remove('nested-head');wrap.appendChild(section);});side.appendChild(wrap);var style=document.getElementById('siapGuruModernMenuStyle')||document.createElement('style');style.id='siapGuruModernMenuStyle';style.textContent='.sg-modern-menu{display:grid;gap:4px;margin-top:4px}.sg-modern-home,.sg-modern-head,.sg-modern-item{font:inherit;color:#526174;border:0;background:transparent;width:100%;text-align:left;cursor:pointer}.sg-modern-home{display:flex;align-items:center;gap:10px;min-height:42px;padding:9px 11px;border-radius:10px;font-weight:800}.sg-modern-home.active,.sg-modern-item.active{background:#edf6ff;color:#1767c5}.sg-modern-home:hover,.sg-modern-head:hover,.sg-modern-item:hover{background:#f5f8fc;color:#1767c5}.sg-modern-head{display:flex;align-items:center;justify-content:space-between;min-height:42px;padding:9px 11px;border-radius:10px;font-weight:800}.sg-head-main,.sg-item-main{display:flex;align-items:center;gap:9px;min-width:0}.sg-menu-icon{width:19px;height:19px;display:inline-grid;place-items:center;flex:none}.sg-menu-icon svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.sg-sub-icon{width:17px;height:17px;display:inline-grid;place-items:center;flex:none;color:#8491a3}.sg-sub-icon svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}.sg-chevron{display:grid;transition:transform .18s ease;color:#9aa6b5}.sg-chevron svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.sg-modern-group.open>.sg-modern-head>.sg-chevron{transform:rotate(90deg)}.sg-modern-sub{display:none;padding:2px 0 5px 29px}.sg-modern-group.open>.sg-modern-sub{display:grid;gap:1px}.sg-modern-item{display:flex;align-items:center;gap:8px;padding:8px 9px;border-radius:8px;font-size:12.5px;line-height:1.25}.sg-modern-group.nested{padding-left:0}.sg-modern-group.nested>.sg-modern-sub{padding-left:27px}.sg-modern-group.nested .sg-modern-head{font-weight:700;font-size:12.5px;min-height:36px;padding:7px 8px}@media(max-width:850px){.sg-modern-menu{padding-bottom:20px}.sg-modern-item{font-size:13px}}';document.head.appendChild(style);}
+  function setActive(active,root){root.querySelectorAll('.sg-modern-home,.sg-modern-item').forEach(function(x){x.classList.remove('active');});active.classList.add('active');}
   ready(function(){
-    if(!document.getElementById('siapGuruVisualV2')){
-      var link=document.createElement('link');
-      link.id='siapGuruVisualV2';
-      link.rel='stylesheet';
-      link.href='assets/siap-guru-visual-v1.css?v=2';
-      (document.head||document.documentElement).appendChild(link);
-    }
-    setTimeout(addHomeCards,80);
+    if(!document.getElementById('siapGuruVisualV2')){var link=document.createElement('link');link.id='siapGuruVisualV2';link.rel='stylesheet';link.href='assets/siap-guru-visual-v1.css?v=3';(document.head||document.documentElement).appendChild(link);}
+    [100,500,1200,2500].forEach(function(ms){setTimeout(addHomeCards,ms);});
     setTimeout(modernMenu,450);
   });
-  window.__SIAP_GURU_NEW_UI_DISABLED__=false;
-  window.__SIAP_GURU_HYBRID_VISUAL__='v4-simple-outline-menu';
+  window.__SIAP_GURU_NEW_UI_DISABLED__=false;window.__SIAP_GURU_HYBRID_VISUAL__='v4-simple-outline-menu';
 })();

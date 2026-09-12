@@ -23,9 +23,9 @@
       timeline:'<path d="M4 6h16M4 12h12M4 18h8"/><circle cx="20" cy="6" r="1"/><circle cx="16" cy="12" r="1"/><circle cx="12" cy="18" r="1"/>',
       flag:'<path d="M5 21V4"/><path d="M5 5c5-4 9 4 14 0v9c-5 4-9-4-14 0"/>',
       tool:'<path d="m14.5 6.5 3-3a4 4 0 0 1-5.2 5.2L6 15a2.8 2.8 0 1 0 4 4l6.3-6.3a4 4 0 0 1 5.2-5.2l-3 3"/>',
-      brain:'<path d="M9 4a3 3 0 0 0-5 2 3 3 0 0 0 1 5.5A3.5 3.5 0 0 0 7 18a3 3 0 0 0 5 1V5a3 3 0 0 0-3-1z"/><path d="M15 4a3 3 0 0 1 5 2 3 3 0 0 1-1 5.5A3.5 3.5 0 0 1 17 18a3 3 0 0 1-5 1V5a3 3 0 0 1 3-1zM6 8h3M15 8h3M7 13h2M15 13h2"/>',
+      brain:'<path d="M9 4a3 3 0 0 0-5 2 3 3 0 0 0 1 5.5A3.5 3.5 0 0 0 7 18a3 3 0 0 0 5 1V5a3 3 0 0 0-3-1z"/><path d="M15 4a3 3 0 0 1 5 2 3 3 0 0 1-1 5.5A3.5 3.5 0 0 1 17 18a3 3 0 0 1-5 1V5a3 3 0 0 0 3-1zM6 8h3M15 8h3M7 13h2M15 13h2"/>',
       note:'<path d="M6 3h9l4 4v14H6z"/><path d="M15 3v5h4M9 12h6M9 16h5"/>',
-      booksmall:'<path d="M5 4h13a2 2 0 0 1 2 2v14H7a2 2 0 0 1-2-2z"/><path d="M5 4v14a2 2 0 0 0 2 2M9 8h7M9 12h6"/>',
+      booksmall:'<path d="M5 4h13a2 2 0 0 1 2 2v14H7a2 2 0 0 0-2-2z"/><path d="M5 4v14a2 2 0 0 0 2 2M9 8h7M9 12h6"/>',
       sparkles:'<path d="m12 3 1.2 3.8L17 8l-3.8 1.2L12 13l-1.2-3.8L7 8l3.8-1.2z"/><path d="m19 13 .7 2.3L22 16l-2.3.7L19 19l-.7-2.3L16 16l2.3-.7z"/><path d="m5 15 .6 1.9L7.5 18l-1.9.6L5 20.5l-.6-1.9L2.5 18l1.9-.6z"/>',
       checklist:'<path d="M8 5h11M8 12h11M8 19h11"/><path d="m3 5 1.5 1.5L6 5M3 12l1.5 1.5L6 12M3 19l1.5 1.5L6 19"/>',
       list:'<path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/>',
@@ -52,13 +52,12 @@
     if(!hero) return;
     var box=document.createElement('section');
     box.className='sg-home-actions';
-    box.innerHTML='<div class="sg-section-head"><div><span class="sg-eyebrow">RUANG KERJA</span><h3>Akses cepat</h3><p>Pilih pekerjaan yang ingin dikerjakan.</p></div></div>'+
-      '<div class="sg-action-grid">'+
-      '<button class="sg-action" data-sg-page="students"><span class="sg-action-icon">'+icon('users')+'</span><span><b>Data Siswa</b><small>Kelola data & rombel</small></span><i>›</i></button>'+
-      '<button class="sg-action" data-sg-page="rpm"><span class="sg-action-icon">'+icon('book')+'</span><span><b>Perangkat</b><small>CP, ATP, TP, RPM & dokumen</small></span><i>›</i></button>'+
-      '<button class="sg-action" data-sg-page="aiGenerate"><span class="sg-action-icon">'+icon('sparkles')+'</span><span><b>AI Generate</b><small>Buat materi & administrasi</small></span><i>›</i></button>'+
-      '<button class="sg-action" data-sg-page="scores"><span class="sg-action-icon">'+icon('checklist')+'</span><span><b>Penilaian</b><small>Input & kelola nilai</small></span><i>›</i></button>'+
-      '<button class="sg-action" data-sg-page="report"><span class="sg-action-icon">'+icon('files')+'</span><span><b>Rapor & Rekap</b><small>Lihat hasil dan laporan</small></span><i>›</i></button>'+ 
+    box.innerHTML='<div class="sg-section-head"><div><span class="sg-eyebrow">RUANG KERJA</span><h3>Akses cepat</h3><p>Empat pekerjaan utama guru, tanpa memenuhi layar.</p></div></div>'+
+      '<div class="sg-action-grid sg-action-grid-simple">'+
+      '<button class="sg-action" data-sg-page="students"><span class="sg-action-icon">'+icon('users')+'</span><span><b>Data Siswa</b><small>Kelola data & rombel</small></span><i>›</i></button>'+ 
+      '<button class="sg-action" data-sg-page="rpm"><span class="sg-action-icon">'+icon('book')+'</span><span><b>Perangkat</b><small>CP, ATP, TP & RPM</small></span><i>›</i></button>'+ 
+      '<button class="sg-action" data-sg-page="aiGenerate"><span class="sg-action-icon">'+icon('sparkles')+'</span><span><b>AI Generate</b><small>Buat perangkat & materi</small></span><i>›</i></button>'+ 
+      '<button class="sg-action" data-sg-page="scores"><span class="sg-action-icon">'+icon('checklist')+'</span><span><b>Penilaian</b><small>Input & kelola nilai</small></span><i>›</i></button>'+ 
       '</div>';
     hero.insertAdjacentElement('afterend',box);
     box.addEventListener('click',function(e){

@@ -1,10 +1,10 @@
-/* GURU+ SD — GLOBAL INTEGRITY SUPER V6
+/* GURU+ SD — GLOBAL INTEGRITY SUPER V7
  * Canonical runtime bootstrap: Master -> Catalog/Curriculum -> Engine -> Auto Chain -> Bridge -> Audit.
  * Legacy storage remains compatibility-only. No D1/Worker/student/login changes.
- * V6 also simplifies the visible main navigation to Dashboard, Penilaian and Data Siswa.
+ * V7 keeps only Dashboard, Penilaian and Data Siswa in the live sidebar.
  */
 (function(){'use strict';
-if(window.__GURU_SD_GLOBAL_INTEGRITY_V6__)return;window.__GURU_SD_GLOBAL_INTEGRITY_V6__=1;
+if(window.__GURU_SD_GLOBAL_INTEGRITY_V7__)return;window.__GURU_SD_GLOBAL_INTEGRITY_V7__=1;
 const KEY='guru_sd_pembelajaran_master_v1';
 const LEGACY=['guru_sd_perangkat_super_v1','guru_sd_cp_atp_tp_super_v1','guru_sd_rpm_super_v2','guru_sd_prota_promes_super_v2','guru_sd_lkpd_asesmen_super_v1','guru_sd_lkpd_asesmen_super_v2','guru_sd_jp_allocation_super_v1','guru_plus_sd_ai_super_v1'];
 const $=id=>document.getElementById(id);
@@ -22,24 +22,21 @@ function cleanMainMenu(){
   side.querySelectorAll('.menu-group').forEach(g=>{
     const h=g.querySelector('.navgroup');
     if(!h)return;
-    g.style.display=keepGroup(norm(h.textContent))?'':'none';
+    if(!keepGroup(norm(h.textContent)))g.remove();
   });
   side.querySelectorAll('.navbtn').forEach(b=>{
     const page=String(b.getAttribute('data-page')||'');
     const t=norm(b.textContent);
     const direct=page==='dashboard'||page==='scores'||page==='students';
     const allowed=direct||t==='dashboard'||t.includes('daftar siswa');
-    if(b.closest('.menu-group')){
-      if(t.includes('import siswa'))b.style.display='none';
-    }else{
-      b.style.display=allowed?'':'none';
-    }
+    if(t.includes('import siswa'))b.remove();
+    else if(!b.closest('.menu-group')&&!allowed)b.remove();
   });
   const title=side.querySelector('.side-title');if(title)title.textContent='MENU UTAMA';
 }
 function guardGenerate(){if(window.__GURU_SD_AUTO_GENERATE_GUARD__)return;window.__GURU_SD_AUTO_GENERATE_GUARD__=1;document.addEventListener('click',e=>{const b=e.target?.closest?.('#aiSuperGenerate');if(!b)return;setTimeout(()=>{const x=master();if(x?.babId)window.GURU_SD_AUTO_CHAIN?.run?.()},0)},true)}
 const wanted=[['curriculum','curriculum-complete-super-v1.js'],['ui','perangkat-super-ui-v1.js'],['audit','perangkat-audit-super-v1.js']];
-function load(src,key){return new Promise(resolve=>{if([...document.scripts].some(s=>String(s.src).includes(src))){resolve();return}const s=document.createElement('script');s.src='assets/'+src+'?v=20260912-super6';s.setAttribute('data-super-'+key,'1');s.async=false;s.onload=resolve;s.onerror=resolve;(document.head||document.body).appendChild(s)})}
+function load(src,key){return new Promise(resolve=>{if([...document.scripts].some(s=>String(s.src).includes(src))){resolve();return}const s=document.createElement('script');s.src='assets/'+src+'?v=20260912-super7';s.setAttribute('data-super-'+key,'1');s.async=false;s.onload=resolve;s.onerror=resolve;(document.head||document.body).appendChild(s)})}
 async function boot(){
   for(const [key,src] of wanted)await load(src,key);
   try{window.GURU_SD_MASTER?.sync?.()}catch(e){}

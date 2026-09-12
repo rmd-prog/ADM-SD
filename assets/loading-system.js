@@ -1,18 +1,18 @@
-/* SIAP GURU — SAFE LOADING UI
- * Loading/feedback is opt-in. It never intercepts clicks or fetch globally.
+/* SIAP GURU — SAFE LOADING COMPATIBILITY
+ * Loading/notification UI is disabled temporarily to restore a stable normal app.
+ * Public API is preserved so existing code does not throw errors.
  */
 (function(){
-'use strict';
-if(window.__ADM_LOADING_SYSTEM_SAFE__)return;
-window.__ADM_LOADING_SYSTEM_SAFE__=true;
-const ICONS={default:'<path d="M12 3v18M3 12h18"/>',login:'<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5"/><path d="M15 12H3"/>',generate:'<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3Z"/>'};
-const PROCESSES={cp:['Menyusun CP','Capaian Pembelajaran sedang disiapkan','default'],tp:['Menyusun TP','Tujuan Pembelajaran sedang dirancang','default'],atp:['Menyusun ATP','Alur Tujuan Pembelajaran sedang dirangkai','default'],prota:['Menyusun Prota','Program Tahunan sedang dibuat','default'],prosem:['Menyusun Prosem','Program Semester sedang disusun','default'],rpm:['Menyusun RPM','Rencana Pembelajaran sedang dibuat','generate'],lkpd:['Membuat LKPD','Lembar Kerja Peserta Didik sedang dibuat','default']};
-const style=document.createElement('style');style.id='admLoadingStyleSafe';style.textContent='#admLoadingOverlay{position:fixed;inset:0;z-index:999999;display:none;align-items:center;justify-content:center;background:rgba(7,14,30,.58);padding:18px;pointer-events:none}#admLoadingOverlay.show{display:flex;pointer-events:none}.adm-loading-card{width:min(390px,94vw);background:#fff;border-radius:22px;padding:24px;text-align:center;box-shadow:0 20px 70px rgba(0,0,0,.22);pointer-events:none}.adm-loading-icon{font-size:36px;margin:8px}.adm-loading-title{font:800 18px system-ui;margin:8px}.adm-loading-text{font:500 13px system-ui;color:#667085}#admFeedbackHost{position:fixed;right:12px;bottom:12px;z-index:1000000;pointer-events:none}.adm-feedback{pointer-events:auto;background:#fff;padding:12px 15px;border-radius:15px;box-shadow:0 15px 40px rgba(0,0,0,.18);margin-top:8px}';document.head.appendChild(style);
-function mount(){if(document.getElementById('admLoadingOverlay'))return;const x=document.createElement('div');x.id='admLoadingOverlay';x.innerHTML='<div class="adm-loading-card"><div id="admLoadingIcon" class="adm-loading-icon">⌛</div><div id="admLoadingTitle" class="adm-loading-title">Sedang memproses</div><div id="admLoadingText" class="adm-loading-text">Mohon tunggu…</div></div>';document.body.appendChild(x)}
-function show(title,text,opt){mount();opt=opt||{};const o=document.getElementById('admLoadingOverlay');document.getElementById('admLoadingTitle').textContent=title||'Sedang memproses';document.getElementById('admLoadingText').textContent=text||'Mohon tunggu…';document.getElementById('admLoadingIcon').innerHTML='<svg viewBox="0 0 24 24">'+(ICONS[opt.icon]||ICONS.default)+'</svg>';o.classList.add('show')}
-function hide(){document.getElementById('admLoadingOverlay')?.classList.remove('show')}
-function process(name,opt){const p=PROCESSES[String(name||'').toLowerCase()]||['Sedang memproses','Data sedang disiapkan','default'];show(p[0],p[1],Object.assign({},opt,{icon:p[2]}))}
-function feedback(type,title,text,duration){const host=document.getElementById('admFeedbackHost')||(()=>{const x=document.createElement('div');x.id='admFeedbackHost';document.body.appendChild(x);return x})();const e=document.createElement('div');e.className='adm-feedback';e.textContent=(title||'Informasi')+(text?' — '+text:'');host.appendChild(e);setTimeout(()=>e.remove(),duration||3600);return e}
-window.ADMLoading={show,hide,mount,process,setProgress:function(){},success:(t,h)=>feedback('success',h||'Berhasil',t),error:(t,h)=>feedback('error',h||'Gagal',t,4800),warning:(t,h)=>feedback('warning',h||'Perhatian',t,4400),info:(t,h)=>feedback('info',h||'Informasi',t)};
-window.ADMUI=window.ADMLoading;
+  'use strict';
+  if(window.__ADM_LOADING_SYSTEM_DISABLED__) return;
+  window.__ADM_LOADING_SYSTEM_DISABLED__=true;
+  function noop(){}
+  function mount(){}
+  function feedback(){ return null; }
+  window.ADMLoading={
+    show:noop, hide:noop, mount:mount, process:noop, setProgress:noop,
+    success:noop, error:noop, warning:noop, info:noop, feedback:feedback,
+    soundOn:noop, soundOff:noop
+  };
+  window.ADMUI=window.ADMLoading;
 })();

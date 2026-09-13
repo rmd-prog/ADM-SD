@@ -45,6 +45,25 @@
     };
     return '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">'+(paths[name]||paths.note)+'</svg>';
   }
+  function refreshWelcomeHeader(){
+    var hero=document.querySelector('#dashboard .v10-hero');
+    if(!hero || hero.dataset.sgWelcome==='1') return;
+    var title=hero.querySelector('h2');
+    var desc=hero.querySelector('p');
+    if(title) title.textContent='Selamat datang di SIAP GURU';
+    if(desc) desc.textContent='Semua kebutuhan administrasi dan pembelajaran guru, dalam satu ruang kerja.';
+    hero.querySelectorAll('.sg-welcome-illustration').forEach(function(el){el.remove();});
+    var art=document.createElement('div');
+    art.className='sg-welcome-illustration';
+    art.setAttribute('aria-hidden','true');
+    art.innerHTML='<svg viewBox="0 0 420 250" role="presentation"><defs><linearGradient id="sgDesk" x1="0" x2="1"><stop offset="0"/><stop offset="1"/></linearGradient></defs><circle cx="328" cy="74" r="52" fill="#dbeafe"/><circle cx="365" cy="128" r="32" fill="#e0e7ff"/><rect x="232" y="115" width="142" height="88" rx="9" fill="#fff" stroke="#bfdbfe" stroke-width="3"/><rect x="246" y="128" width="114" height="62" rx="5" fill="#eff6ff"/><path d="M251 194h104l14 11H237z" fill="#cbd5e1"/><path d="M166 216h210" stroke="#94a3b8" stroke-width="8" stroke-linecap="round"/><circle cx="151" cy="82" r="25" fill="#f1c7a5"/><path d="M127 80c2-28 47-34 51-2-13-7-34-5-51 2z" fill="#334155"/><path d="M128 112c9-18 35-18 48 0l14 55h-78z" fill="#2563eb"/><path d="M144 164h28l15 48h-27l-10-25-9 25h-28z" fill="#1e3a8a"/><path d="M170 121l47 30" stroke="#f1c7a5" stroke-width="13" stroke-linecap="round"/><circle cx="217" cy="151" r="7" fill="#f1c7a5"/><path d="M138 122l-28 29" stroke="#f1c7a5" stroke-width="13" stroke-linecap="round"/><path d="M101 214h113" stroke="#1e293b" stroke-width="7" stroke-linecap="round"/><path d="M110 214v-9M204 214v-9" stroke="#1e293b" stroke-width="6" stroke-linecap="round"/><circle cx="189" cy="55" r="4" fill="#2563eb"/><circle cx="204" cy="44" r="3" fill="#7c3aed"/><path d="M192 71l13-7" stroke="#2563eb" stroke-width="3" stroke-linecap="round"/></svg>';
+    hero.appendChild(art);
+    var style=document.getElementById('siapGuruWelcomeStyle')||document.createElement('style');
+    style.id='siapGuruWelcomeStyle';
+    style.textContent='.v10-hero{position:relative;overflow:hidden;min-height:210px;padding-right:300px!important}.v10-hero h2,.v10-hero p,.v10-hero .v10-kicker{position:relative;z-index:2}.sg-welcome-illustration{position:absolute;right:12px;bottom:0;width:min(390px,43%);height:100%;display:flex;align-items:flex-end;justify-content:center;pointer-events:none;opacity:.98}.sg-welcome-illustration svg{width:100%;height:100%;max-height:245px}.sg-welcome-illustration svg path,.sg-welcome-illustration svg rect,.sg-welcome-illustration svg circle{vector-effect:non-scaling-stroke}@media(max-width:700px){.v10-hero{min-height:245px;padding-right:20px!important;padding-bottom:115px!important}.sg-welcome-illustration{width:230px;height:125px;right:50%;transform:translateX(50%);bottom:-3px}.sg-welcome-illustration svg{max-height:125px}}';
+    document.head.appendChild(style);
+    hero.dataset.sgWelcome='1';
+  }
   function addHomeCards(){
     var d=document.getElementById('dashboard');
     if(!d || d.querySelector('.sg-home-actions')) return;
@@ -68,6 +87,7 @@
   function setActive(active,root){root.querySelectorAll('.sg-modern-home,.sg-modern-item').forEach(function(x){x.classList.remove('active');});active.classList.add('active');}
   ready(function(){
     if(!document.getElementById('siapGuruVisualV2')){var link=document.createElement('link');link.id='siapGuruVisualV2';link.rel='stylesheet';link.href='assets/siap-guru-visual-v1.css?v=3';(document.head||document.documentElement).appendChild(link);}
+    [100,500,1200,2500].forEach(function(ms){setTimeout(refreshWelcomeHeader,ms);});
     [100,500,1200,2500].forEach(function(ms){setTimeout(addHomeCards,ms);});
     setTimeout(modernMenu,450);
   });

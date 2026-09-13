@@ -72,11 +72,23 @@
     }catch(e){}
   }
 
+  function loadProtaProsemRooms(){
+    try{
+      if(document.getElementById('sgProtaProsemRoomsLoader')) return;
+      const s=document.createElement('script');
+      s.id='sgProtaProsemRoomsLoader';
+      s.src='assets/siap-guru-prota-prosem-rooms.js';
+      s.defer=true;
+      document.head.appendChild(s);
+    }catch(e){}
+  }
+
   function boot(){
     emptyDashboard();
     renameBrand(document);
     patchWelcome();
     loadProtaBridge();
+    loadProtaProsemRooms();
   }
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});

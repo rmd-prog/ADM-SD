@@ -35,6 +35,8 @@
       .sg-doc-room-head{font-size:13px;padding:8px 10px;color:#cbd5e1}
       .sg-doc-room-head:hover{color:#fff;background:rgba(255,255,255,.055)}
       .sg-doc-room .sg-doc-room-submenu{padding-left:8px}
+      .sg-doc-room:not(.open) > .sg-doc-room-submenu{display:none!important}
+      .sg-doc-room.open > .sg-doc-room-submenu{display:block!important}
       .sg-doc-room .navbtn{font-size:13px;padding:8px 10px}
     `;
     document.head.appendChild(style);

@@ -61,10 +61,22 @@
     }catch(e){}
   }
 
+  function loadProtaBridge(){
+    try{
+      if(document.getElementById('sgProtaBridgeLoader')) return;
+      const s=document.createElement('script');
+      s.id='sgProtaBridgeLoader';
+      s.src='assets/siap-guru-prota.js';
+      s.defer=true;
+      document.head.appendChild(s);
+    }catch(e){}
+  }
+
   function boot(){
     emptyDashboard();
     renameBrand(document);
     patchWelcome();
+    loadProtaBridge();
   }
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});

@@ -83,11 +83,18 @@
     }catch(e){}
   }
 
-  /* RPM ONLY: emergency navigation guard.
-   * It does not replace the existing RPM boot. It only guarantees that a click on
-   * the RPM menu exposes #rpm before any legacy handler can fail. If the RPM bridge
-   * exists, it is called afterwards so the original renderer remains the owner.
-   */
+  function loadRPMFinalOverride(){
+    try{
+      if(document.getElementById('sgRPMFinalOverrideLoader'))return;
+      const s=document.createElement('script');
+      s.id='sgRPMFinalOverrideLoader';
+      s.src='assets/rpm-final-override.js';
+      s.defer=true;
+      document.head.appendChild(s);
+    }catch(e){}
+  }
+
+  /* RPM ONLY: emergency navigation guard. */
   function repairRPMNavigation(){
     try{
       const buttons=[...document.querySelectorAll('.navbtn[data-page="rpm"]')];
@@ -104,10 +111,7 @@
             btn.classList.add('active');
             const side=document.querySelector('.side');
             if(side&&window.innerWidth<=850)side.classList.remove('open');
-            setTimeout(function(){
-              try{ if(typeof window.__openSiapGuruRPM==='function') window.__openSiapGuruRPM(); }
-              catch(e){}
-            },0);
+            setTimeout(function(){try{if(typeof window.__openSiapGuruRPM==='function')window.__openSiapGuruRPM();}catch(e){}},0);
           }catch(e){}
         },true);
       });
@@ -120,12 +124,13 @@
     patchWelcome();
     loadProtaBridge();
     loadProtaProsemRooms();
+    loadRPMFinalOverride();
     repairRPMNavigation();
   }
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});
   else boot();
-  [500,1200,2500].forEach(ms=>setTimeout(()=>{patchWelcome();repairRPMNavigation()},ms));
+  [500,1200,2500].forEach(ms=>setTimeout(()=>{patchWelcome();loadRPMFinalOverride();repairRPMNavigation()},ms));
 
   window.SIAP_GURU_UI={emptyDashboard,cleanMainMenu:cleanMenu,isolateRooms,enforceRoomVisibility,renameBrand,canonical:true};
 })();
